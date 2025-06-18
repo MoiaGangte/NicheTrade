@@ -76,7 +76,7 @@ app.use((err, _req, res, _next) => {
 
 // Start server
 const server = app.listen(port, () => {
-    console.log(`Server is running on http://localhost:${port}`);
+    console.log(`Server is running on http://${port}`);
 });
 
 // Handle server errors
