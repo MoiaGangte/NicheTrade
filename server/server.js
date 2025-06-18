@@ -40,11 +40,15 @@ try {
 
 // CORS middleware configuration
 app.use(cors({
-    origin: process.env.FRONTEND_URL || ['http://localhost:5173','https://eimi-cart.vercel.app'],
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
-    exposedHeaders: ['Set-Cookie']
+    origin: (origin, callback) => {
+        const allowedOrigins = ['http://localhost:5173', 'https://eimi-cart.vercel.app'];
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    credentials: true
 }));
 
 // Middleware configuration
@@ -76,7 +80,7 @@ app.use((err, _req, res, _next) => {
 
 // Start server
 const server = app.listen(port, () => {
-    console.log(`Server is running on http://${port}`);
+    console.log(`Server is running on http://localhost:${port}`);
 });
 
 // Handle server errors
