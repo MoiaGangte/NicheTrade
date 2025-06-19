@@ -17,7 +17,7 @@ const ProductCart = ({ product }) => {
     return product && (
         <div onClick={handleProductClick} className={`border rounded-md p-3 w-full cursor-pointer transition-all duration-300 ${
             isHomePage 
-            ? 'border-black hover:border-white hover:shadow-lg hover:shadow-white/20 bg-black/50 backdrop-blur-sm' 
+            ? 'border-black border-3 hover:border-white hover:shadow-lg hover:shadow-white/20 bg-black/20 backdrop-blur-sm' 
             : 'border-gray-300 hover:border-gray-400 bg-white outline outline-white-500'
         }`}>
             <div className="group flex items-center justify-center px-2 relative">

@@ -50,6 +50,24 @@ const ProductDetails = () => {
         fetchReviews();
     }, [id]);
 
+    useEffect(() => {
+        if (!isFullScreen) return;
+        const handleKeyDown = (e) => {
+            if (!product || !product.image) return;
+            if (e.key === 'ArrowLeft') {
+                const currentIndex = product.image.indexOf(thumbnail);
+                const prevIndex = currentIndex === 0 ? product.image.length - 1 : currentIndex - 1;
+                setThumbnail(product.image[prevIndex]);
+            } else if (e.key === 'ArrowRight') {
+                const currentIndex = product.image.indexOf(thumbnail);
+                const nextIndex = currentIndex === product.image.length - 1 ? 0 : currentIndex + 1;
+                setThumbnail(product.image[nextIndex]);
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [isFullScreen, thumbnail, product]);
+
     const fetchReviews = async () => {
         try {
             const { data } = await axios.get(`/api/review/product/${id}`);
@@ -165,8 +183,40 @@ const ProductDetails = () => {
                     onClick={() => setIsFullScreen(false)}
                 >
                     <div className="relative flex items-center justify-center" style={{ width: '90vw', height: '90vh' }}>
+                        {/* Left Arrow Button */}
+                        <button
+                            className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/30 hover:bg-white/60 text-black rounded-full p-3 z-20"
+                            style={{ fontSize: '2rem' }}
+                            onClick={e => {
+                                e.stopPropagation();
+                                const currentIndex = product.image.indexOf(thumbnail);
+                                const prevIndex = currentIndex === 0 ? product.image.length - 1 : currentIndex - 1;
+                                setThumbnail(product.image[prevIndex]);
+                            }}
+                            aria-label="Previous image"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                            </svg>
+                        </button>
+                        {/* Right Arrow Button */}
+                        <button
+                            className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/30 hover:bg-white/60 text-black rounded-full p-3 z-20"
+                            style={{ fontSize: '2rem' }}
+                            onClick={e => {
+                                e.stopPropagation();
+                                const currentIndex = product.image.indexOf(thumbnail);
+                                const nextIndex = currentIndex === product.image.length - 1 ? 0 : currentIndex + 1;
+                                setThumbnail(product.image[nextIndex]);
+                            }}
+                            aria-label="Next image"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                        </button>
                         <button 
-                            className="absolute top-4 right-4 text-white text-2xl hover:text-gray-300"
+                            className="absolute top-4 right-4 text-white text-2xl hover:text-gray-300 z-20"
                             onClick={() => setIsFullScreen(false)}
                         >
                             ×
