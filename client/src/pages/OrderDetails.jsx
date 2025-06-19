@@ -211,8 +211,8 @@ const OrderDetails = () => {
                             <span className="font-medium">{currency}{order.items?.reduce((total, item) => total + (item.product?.offerPrice * item.quantity), 0).toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between">
-                            <span className="text-gray-700">Tax (2%):</span>
-                            <span className="font-medium">{currency}{(order.items?.reduce((total, item) => total + (item.product?.offerPrice * item.quantity), 0) * 0.02).toFixed(2)}</span>
+                            <span className="text-gray-700">Tax (10%):</span>
+                            <span className="font-medium">{currency}{(order.items?.reduce((total, item) => total + (item.product?.offerPrice * item.quantity), 0) * 0.10).toFixed(2)}</span>
                         </div>
                         <div className="border-t pt-2 mt-2">
                             <div className="flex justify-between">
