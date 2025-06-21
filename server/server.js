@@ -12,6 +12,11 @@ import orderRouter from './routes/orderRoutes.js';
 import addressRouter from './routes/addressRoute.js';
 import reviewRouter from './routes/reviewRoutes.js';
 import paymentRouter from './routes/paymentRoute.js';
+import session from 'express-session';
+import passport from 'passport';
+import './configs/passport.js';
+import jwt from 'jsonwebtoken';
+import queryString from 'query-string';
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -41,7 +46,7 @@ try {
 // CORS middleware configuration
 app.use(cors({
     origin: (origin, callback) => {
-        const allowedOrigins = ['http://localhost:5173', 'https://eimi-cart.vercel.app'];
+        const allowedOrigins = ['http://localhost:5173', 'http://localhost:5174', 'https://eimi-cart.vercel.app'];
         if (!origin || allowedOrigins.includes(origin)) {
             callback(null, true);
         } else {
@@ -56,6 +61,11 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
+// Add session and passport middleware
+app.use(session({ secret: 'your_secret', resave: false, saveUninitialized: true }));
+app.use(passport.initialize());
+app.use(passport.session());
+
 // Routes
 app.get('/', (_req, res) => res.send("API is Working"));
 app.use('/api/user', userRouter);
@@ -67,6 +77,26 @@ app.use('/api/review', reviewRouter);
 app.use('/api/order', orderRouter);
 app.use('/api/payment', paymentRouter);
 
+// Google OAuth routes
+app.get('/api/user/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+
+app.get('/api/user/google/callback',
+  passport.authenticate('google', { failureRedirect: '/' }),
+  (req, res) => {
+    // Issue JWT
+    const user = req.user;
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+
+    // Redirect to frontend with token and user info as query params
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5174';
+    const params = queryString.stringify({
+      token,
+      name: user.name,
+      email: user.email
+    });
+    res.redirect(`${frontendUrl}/google-auth-success?${params}`);
+  }
+);
 
 // Error handling middleware
 app.use((err, _req, res, _next) => {

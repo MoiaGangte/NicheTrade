@@ -71,6 +71,22 @@ const MyOrders = () => {
     navigate(`/order-details/${orderId}`);
   };
 
+  const handleDeleteOrder = async (orderId) => {
+    const confirmed = window.confirm('Are you sure you want to cancel and delete this order? This action cannot be undone.');
+    if (!confirmed) return;
+    try {
+      const { data } = await axios.delete(`/api/order/${orderId}`);
+      if (data.success) {
+        toast.success('Order cancelled and deleted successfully');
+        fetchOrders();
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Error deleting order');
+    }
+  };
+
   if (loading) {
     return (
       <div className="mt-16 flex justify-center items-center">
@@ -159,10 +175,18 @@ const MyOrders = () => {
             </div>
           ))}
           
-          <div className="mt-4 text-right">
+          <div className="mt-4 flex justify-between items-center">
             <span className="text-sm text-[var(--color-primary)] hover:underline">
               Click to view full details →
             </span>
+            {order.status !== 'Cancelled' && (
+              <button
+                onClick={e => { e.stopPropagation(); handleDeleteOrder(order._id); }}
+                className="ml-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition"
+              >
+                Delete Order
+              </button>
+            )}
           </div>
         </div>
       ))}

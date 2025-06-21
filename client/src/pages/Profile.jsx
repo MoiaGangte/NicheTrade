@@ -142,7 +142,7 @@ const Profile = () => {
                                             </div>
                                             <div className="flex space-x-2">
                                                 <button
-                                                    onClick={() => navigate(`/edit-address/${address._id}`)}
+                                                    onClick={() => navigate(`/add-address/${address._id}`)}
                                                     className="text-indigo-600 hover:text-indigo-800 transition-colors duration-200"
                                                 >
                                                     Edit

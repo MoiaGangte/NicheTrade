@@ -131,7 +131,7 @@ const Cart = () => {
 
         try {
             if (!selectedAddress) {
-                return toast.error("Please select an address")
+                return toast.error("Please Add an address")
             }
 
             setIsPlacingOrder(true);

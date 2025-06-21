@@ -71,7 +71,8 @@ const ProductList = () => {
             const { data } = await axios.post('/api/product/stock', {
                 id: productId,
                 stockQuantity: parseInt(newQuantity),
-                inStock: newQuantity > 0
+                inStock: newQuantity > 0,
+                isVisible: newQuantity > 0
             });
             
             if (data.success) {

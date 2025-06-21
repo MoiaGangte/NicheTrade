@@ -4,11 +4,19 @@ import Order from "../models/Order.js";
 import Product from "../models/Product.js";
 import User from "../models/User.js";
 import mongoose from "mongoose";
+import sendOrderEmail from "../utils/sendOrderEmail.js";
 
 export const verifyPayment = async (req, res) => {
     try {
         const { razorpay_order_id, razorpay_payment_id, razorpay_signature, items, address } = req.body;
         const userId = req.userId;
+
+        if (!address) {
+            return res.json({
+                success: false,
+                message: "please selecct an address"
+            })
+        }
 
         console.log("Payment verification started");
         console.log("Order ID:", razorpay_order_id);
@@ -29,9 +37,9 @@ export const verifyPayment = async (req, res) => {
 
         if (!isAuthentic) {
             console.log("Signature verification failed");
-            return res.json({ 
-                success: false, 
-                message: "Invalid payment signature" 
+            return res.json({
+                success: false,
+                message: "Invalid payment signature"
             });
         }
 
@@ -50,9 +58,9 @@ export const verifyPayment = async (req, res) => {
                     return res.json({ success: false, message: `Product not found: ${item.product}` });
                 }
                 if (!product.inStock || product.stockQuantity < item.quantity) {
-                    return res.json({ 
-                        success: false, 
-                        message: `Insufficient stock for ${product.name}. Available: ${product.stockQuantity}` 
+                    return res.json({
+                        success: false,
+                        message: `Insufficient stock for ${product.name}. Available: ${product.stockQuantity}`
                     });
                 }
                 amount += product.offerPrice * item.quantity;
@@ -77,18 +85,29 @@ export const verifyPayment = async (req, res) => {
                 razorpayOrderId: razorpay_order_id
             });
 
+            // Populate user and product details before sending email
+            const populatedOrder = await Order.findById(order._id)
+                .populate('userId')
+                .populate('items.product')
+                .populate('address');
+
+            // Send order details to Gmail////////////////////
+            await sendOrderEmail(populatedOrder);
+
+            await sendOrderEmail(populatedOrder, true);
+
             // Update stock quantities
             for (const item of items) {
                 const product = await Product.findById(item.product);
                 if (product) {
                     product.stockQuantity -= item.quantity;
-                    
+
                     // If stock is depleted, mark as out of stock
                     if (product.stockQuantity <= 0) {
                         product.inStock = false;
                         product.isVisible = false;
                     }
-                    
+
                     await product.save();
                 }
             }
@@ -98,24 +117,24 @@ export const verifyPayment = async (req, res) => {
 
             console.log("Order created successfully:", order._id);
 
-            res.json({ 
-                success: true, 
+            res.json({
+                success: true,
                 message: "Payment verified and order placed successfully",
-                order 
+                order
             });
         } else {
             // Just verify the payment without creating order (for existing orders)
-            res.json({ 
-                success: true, 
-                message: "Payment verified successfully" 
+            res.json({
+                success: true,
+                message: "Payment verified successfully"
             });
         }
 
     } catch (error) {
         console.error('Error in verifyPayment:', error);
-        res.json({ 
-            success: false, 
-            message: error.message || "Failed to verify payment" 
+        res.json({
+            success: false,
+            message: error.message || "Failed to verify payment"
         });
     }
 };

@@ -54,6 +54,32 @@ const Login = () => {
                     <p>Password</p>
                     <input onChange={(e) => setPassword(e.target.value)} value={password} placeholder="type here" className="border border-gray-200 rounded w-full p-2 mt-1 outline-[var(--color-primary)]" type="password" required />
                 </div>
+
+                <button
+                    type="button"
+                    onClick={() => window.location.href = `${import.meta.env.VITE_BACKEND_URL}/api/user/google`}
+                    style={{
+                        background: '#fff',
+                        color: '#444',
+                        border: '1px solid #ccc',
+                        padding: '10px 20px',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        width: '100%',
+                        marginBottom: '8px'
+                    }}
+                >
+                    <img
+                        src="https://developers.google.com/identity/images/g-logo.png"
+                        alt="Google logo"
+                        style={{ width: 20, height: 20 }}
+                    />
+                    {state === "register" ? "Sign in with Google" : "Login with Google"}
+                </button>
+
                 {state === "register" ? (
                     <p>
                         Already have account? <span onClick={() => setState("login")} className="text-[var(--color-primary)] cursor-pointer">click here</span>
@@ -63,6 +89,7 @@ const Login = () => {
                         Create an account? <span onClick={() => setState("register")} className="text-[var(--color-primary)] cursor-pointer">click here</span>
                     </p>
                 )}
+
                 <button className="bg-[var(--color-primary)] hover:bg-primary-dull transition-all text-white w-full py-2 rounded-md cursor-pointer">
                     {state === "register" ? "Create Account" : "Login"}
                 </button>

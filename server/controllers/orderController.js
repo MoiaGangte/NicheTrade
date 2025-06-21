@@ -184,12 +184,28 @@ export const getUserOrders = async (req, res) => {
         const userId = req.userId;
         const userObjectId = new mongoose.Types.ObjectId(userId);
         
-        const orders = await Order.find({ 
+        let orders = await Order.find({ 
             userId: userObjectId, 
             isHidden: false, // Only get non-hidden orders
             $or: [{ paymentType: "COD" }, { isPaid: true }]
         }).populate("items.product address").sort({ createdAt: -1 });
         
+        // Remove invalid products from each order
+        for (let order of orders) {
+            const validItems = order.items.filter(item => item.product !== null);
+            if (validItems.length !== order.items.length) {
+                order.items = validItems;
+                await order.save();
+            }
+        }
+
+        // Refetch orders to ensure populated data is up-to-date
+        orders = await Order.find({ 
+            userId: userObjectId, 
+            isHidden: false,
+            $or: [{ paymentType: "COD" }, { isPaid: true }]
+        }).populate("items.product address").sort({ createdAt: -1 });
+
         res.json({ success: true, orders });
     } catch (error) {
         console.error('Error in getUserOrders:', error);

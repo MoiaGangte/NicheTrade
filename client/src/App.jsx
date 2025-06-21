@@ -22,6 +22,7 @@ import SellerOrderDetails from './pages/seller/OrderDetails'
 import Profile from './pages/Profile'
 import Favorites from './pages/Favorites'
 import { assets } from './assets/assets'
+import GoogleAuthSuccess from './pages/GoogleAuthSuccess'
 
 const App = () => {
   const isSellerPath = useLocation().pathname.includes("seller")
@@ -51,10 +52,12 @@ const App = () => {
           <Route path='/products/:category/:id' element={<ProductDetails />} />
           <Route path='/cart' element={<Cart />} />
           <Route path='/add-address' element={<AddAddress />} />
+          <Route path='/add-address/:id' element={<AddAddress />}    />
           <Route path='/favorites' element={<Favorites />} />
           <Route path='/my-orders' element={<MyOrders />} />
           <Route path='/order-details/:orderId' element={<OrderDetails />} />
           <Route path='/profile' element={<Profile />} />
+          <Route path='/google-auth-success' element={<GoogleAuthSuccess />} />
           <Route path='/seller' element={isSeller ? <SellerLayout /> : <SellerLogin />}>
             <Route index element={isSeller ? <AddProduct /> : null} />
             <Route path='product-list' element={<ProductList />} />

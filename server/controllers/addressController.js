@@ -23,3 +23,14 @@ export const getAddress = async (req, res) => {
         res.json({ success: false, message: error.message });
     }
 }
+
+// delete address : /api/address/:id
+export const deleteAddress = async (req, res) => {
+    try {
+        await Address.findByIdAndDelete(req.params.id);
+        res.json({ success: true, message: "Address deleted successfully" });
+    } catch (error) {
+        console.log(error.message);
+        res.json({ success: false, message: error.message });
+    }
+};

@@ -118,47 +118,34 @@ export const productById = async (req, res) => {
 //change product instock : /api/product/stock
 export const changeStock = async (req, res) => {
     try {
-        const { id, inStock, isVisible, stockQuantity } = req.body;
-        
-        const updateData = {};
-        
-        if (inStock !== undefined) {
-            updateData.inStock = inStock;
-        }
-        
-        if (isVisible !== undefined) {
-            updateData.isVisible = isVisible;
-        }
-        
-        if (stockQuantity !== undefined) {
-            updateData.stockQuantity = parseInt(stockQuantity);
-            // If stock quantity is being set, also update inStock based on quantity
-            if (updateData.stockQuantity > 0 && !updateData.inStock) {
-                updateData.inStock = true;
-            } else if (updateData.stockQuantity === 0 && updateData.inStock !== false) {
-                updateData.inStock = false;
-            }
-        }
-        
+        const { id, stockQuantity } = req.body;
+
+        // Always parse stockQuantity as integer
+        const quantity = parseInt(stockQuantity);
+
+        // If stock is added, set inStock and isVisible to true
+        // If stock is 0, set inStock and isVisible to false
+        const updateData = {
+            stockQuantity: quantity,
+            inStock: quantity > 0,
+            isVisible: quantity > 0
+        };
+
         await Product.findByIdAndUpdate(id, updateData);
-        
-        // Provide more specific success message
-        let message = "Stock Updated";
-        if (stockQuantity !== undefined) {
-            message = `Stock quantity updated to ${updateData.stockQuantity}`;
-            if (updateData.stockQuantity > 0) {
-                message += " - Product is now in stock";
-            } else {
-                message += " - Product is now out of stock";
-            }
+
+        let message = `Stock quantity updated to ${quantity}`;
+        if (quantity > 0) {
+            message += " - Product is now in stock and visible";
+        } else {
+            message += " - Product is now out of stock and hidden";
         }
-        
+
         res.json({ success: true, message });
     } catch (error) {
-        console.log(error.message);
-        res.json({ success: false, message: error.message });
+        console.error('Error in changeStock:', error);
+        res.json({ success: false, message: error.message || "Failed to update stock" });
     }
-}
+};
 
 //delete product : /api/product/delete/:id
 export const deleteProduct = async (req, res) => {
@@ -170,4 +157,4 @@ export const deleteProduct = async (req, res) => {
         console.log(error.message);
         res.json({ success: false, message: error.message });
     }
-}
+};
