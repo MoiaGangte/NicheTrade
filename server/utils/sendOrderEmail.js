@@ -44,7 +44,7 @@ New Order Details:
 
 User Name: ${user?.name || 'N/A'}
 User Email: ${user?.email || 'N/A'}
-User Phone: ${user?.phone || 'N/A'}
+User Phone: ${orderDetails.address?.phone || 'N/A'}
 Product Name: ${product?.name || 'N/A'}
 
 Full Order JSON:

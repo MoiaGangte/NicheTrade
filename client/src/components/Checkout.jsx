@@ -24,4 +24,4 @@ const handlePayment = async (amount) => {
     };
     const rzp = new window.Razorpay(options);
     rzp.open();
-};
+};F

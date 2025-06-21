@@ -17,6 +17,7 @@ import passport from 'passport';
 import './configs/passport.js';
 import jwt from 'jsonwebtoken';
 import queryString from 'query-string';
+import './configs/passport.js';
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -77,8 +78,12 @@ app.use('/api/review', reviewRouter);
 app.use('/api/order', orderRouter);
 app.use('/api/payment', paymentRouter);
 
-// Google OAuth routes
-app.get('/api/user/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+//////////////////////////
+app.get('/api/user/google', (req, res, next) => {
+  console.log('Google OAuth route hit');
+  next();
+}, passport.authenticate('google', { scope: ['profile', 'email'] }));
+/////////////////////////
 
 app.get('/api/user/google/callback',
   passport.authenticate('google', { failureRedirect: '/' }),

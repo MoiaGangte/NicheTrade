@@ -13,6 +13,7 @@ const Cart = () => {
     const [selectedAddress, setSelectedAddress] = useState(null);
     const [isPlacingOrder, setIsPlacingOrder] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
     const getCart = () => {
         let tempArray = []
@@ -55,6 +56,7 @@ const Cart = () => {
                 currency: data.order.currency,
                 order_id: data.order.id,
                 handler: function (response) {
+                    setIsProcessingPayment(true);
                     console.log("Razorpay handler response:", response);
                     // 3. Verify payment on backend
                     axios.post("/api/payment/verify", {
@@ -210,6 +212,13 @@ const Cart = () => {
 
     return products.length > 0 && cartItems ? (
         <div className="flex flex-col md:flex-row mt-16">
+            {isProcessingPayment && (
+                <div className="fixed inset-0 bg-white bg-opacity-80 flex flex-col items-center justify-center z-50">
+                    <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-[var(--color-primary)]"></div>
+                    <p className="mt-4 text-lg font-semibold text-gray-700">Processing Payment...</p>
+                    <p className="text-gray-500">Please do not refresh or go back.</p>
+                </div>
+            )}
             <div className='flex-1 max-w-4xl'>
                 <h1 className="text-3xl font-medium mb-6">
                     Shopping Cart <span className="text-sm text-indigo-500">{getCartCount()} Items</span>
