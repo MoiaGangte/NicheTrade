@@ -132,10 +132,10 @@ const MainBanner = () => {
                 <p className='text-lg md:text-xl text-white outline outline-black mt-4 [text-shadow:_1px_1px_0_rgb(0_0_0_/_100%)] md:text-left'>
                     Styliest fasion,<br className='block md:hidden' />
                     Branded and Exclusive,<br className=' block md: hidden' />
-                    DoorStep Delivery at LAMKA!!<br className='block md:hidden'/>
+                    DoorStep Delivery at LAMKA!!<br className='block md:hidden' />
                 </p>
                 <div className='lg:hidden flex items-center gap-4 mt-6'>
-                <button onClick={() => navigate('/products?category=fasion')} className='lg:hidden px-4 mt-10 py-3 bg-[var(--color-primary)] shadow-lg p-2 text-white font-medium rounded-none border-2 border-white border-transparent hover:border-white active:border-white transition'>
+                    <button onClick={() => navigate('/products?category=fasion')} className='lg:hidden px-4 mt-10 py-3 bg-[var(--color-primary)] shadow-lg p-2 text-white font-medium rounded-none border-2 border-white border-transparent hover:border-white active:border-white transition'>
                         Shop now
                     </button>
                     <p className='text-white text-center mt-10 text-lg [text-shadow:_1px_1px_0_rgb(0_0_0_/_100%)] relative'>
@@ -168,10 +168,10 @@ const MainBanner = () => {
             </div>
             {/* Optional: Dots for navigation */}
             <div className="lg:hidden absolute bottom-0 left-1/2 transform -translate-x-1/2 flex gap-2 z-20">
-                {slides.map((_, idx) => (
+                            {slides.map((_, idx) => (
                     <button
                         key={idx}
-                        className={`w-8 h-1 rounded transition-colors duration-200 ${currentSlide === idx ? 'bg-blue-500' : 'bg-gray-800'} opacity-80 hover:bg-blue-500 cursor-pointer`}
+                        className={`w-8 h-1 rounded transition-colors duration-200 ${currentSlide === idx ? 'bg-blue-300' : 'bg-gray-400'} opacity-80 hover:bg-blue-500 cursor-pointer`}
                         onClick={() => setCurrentSlide(idx)}
                         aria-label={`Go to slide ${idx + 1}`}
                     />
