@@ -80,7 +80,7 @@ const ProductDetails = () => {
     };
 
     return product && (
-        <div className="mt-10">
+        <div className="mt-2">
             <div className="flex flex-col md:flex-row gap-8">
                 {/* Left Column - Images */}
                 <div className="md:w-1/2">
@@ -120,7 +120,7 @@ const ProductDetails = () => {
                                 </svg>
                             </button>
                         </div>
-                        <div className="flex gap-4 mt-4 overflow-x-auto pb-2">
+                        <div className="flex gap-4 mt-2 overflow-x-auto pb-2">
                             {product?.image.map((item, index) => (
                                 <img 
                                     key={index} 
@@ -141,20 +141,20 @@ const ProductDetails = () => {
                         <p className="text-base">Stock Available: <span className={product.stockQuantity > 0 ? 'text-green-600' : 'text-red-600'}>{product.stockQuantity || 1}</span></p>
                     </div>
 
-                    <div className="mt-6">
+                    <div className="mt-2">
                         <p className="text-black line-through">MRP: {currency}{product.price}</p>
                         <p className="text-2xl font-medium text-green-600">MRP: {currency}{product.offerPrice}</p>
                         <span className="text-black">(inclusive of all taxes)</span>
                     </div>
 
-                    <p className="text-base font-medium mt-6">About Product</p>
+                    <p className="text-base font-medium mt-2">About Product</p>
                     <ul className="list-disc ml-4 text-black">
                         {product.description.map((desc, index) => (
                             <li key={index}>{desc}</li>
                         ))}
                     </ul>
 
-                    <div className="flex items-center mt-10 gap-4 text-base">
+                    <div className="flex items-center mt-2 gap-4 text-base">
                         <button 
                             onClick={() => {
                                 if (cartItems[product._id]) {
@@ -231,12 +231,12 @@ const ProductDetails = () => {
             )}
 
             {/*-----------related product---------- */}
-            <div className="flex flex-col items-center mt-8">
+            <div className="flex flex-col items-center mt-2">
                 <div className="flex flex-col items-center w-max">
                     <p className="text-3xl font-medium">Related product</p>
                     <div className="w-20 h-0.5 bg-[var(--color-primary)] rounded-full mt-2"></div>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 md:gap-6 lg:grid-cols-5 mt-6 w-full">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 md:gap-6 lg:grid-cols-5 mt-4 w-full">
                     {relatedProducts.filter((product) => product.inStock).map(
                         (product) => (
                             <ProductCart key={product._id} product={product} />

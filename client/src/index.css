@@ -20,4 +20,8 @@
   scrollbar-width: none;
 }
 
-
+@media (max-width: 767px) {
+  .no-bg-mobile {
+    background-image: none !important;
+  }
+}

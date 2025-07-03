@@ -36,7 +36,7 @@ const App = () => {
       {showUserLogin ? <Login /> : null}
 
       <Toaster />
-      <div className={`${isSellerPath ? "" : "px-6 md:px-16 lg:px-24 xl:px-32"}`} style={{
+      <div className={`${isSellerPath ? "" : "px-6 md:px-16 lg:px-24 xl:px-32"} ${isHomePage ? "no-bg-mobile" : ""}`} style={{
           backgroundImage: isHomePage ? `url(${assets.main_background_image_bg})` : 'none',
           backgroundSize: 'cover',
           backgroundPosition: 'top center',

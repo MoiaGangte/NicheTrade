@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { assets } from "../../assets/assets";
+import { categories as defaultCategories } from "../../assets/assets";
 import { useAppContext } from "../../context/AppContext";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -16,8 +17,30 @@ const AddProduct = () => {
     const [isBestSeller, setIsBestSeller] = useState(false);
     const [category, setCategory] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
+    // Track custom categories
+    const [customCategories, setCustomCategories] = useState([]);
 
     const { axios } = useAppContext();
+
+    // Merge default and custom categories for shortcuts
+    const allCategoryShortcuts = [
+        ...defaultCategories.map(cat => ({ text: cat.text, value: cat.path, isDefault: true })),
+        ...customCategories.map(cat => ({ text: cat, value: cat, isDefault: false }))
+    ];
+
+    const handleCategoryShortcut = (catValue) => {
+        setCategory(catValue);
+    };
+
+    const handleRemoveShortcut = (catValue) => {
+        setCustomCategories(prev => prev.filter(c => c !== catValue));
+        // If the removed category is currently selected, clear it
+        if (category === catValue) setCategory("");
+    };
+
+    const handleCategoryInputChange = (e) => {
+        setCategory(e.target.value);
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -37,6 +60,10 @@ const AddProduct = () => {
         setIsSubmitting(true);
 
         try {
+            // If the category is not in the default list or custom list, add it as a custom shortcut
+            if (!defaultCategories.some(cat => cat.path === category) && !customCategories.includes(category)) {
+                setCustomCategories(prev => [...prev, category]);
+            }
             const productData = {
                 name,
                 description: description.split('\n'),
@@ -198,8 +225,32 @@ const AddProduct = () => {
                 </div>
                 <div className="flex flex-col gap-1 max-w-md">
                     <label className="text-base font-medium" htmlFor="product-category">Category <span className="text-red-500">*</span></label>
+                    {/* Category shortcuts */}
+                    <div className="flex flex-wrap gap-2 mb-2">
+                        {allCategoryShortcuts.map((cat, idx) => (
+                            <div key={cat.value} className="flex items-center gap-1">
+                                <button
+                                    type="button"
+                                    className={`px-3 py-1 rounded border border-gray-400 bg-gray-100 hover:bg-[var(--color-primary)] hover:text-white transition text-sm ${category === cat.value ? 'bg-[var(--color-primary)] text-white' : ''}`}
+                                    onClick={() => handleCategoryShortcut(cat.value)}
+                                >
+                                    {cat.text}{cat.text !== cat.value ? ` (${cat.value})` : ''}
+                                </button>
+                                {!cat.isDefault && (
+                                    <button
+                                        type="button"
+                                        className="text-red-500 text-xs px-1"
+                                        title="Remove this category shortcut"
+                                        onClick={() => handleRemoveShortcut(cat.value)}
+                                    >
+                                        ✕
+                                    </button>
+                                )}
+                            </div>
+                        ))}
+                    </div>
                     <input 
-                        onChange={(e) => setCategory(e.target.value)} 
+                        onChange={handleCategoryInputChange} 
                         value={category} 
                         id="product-category" 
                         type="text" 
