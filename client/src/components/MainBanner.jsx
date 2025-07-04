@@ -127,7 +127,7 @@ const MainBanner = () => {
                 playsInline
                 className="absolute top-0 left-0 w-full h-full object-cover block md:hidden z-0"
             />
-            <div className="lg:hidden relative z-10 flex flex-col items-center justify-center text-center" >
+            <div className= "lg:hidden relative z-10 flex flex-col items-center justify-center text-center" >
                 <h1 className='text-4xl md:text-5xl lg:text-4xl font-bold text-white [text-shadow:_1px_1px_0_rgb(0_0_0_/_100%)]'>Top Brand Fasion</h1>
                 <p className='text-lg md:text-xl text-white outline outline-black mt-4 [text-shadow:_1px_1px_0_rgb(0_0_0_/_100%)] md:text-left'>
                     Styliest fasion,<br className='block md:hidden' />
