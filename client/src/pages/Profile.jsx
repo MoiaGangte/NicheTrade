@@ -16,10 +16,17 @@ const Profile = () => {
         }
         fetchAddresses();
     }, [user, navigate]);
-
+///////////////////////////////////////////////////////////
     const fetchAddresses = async () => {
         try {
-            const response = await axios.get('/api/address/get');
+            // Get token from localStorage, context, or user object
+            const token = user?.token || localStorage.getItem('token');
+            const response = await axios.get('/api/address/get', {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+                withCredentials: true, // if using cookies
+            });
             if (response.data.success) {
                 setAddresses(response.data.addresses);
             }
@@ -60,7 +67,7 @@ const Profile = () => {
         <div className="mt-16 max-w-4xl mx-auto p-6">
             <div className="bg-white rounded-lg shadow-md p-6">
                 <h1 className="text-2xl font-semibold text-gray-800 mb-6">Profile Details</h1>
-                
+
                 <div className="space-y-6">
                     {/* Personal Information */}
                     <div className="bg-gray-50 p-4 rounded-md">
@@ -102,7 +109,7 @@ const Profile = () => {
                                 Add New Address
                             </button>
                         </div>
-                        
+
                         {addresses.length === 0 ? (
                             <div className="text-center py-4">
                                 <p className="text-gray-500 mb-4">No shipping addresses found</p>
