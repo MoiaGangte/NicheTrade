@@ -16,7 +16,7 @@ function useIsLargeScreen() {
 const SLIDE_INTERVAL_IMAGE = 3000;
 const SLIDE_INTERVAL_VIDEO = 3000;
 
-const BestOffer = () => {
+const Advertise = () => {
     const navigate = useNavigate();
     const [currentSlide, setCurrentSlide] = useState(0);
     const intervalRef = useRef(null);
@@ -159,4 +159,4 @@ const BestOffer = () => {
     );
 }
 
-export default BestOffer
+export default Advertise;
