@@ -2,6 +2,17 @@ import React, { useEffect, useRef, useState } from 'react'
 import { assets } from '../assets/assets'
 import { useNavigate } from 'react-router-dom'
 
+// Add this hook to detect large screens
+function useIsLargeScreen() {
+  const [isLarge, setIsLarge] = useState(() => window.innerWidth >= 1024);
+  useEffect(() => {
+    const onResize = () => setIsLarge(window.innerWidth >= 1024);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+  return isLarge;
+}
+
 const SLIDE_INTERVAL_IMAGE = 3000;
 const SLIDE_INTERVAL_VIDEO = 5000;
 
@@ -13,14 +24,17 @@ const MainBanner = () => {
     const slideCount = 3;
     const [touchStartX, setTouchStartX] = useState(null);
     const [touchEndX, setTouchEndX] = useState(null);
+    const isLargeScreen = useIsLargeScreen();
 
-    // Auto-advance logic
+    // Only run sliding logic on non-large screens
     useEffect(() => {
+        if (isLargeScreen) return; // skip on large screens
         startAutoSlide();
         return () => stopAutoSlide();
-    }, [currentSlide]);
+    }, [currentSlide, isLargeScreen]);
 
     const startAutoSlide = () => {
+        if (isLargeScreen) return;
         stopAutoSlide();
         const interval = currentSlide === 0 ? SLIDE_INTERVAL_IMAGE : SLIDE_INTERVAL_VIDEO;
         intervalRef.current = setInterval(() => {
@@ -36,17 +50,21 @@ const MainBanner = () => {
 
     // Pause on hover
     const handleMouseEnter = () => {
+        if (isLargeScreen) return;
         stopAutoSlide();
     };
     const handleMouseLeave = () => {
+        if (isLargeScreen) return;
         startAutoSlide();
     };
 
     // Swipe handlers
     const handleTouchStart = (e) => {
+        if (isLargeScreen) return;
         setTouchStartX(e.touches[0].clientX);
     };
     const handleTouchEnd = (e) => {
+        if (isLargeScreen) return;
         if (touchStartX === null) return;
         const endX = e.changedTouches[0].clientX;
         const diff = touchStartX - endX;
@@ -146,6 +164,17 @@ const MainBanner = () => {
             </div>
         </div>
     ];
+
+    if (isLargeScreen) {
+      // Only show the first slide, no handlers, no transform
+      return (
+        <div className="w-full h-full relative">
+          <div className="w-full h-full flex-shrink-0">
+            {slides[0]}
+          </div>
+        </div>
+      );
+    }
 
     return (
         <div

@@ -14,6 +14,12 @@ const AllProduct = () => {
     const initialCategory = params.get('category');
     const [categoryFilter, setCategoryFilter] = useState(initialCategory);
 
+    // Sync categoryFilter with URL query parameter
+    useEffect(() => {
+      const params = new URLSearchParams(location.search);
+      setCategoryFilter(params.get('category'));
+    }, [location.search]);
+
     useEffect(() => {
         const handleResize = () => setIsMobile(window.innerWidth < 640);
         window.addEventListener('resize', handleResize);

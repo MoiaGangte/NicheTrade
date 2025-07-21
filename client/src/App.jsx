@@ -23,6 +23,7 @@ import Profile from './pages/Profile'
 import Favorites from './pages/Favorites'
 import { assets } from './assets/assets'
 import GoogleAuthSuccess from './pages/GoogleAuthSuccess'
+import CategoryNav from './components/CategoryNav'
 
 const App = () => {
   const isSellerPath = useLocation().pathname.includes("seller")
@@ -33,6 +34,7 @@ const App = () => {
   return (
     <div className='text-default min-h-screen text-black-700 bg-gray-200'>
       {isSellerPath ? null : <Navbar />}
+      {isSellerPath ? null : <CategoryNav />}
       {showUserLogin ? <Login /> : null}
 
       <Toaster />

@@ -7,7 +7,7 @@ import toast from "react-hot-toast";
 
 const ProductDetails = () => {
 
-    const { products, navigate, currency, addToCart, user, axios, favorites, toggleFavorite, removeFromCart, cartItems } = useAppContext()
+    const { products, navigate, currency, addToCart, user, axios, removeFromCart, cartItems } = useAppContext()
     const { id } = useParams()
 
     const [relatedProducts, setRelatedProducts] = useState([]);
@@ -219,7 +219,6 @@ const ProductDetails = () => {
                             className="absolute top-4 right-4 text-white text-2xl hover:text-gray-300 z-20"
                             onClick={() => setIsFullScreen(false)}
                         >
-                            ×
                         </button>
                         <img 
                             src={thumbnail} 

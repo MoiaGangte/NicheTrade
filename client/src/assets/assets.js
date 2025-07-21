@@ -110,31 +110,34 @@ export const assets = {
 
 export const categories = [
   {
-    text: "Organic veggies",
-    path: "Vegetables",
+    text: "Organic vegetables",
+    path: "Household",
     image: organic_vegitable_image,
     bgColor: "#FEF6DA",
   },
   {
-    text: "Fresh Fruits",
-    path: "Fruits",
+    text: "Shoes",
+    path: "shoes",
     image: fresh_fruits_image,
     bgColor: "#FEE0E0",
   },
   {
-    text: "Household",
-    path: "Household",
-    bgColor: "#F0F5DE",
-  },
-  {
     text: "shirt",
     path: "shirt",
+    image: "",
     bgColor: "#E1F5EC",
   },
   {
     text: "fasion",
     path: "fasion",
+    image: "",
     bgColor: "#FEE6CD",
+  },
+  {
+    text: "Electornic",
+    path: "electronic",
+    image: "",
+    bgColor: "#FEF6DA",
   },
 ];
 
