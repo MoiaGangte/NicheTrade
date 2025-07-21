@@ -95,7 +95,7 @@ const MainBanner = () => {
                             DoorStep Delivery at LAMKA!!
                         </p>
                         <div className='flex items-center gap-4 mt-6'>
-                            <button onClick={() => navigate('/products')} className='px-4 mt-10 py-3 bg-[var(--color-primary)] shadow-lg p-2 text-white font-medium rounded-none border-2 border-white border-transparent hover:border-white active:border-white transition'>
+                            <button onClick={() => navigate('/products')} className='px-1 mt-10 py-2 bg-[var(--color-primary)] shadow-lg p-2 text-white font-medium rounded-none border-1 border-white border-transparent hover:border-white active:border-white transition'>
                                 Shop now
                             </button>
                             <p className='text-white text-center mt-10 text-lg [text-shadow:_1px_1px_0_rgb(0_0_0_/_100%)] relative'>
@@ -125,7 +125,7 @@ const MainBanner = () => {
                     DoorStep Delivery at LAMKA!!
                 </p>
                 <div className='lg:hidden flex items-center gap-4 mt-6'>
-                    <button onClick={() => navigate('/products?category=Household')} className='lg:hidden px-4 mt-10 py-3 bg-[var(--color-primary)] shadow-lg p-2 text-white font-medium rounded-none border-2 border-white border-transparent hover:border-white active:border-white transition'>
+                    <button onClick={() => navigate('/products?category=Household')} className='lg:hidden px-2 mt-10 py-1 bg-[var(--color-primary)] shadow-lg p-2 text-white font-medium rounded-none border-1 border-white border-transparent hover:border-white active:border-white transition'>
                         Shop now
                     </button>
                     <p className='text-white text-center mt-10 text-lg [text-shadow:_1px_1px_0_rgb(0_0_0_/_100%)] relative'>
@@ -153,7 +153,7 @@ const MainBanner = () => {
                     DoorStep Delivery at LAMKA!!<br className='block md:hidden' />
                 </p>
                 <div className='lg:hidden flex items-center gap-4 mt-6'>
-                    <button onClick={() => navigate('/products?category=fasion')} className='lg:hidden px-4 mt-10 py-3 bg-[var(--color-primary)] shadow-lg p-2 text-white font-medium rounded-none border-2 border-white border-transparent hover:border-white active:border-white transition'>
+                    <button onClick={() => navigate('/products?category=fasion')} className='lg:hidden px-2 mt-10 py-1 bg-[var(--color-primary)] shadow-lg p-2 text-white font-medium rounded-none border-1 border-white border-transparent hover:border-white active:border-white transition'>
                         Shop now
                     </button>
                     <p className='text-white text-center mt-10 text-lg [text-shadow:_1px_1px_0_rgb(0_0_0_/_100%)] relative'>
