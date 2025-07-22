@@ -13,7 +13,7 @@ function useIsLargeScreen() {
     return isLarge;
 }
 
-const SLIDE_INTERVAL_IMAGE = 3000;
+const SLIDE_INTERVAL_IMAGE = 6000;
 const SLIDE_INTERVAL_VIDEO = 5000;
 
 const MainBanner = () => {
@@ -83,25 +83,24 @@ const MainBanner = () => {
     // Slides array
     const slides = [
         // Image background
-        <div key="img" className="w-full h-full flex-shrink-0 relative">
-            <div className="bg-[url('/main_background_image_bg.png')] bg-cover bg-center bg-no-repeat w-full h-full lg:bg-none">
+        <div className="w-full h-full flex-shrink-0 relative">
+            <div key="foral" className="w-full h-full flex-shrink-0 relative">
+                <video
+                    src="/foral.mp4"
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    className="absolute top-0 left-0 w-full h-full object-cover block md:hidden z-0"
+                />
                 <div>
                     <div className="relative z-10 flex flex-col items-center justify-center text-center" >
                         <img src={assets.gocc} alt="" className='w-full h-full object-cover' />
-                        <h1 className='text-4xl md:text-5xl lg:text-4xl font-bold text-white [text-shadow:_1px_1px_0_rgb(0_0_0_/_100%)]'>Welcome to EimiCart</h1>
-                        <p className='text-lg md:text-xl text-white outline outline-black mt-4 [text-shadow:_1px_1px_0_rgb(0_0_0_/_100%)] md:text-left'>
-                            Best offer price,<br className='block md:hidden' />
-                            Exclusive top brand,<br className=' block md: hidden' />
-                            DoorStep Delivery at LAMKA!!
-                        </p>
-                        <div className='flex self-start gap-4 mt-6'>
-                            <button onClick={() => navigate('/products')} className='px-1 mt-18 py-2 bg-[var(--color-primary)] shadow-lg p-2 text-white font-medium rounded-none border-1 border-white border-transparent hover:border-white active:border-white transition'>
+                        <h1 className='text-2xl md:text-2xl lg:text-2xl font-bold text-white [text-shadow:_1px_1px_0_rgb(0_0_0_/_100%)]'>Welcome to EimiCart</h1>
+                        <div className='flex lg:hidden self-start gap-4 mt-6'>
+                            <button onClick={() => navigate('/products')} className='px-1 mt-44 py-2 bg-[var(--color-primary)] shadow-lg p-2 text-white font-medium rounded-none border-1 border-white border-transparent hover:border-white active:border-white transition'>
                                 Shop now
                             </button>
-                            <p className='text-white text-center mt-10 text-lg [text-shadow:_1px_1px_0_rgb(0_0_0_/_100%)] relative'>
-                                Shop with us with love and joy!!
-                                <span className='absolute bottom-0 left-0 w-full h-0.5 bg-black [box-shadow:_0_0_2px_black]'></span>
-                            </p>
                         </div>
                     </div>
                 </div>
