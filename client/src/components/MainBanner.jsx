@@ -4,13 +4,13 @@ import { useNavigate } from 'react-router-dom'
 
 // Add this hook to detect large screens
 function useIsLargeScreen() {
-  const [isLarge, setIsLarge] = useState(() => window.innerWidth >= 1024);
-  useEffect(() => {
-    const onResize = () => setIsLarge(window.innerWidth >= 1024);
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
-  }, []);
-  return isLarge;
+    const [isLarge, setIsLarge] = useState(() => window.innerWidth >= 1024);
+    useEffect(() => {
+        const onResize = () => setIsLarge(window.innerWidth >= 1024);
+        window.addEventListener('resize', onResize);
+        return () => window.removeEventListener('resize', onResize);
+    }, []);
+    return isLarge;
 }
 
 const SLIDE_INTERVAL_IMAGE = 3000;
@@ -94,8 +94,8 @@ const MainBanner = () => {
                             Exclusive top brand,<br className=' block md: hidden' />
                             DoorStep Delivery at LAMKA!!
                         </p>
-                        <div className='flex items-center gap-4 mt-6'>
-                            <button onClick={() => navigate('/products')} className='px-1 mt-10 py-2 bg-[var(--color-primary)] shadow-lg p-2 text-white font-medium rounded-none border-1 border-white border-transparent hover:border-white active:border-white transition'>
+                        <div className='flex self-start gap-4 mt-6'>
+                            <button onClick={() => navigate('/products')} className='px-1 mt-18 py-2 bg-[var(--color-primary)] shadow-lg p-2 text-white font-medium rounded-none border-1 border-white border-transparent hover:border-white active:border-white transition'>
                                 Shop now
                             </button>
                             <p className='text-white text-center mt-10 text-lg [text-shadow:_1px_1px_0_rgb(0_0_0_/_100%)] relative'>
@@ -108,33 +108,26 @@ const MainBanner = () => {
             </div>
         </div>,
         // goccvideo
-        <div key="goccvideo" className="w-full h-full flex-shrink-0 relative">
+        <div key="grt" className="w-full h-full flex-shrink-0 relative">
             <video
-                src="/goccvideo.mp4"
+                src="/grt.mp4"
                 autoPlay
                 loop
                 muted
                 playsInline
                 className="absolute top-0 left-0 w-full h-full object-cover block md:hidden z-0"
             />
-            <div className="lg:hidden relative z-10 flex flex-col items-center justify-center text-center" >
-                <h1 className='text-4xl md:text-5xl lg:text-4xl font-bold text-white [text-shadow:_1px_1px_0_rgb(0_0_0_/_100%)]'>House Hold Product</h1>
-                <p className='text-lg md:text-xl text-white outline outline-black mt-4 [text-shadow:_1px_1px_0_rgb(0_0_0_/_100%)] md:text-left'>
-                    Best offer price,<br className='block md:hidden' />
-                    <br className=' block md: hidden' />
-                    DoorStep Delivery at LAMKA!!
-                </p>
-                <div className='lg:hidden flex items-center gap-4 mt-6'>
-                    <button onClick={() => navigate('/products?category=Household')} className='lg:hidden px-2 mt-10 py-1 bg-[var(--color-primary)] shadow-lg p-2 text-white font-medium rounded-none border-1 border-white border-transparent hover:border-white active:border-white transition'>
-                        Shop now
-                    </button>
-                    <p className='text-white text-center mt-10 text-lg [text-shadow:_1px_1px_0_rgb(0_0_0_/_100%)] relative'>
-                        Shop with us with love and joy!!
-                        <span className='absolute bottom-0 left-0 w-full h-0.5 bg-black [box-shadow:_0_0_2px_black]'></span>
-                    </p>
-                </div>
+            <div className="lg:hidden relative z-10 flex flex-col items-start justify-center text-center h-full">
+                <button
+                    onClick={() => navigate('/products?category=Household')}
+                    className="lg:hidden px-4 mt-59 py-2 bg-[var(--color-primary)] shadow-lg text-white font-medium rounded border border-white hover:border-white active:border-white transition"
+                >
+                    Shop now
+                </button>
             </div>
         </div>,
+
+
         // backgroundvideo
         <div key="backgroundvideo" className="w-full h-full flex-shrink-0 relative">
             <video
@@ -145,35 +138,31 @@ const MainBanner = () => {
                 playsInline
                 className="absolute top-0 left-0 w-full h-full object-cover block md:hidden z-0"
             />
-            <div className= "lg:hidden relative z-10 flex flex-col items-center justify-center text-center" >
+            <div className="lg:hidden relative z-10 flex flex-col items-center justify-center text-center" >
                 <h1 className='text-4xl md:text-5xl lg:text-4xl font-bold text-white [text-shadow:_1px_1px_0_rgb(0_0_0_/_100%)]'>Top Brand Fasion</h1>
                 <p className='text-lg md:text-xl text-white outline outline-black mt-4 [text-shadow:_1px_1px_0_rgb(0_0_0_/_100%)] md:text-left'>
                     Styliest fasion,<br className='block md:hidden' />
                     Branded and Exclusive,<br className=' block md: hidden' />
                     DoorStep Delivery at LAMKA!!<br className='block md:hidden' />
                 </p>
-                <div className='lg:hidden flex items-center gap-4 mt-6'>
-                    <button onClick={() => navigate('/products?category=fasion')} className='lg:hidden px-2 mt-10 py-1 bg-[var(--color-primary)] shadow-lg p-2 text-white font-medium rounded-none border-1 border-white border-transparent hover:border-white active:border-white transition'>
+                <div className='lg:hidden flex self-start mt-6'>
+                    <button onClick={() => navigate('/products?category=fasion')} className='px-1 mt-18 py-2 bg-[var(--color-primary)] shadow-lg p-2 text-white font-medium rounded-none border-1 border-white border-transparent hover:border-white active:border-white transition'>
                         Shop now
                     </button>
-                    <p className='text-white text-center mt-10 text-lg [text-shadow:_1px_1px_0_rgb(0_0_0_/_100%)] relative'>
-                        Shop with us with love and joy!!
-                        <span className='absolute bottom-0 left-0 w-full h-0.5 bg-black [box-shadow:_0_0_2px_black]'></span>
-                    </p>
                 </div>
             </div>
         </div>
     ];
 
     if (isLargeScreen) {
-      // Only show the first slide, no handlers, no transform
-      return (
-        <div className="w-full h-full relative">
-          <div className="w-full h-full flex-shrink-0">
-            {slides[0]}
-          </div>
-        </div>
-      );
+        // Only show the first slide, no handlers, no transform
+        return (
+            <div className="w-full h-full relative">
+                <div className="w-full h-full flex-shrink-0">
+                    {slides[0]}
+                </div>
+            </div>
+        );
     }
 
     return (
@@ -197,7 +186,7 @@ const MainBanner = () => {
             </div>
             {/* Optional: Dots for navigation */}
             <div className="lg:hidden absolute bottom-0 left-1/2 transform -translate-x-1/2 flex gap-2 z-20">
-                            {slides.map((_, idx) => (
+                {slides.map((_, idx) => (
                     <button
                         key={idx}
                         className={`w-8 h-1 rounded transition-colors duration-200 ${currentSlide === idx ? 'bg-blue-300' : 'bg-gray-400'} opacity-80 hover:bg-blue-500 cursor-pointer`}

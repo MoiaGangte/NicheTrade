@@ -13,7 +13,7 @@ function useIsLargeScreen() {
     return isLarge;
 }
 
-const SLIDE_INTERVAL_IMAGE = 3000;
+const SLIDE_INTERVAL_IMAGE = 2000;
 const SLIDE_INTERVAL_VIDEO = 3000;
 
 const Advertise = () => {
@@ -134,7 +134,7 @@ const Advertise = () => {
                         Best offer price,<br className='block md:hidden' />
                         Exclusive top brand,<br className=' block md: hidden' />
                     </p>
-                    <div className='flex items-center gap-4 mt-6'>
+                    <div className='flex self-start gap-4 mt-6'>
                         <button onClick={() => navigate('/products')} className='lg:hidden px-2 mt-10 py-1 bg-[var(--color-primary)] shadow-lg p-2 text-white font-medium rounded-none border-1 border-white border-transparent hover:border-white active:border-white transition'>
                             Shop now
                         </button>
