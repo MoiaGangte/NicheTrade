@@ -121,6 +121,11 @@ export const categories = [
     image: fresh_fruits_image,
     bgColor: "#FEE0E0",
   },
+    {
+    text: "drinks",
+    path: "drinks",
+    bgColor: "#FEF6DA",
+  },
   {
     text: "shirt",
     path: "shirt",
