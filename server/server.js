@@ -17,7 +17,8 @@ import passport from 'passport';
 import './configs/passport.js';
 import jwt from 'jsonwebtoken';
 import queryString from 'query-string';
-import './configs/passport.js';
+import Razorpay from 'razorpay';
+
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -132,7 +133,7 @@ server.on('error', (error) => {
 
 app.post("/order", async (req, res) => {
     try {
-        const razorpay = new razorpay({
+        const razorpay = new Razorpay({
             key_id: process.env.RAZORPAY_KEY_ID,
             key_secret: process.env.RAZORPAY_KEY_SECRET
         });
