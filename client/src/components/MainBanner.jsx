@@ -118,7 +118,7 @@ const MainBanner = () => {
             />
             <div className="lg:hidden relative z-10 flex flex-col items-start justify-center text-center h-full">
                 <button
-                    onClick={() => navigate('/products?category=Household')}
+                    onClick={() => navigate('/products')}
                     className="lg:hidden px-4 mt-59 py-2 bg-[var(--color-primary)] shadow-lg text-white font-medium rounded border border-white hover:border-white active:border-white transition"
                 >
                     Shop now
