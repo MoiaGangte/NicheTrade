@@ -21,7 +21,7 @@ const ProductCart = ({ product, small, smaller }) => {
             ? 'p-2 w-full max-w-[140px] min-w-[110px]'
             : 'p-3 w-full';
     const imgClass = small
-        ? 'h-14'
+        ? 'h-25'
         : smaller
             ? 'h-20'
             : 'h-32 sm:h-40';
@@ -54,30 +54,26 @@ const ProductCart = ({ product, small, smaller }) => {
             : 'px-4 py-1';
 
     return product && (
-        <div onClick={handleProductClick} className={`border rounded-md cursor-pointer transition-all duration-300 ${boxClass} ${
-            isHomePage 
-            ? 'border-black border-3 hover:border-white hover:shadow-lg hover:shadow-white/20 bg-black/20 backdrop-blur-sm' 
-            : 'border-gray-300 hover:border-gray-400 bg-white outline outline-white-500'
-        }`}>
+        <div onClick={handleProductClick} className={`bg-transparent border border-black rounded-md cursor-pointer transition-all duration-300 ${boxClass}`}>
             <div className={`group flex items-center justify-center relative ${pxClass}`}>
                 <img className={`group-hover:scale-105 transition w-full object-contain ${imgClass}`} src={product.image[0]} alt={product.name} />
             </div>
-            <div className={`text-gray-500/60 text-sm ${mtClass}`}>
-                <p className={`${isHomePage ? 'text-white [text-shadow:_0_0_1px_black,_0_0_1px_black,_0_0_1px_black,_0_0_1px_black]' : 'text-gray-500'} ${catTextClass}`}>{product.category}</p>
-                <p className={`${isHomePage ? 'text-white [text-shadow:_0_0_1px_black,_0_0_1px_black,_0_0_1px_black,_0_0_1px_black]' : 'text-gray-700'} font-medium truncate w-full ${nameTextClass}`}>{product.name}</p>
+            <div className={`text-black text-sm ${mtClass}`}>
+                <p className={`${isHomePage ? 'text-black' : 'text-black'} ${catTextClass}`}>{product.category}</p>
+                <p className={`${isHomePage ? 'text-black ' : 'text-black'} font-medium truncate w-full ${nameTextClass}`}>{product.name}</p>
                 <div className="flex items-center gap-2">
-                    <span className="font-medium text-green-600 text-xs">
+                    <span className="font-medium text-black text-xs">
                         Stock: {product.stockQuantity || 1}
                     </span>
                 </div>
-                <div className={`flex items-end justify-between mt-3 ${small ? 'mt-1' : smaller ? 'mt-2' : ''}`}>
+                <div className={`flex items-end justify-between mt-0 ${small ? 'mt-1' : smaller ? 'mt-1' : ''}`}>
                     {small || smaller ? (
                         <div className="flex flex-col items-start">
-                            <span className={`font-medium ${isHomePage ? 'text-green-600' : 'text-[var(--color-primary)]'} ${priceTextClass}`}>{currency}{product.offerPrice}</span>
-                            <span className={`line-through ${lineThroughClass} ${isHomePage ? 'text-white' : 'text-gray-500/60'}`}>{currency}{product.price}</span>
+                            <span className={`font-medium ${isHomePage ? 'text-green' : 'text-[var(--color-primary)]'} ${priceTextClass}`}>{currency}{product.offerPrice}</span>
+                            <span className={`line-through ${lineThroughClass} ${isHomePage ? 'text-black' : 'text-black'}`}>{currency}{product.price}</span>
                         </div>
                     ) : (
-                        <p className={`font-medium ${isHomePage ? 'text-green-600' : 'text-[var(--color-primary)]'} ${priceTextClass}`}>
+                        <p className={`font-medium ${isHomePage ? 'text-black' : 'text-[var(--color-primary)]'} ${priceTextClass}`}>
                             {currency}{product.offerPrice}{" "}
                             <span className={`text-xs line-through ${isHomePage ? 'text-white' : 'text-gray-500/60'}`}>{currency}{product.price}</span>
                         </p>
@@ -89,8 +85,8 @@ const ProductCart = ({ product, small, smaller }) => {
                         } else {
                             addToCart(product._id);
                         }
-                    }} 
-                    className={`bg-[var(--color-primary)] hover:bg-primary-dull transition text-white rounded-full text-xs ${btnClass} 
+                    }}
+                        className={`bg-[var(--color-primary)] hover:bg-primary-dull transition text-white rounded-full text-xs ${btnClass} 
                         ${isHomePage ? 'border-2 border-white hover:border-white active:border-white' : ''}`}
                     >
                         {cartItems[product._id] ? "Remove" : "Add"}
