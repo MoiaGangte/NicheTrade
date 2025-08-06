@@ -20,7 +20,7 @@ const AddAddress = () => {
     const [loading, setLoading] = useState(true)
 
     const [address, setAddress] = useState(() => {
-        // Try to get saved address data from localStorage
+        // Try to get saved address data from localStorage//
         const savedAddress = localStorage.getItem('addressFormData');
         return savedAddress ? JSON.parse(savedAddress) : {
             firstname: '',
