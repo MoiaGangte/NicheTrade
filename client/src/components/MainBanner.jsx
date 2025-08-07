@@ -97,7 +97,7 @@ const MainBanner = () => {
                     <div className="relative z-10 flex flex-col items-center justify-center text-center" >
                         <img src={assets.gocc} alt="" className='w-full h-full object-cover' />
                         <h1 className='hidden md:block text-4xl md:text-4xl lg:text-4xl font-bold text-white [text-shadow:_1px_1px_0_rgb(0_0_0_/_100%)]'>Welcome To EimiCart</h1>
-                        <div className='flex lg:hidden self-start gap-4 mt-6'>
+                        <div className='flex lg:hidden self-start gap-4 mt-7'>
                             <button onClick={() => navigate('/products')} className='px-1 mt-52 py-2 bg-[var(--color-primary)] shadow-lg p-2 text-white font-medium rounded-none border-1 border-white border-transparent hover:border-white active:border-white transition'>
                                 Shop now
                             </button>
@@ -144,7 +144,7 @@ const MainBanner = () => {
                     Branded and Exclusive,<br className=' block md: hidden' />
                     DoorStep Delivery at LAMKA!!<br className='block md:hidden' />
                 </p>
-                <div className='lg:hidden flex self-start mt-6'>
+                <div className='lg:hidden flex self-start mt-13'>
                     <button onClick={() => navigate('/products?category=fasion')} className='px-1 mt-18 py-2 bg-[var(--color-primary)] shadow-lg p-2 text-white font-medium rounded-none border-1 border-white border-transparent hover:border-white active:border-white transition'>
                         Shop now
                     </button>

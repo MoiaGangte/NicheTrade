@@ -6,7 +6,7 @@ import Advertise from '../components/Addvertise'
 
 const Home = () => {
   return (
-    <div className="mt-3 w-full m-0 p-0">
+    <div className="w-full min-w-full h-full min-h-screen mt-1 p-0 overflow-x-hidden">
         <MainBanner />
         <BestSeller />
         <Advertise />
