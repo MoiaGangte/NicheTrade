@@ -144,7 +144,7 @@ const MainBanner = () => {
                     Branded and Exclusive,<br className=' block md: hidden' />
                     DoorStep Delivery at LAMKA!!<br className='block md:hidden' />
                 </p>
-                <div className='lg:hidden flex self-start mt-13'>
+                <div className='lg:hidden flex self-start mt-6'>
                     <button onClick={() => navigate('/products?category=fasion')} className='px-1 mt-18 py-2 bg-[var(--color-primary)] shadow-lg p-2 text-white font-medium rounded-none border-1 border-white border-transparent hover:border-white active:border-white transition'>
                         Shop now
                     </button>
