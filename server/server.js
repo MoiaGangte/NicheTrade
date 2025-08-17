@@ -93,7 +93,7 @@ app.get('/api/user/google/callback',
     const user = req.user;
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
-    // Redirect to frontend with token and user info as query params
+    // Redirect to frontend with token and user info as query params//
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5174';
     const params = queryString.stringify({
       token,
@@ -129,7 +129,7 @@ server.on('error', (error) => {
     process.exit(1);
 });
 
-//be mee not validate the code//////////////////////////////////////////////////////////
+/////be mee not validate the code/////////////////////////////////
 
 app.post("/order", async (req, res) => {
     try {
