@@ -48,7 +48,7 @@ try {
 // CORS middleware configuration
 app.use(cors({
     origin: (origin, callback) => {
-        const allowedOrigins = ['http://localhost:5173', 'http://localhost:5174', 'https://eimi-cart.vercel.app',];
+        const allowedOrigins = ['http://localhost:5173', 'https://eimi-cart.vercel.app',];
         if (!origin || allowedOrigins.includes(origin)) {
             callback(null, true);
         } else {
@@ -58,7 +58,7 @@ app.use(cors({
     credentials: true
 }));
 
-// Middleware configuration
+//Middleware configuration//
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
