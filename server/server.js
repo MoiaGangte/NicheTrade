@@ -48,7 +48,7 @@ try {
 // CORS middleware configuration
 app.use(cors({
     origin: (origin, callback) => {
-        const allowedOrigins = ['http://localhost:5173', 'https://eimi-cart.vercel.app',];
+        const allowedOrigins = ['https://eimi-cart.vercel.app', 'http://localhost:5173' ];
         if (!origin || allowedOrigins.includes(origin)) {
             callback(null, true);
         } else {
@@ -129,17 +129,17 @@ server.on('error', (error) => {
     process.exit(1);
 });
 
-/////be mee not validate the code/////////////////////////////////
+/////be me not validate the code/////////////////////////////////
 
 app.post("/order", async (req, res) => {
     try {
-        const razorpay = new Razorpay({
+        const razorpayInstance = new Razorpay({
             key_id: process.env.RAZORPAY_KEY_ID,
             key_secret: process.env.RAZORPAY_KEY_SECRET
         });
 
         const options = req.body;
-        const order = await razorpay.orders.create(options);
+        const order = await razorpayInstance.orders.create(options);
 
         if (!order) {
             return res.status(500).json({ error: 'Failed to create order' });

@@ -2,7 +2,6 @@ import { useEffect, useState } from "react"
 import { useAppContext } from "../context/AppContext"
 import { assets } from "../assets/assets"
 import toast from "react-hot-toast"
-import axios from "axios"
 
 const Cart = () => {
 

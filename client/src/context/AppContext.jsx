@@ -9,6 +9,19 @@ const axiosInstance = axios.create({
     baseURL: import.meta.env.VITE_BACKEND_URL
 });
 
+// Attach Authorization header from localStorage token on each request
+axiosInstance.interceptors.request.use(
+    (config) => {
+        const token = localStorage.getItem('token');
+        if (token) {
+            config.headers = config.headers || {};
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+    },
+    (error) => Promise.reject(error)
+);
+
 // Add response interceptor to handle auth errors
 axiosInstance.interceptors.response.use(
     (response) => response,

@@ -4,7 +4,11 @@ import User from '../models/User.js';
 // Auth middleware for users
 export const authUser = async (req, res, next) => {
     try {
-        const token = req.cookies.token;
+        const headerAuth = req.headers.authorization || req.headers.Authorization;
+        const bearerToken = headerAuth && headerAuth.startsWith('Bearer ')
+            ? headerAuth.substring(7)
+            : null;
+        const token = bearerToken || req.cookies.token;
         if (!token) {
             return res.status(401).json({ success: false, message: 'Not authorized' });
         }
@@ -28,7 +32,11 @@ export const authUser = async (req, res, next) => {
 // Auth middleware for sellers
 export const authSeller = async (req, res, next) => {
     try {
-        const token = req.cookies.token;
+        const headerAuth = req.headers.authorization || req.headers.Authorization;
+        const bearerToken = headerAuth && headerAuth.startsWith('Bearer ')
+            ? headerAuth.substring(7)
+            : null;
+        const token = bearerToken || req.cookies.token;
         if (!token) {
             return res.status(401).json({ success: false, message: 'Not authorized' });
         }
@@ -52,7 +60,11 @@ export const authSeller = async (req, res, next) => {
 // Combined auth middleware for both users and sellers
 export const combinedAuth = async (req, res, next) => {
     try {
-        const token = req.cookies.token;
+        const headerAuth = req.headers.authorization || req.headers.Authorization;
+        const bearerToken = headerAuth && headerAuth.startsWith('Bearer ')
+            ? headerAuth.substring(7)
+            : null;
+        const token = bearerToken || req.cookies.token;
         if (!token) {
             return res.status(401).json({ success: false, message: 'Not authorized' });
         }
@@ -66,7 +78,7 @@ export const combinedAuth = async (req, res, next) => {
             return next();
         }
 
-        // If not a seller, check if it's a user
+        // If not a seller, check if it's a user///////
         const user = await User.findById(decoded.id).select('-password');
         if (user) {
             req.userId = user._id;
@@ -74,7 +86,7 @@ export const combinedAuth = async (req, res, next) => {
             return next();
         }
 
-        // If neither user nor seller found
+        // If neither user nor seller found////for security//
         return res.status(401).json({ success: false, message: 'Not authorized' });
     } catch (error) {
         console.error('Auth middleware error:', error);
