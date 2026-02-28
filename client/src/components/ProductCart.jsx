@@ -54,7 +54,7 @@ const ProductCart = ({ product, small, smaller }) => {
             : 'px-4 py-1';
 
     return product && (
-        <div onClick={handleProductClick} className={`bg-transparent border border-black rounded-md cursor-pointer transition-all duration-300 ${boxClass}`}>
+        <div onClick={handleProductClick} className={`bg-white border border-black rounded-md cursor-pointer transition-all duration-300 ${boxClass}`}>
             <div className={`group flex items-center justify-center relative ${pxClass}`}>
                 <img className={`group-hover:scale-105 transition w-full object-contain ${imgClass}`} src={product.image[0]} alt={product.name} />
             </div>

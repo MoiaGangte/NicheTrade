@@ -3,21 +3,21 @@ import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import User from '../models/User.js';
 
 passport.use(new GoogleStrategy({
-    clientID: process.env.GOOGLE_CLIENT_ID,
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: process.env.NODE_ENV === 'development' 
-      ? 'https://eimi-cart-backend.vercel.app/api/user/google/callback'
-      : 'http://localhost:5000/api/user/google/callback'
-  },
+  clientID: process.env.GOOGLE_CLIENT_ID,
+  clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+  callbackURL: process.env.NODE_ENV === 'development'
+    ? 'https://eimi-cart-backend.vercel.app/api/user/google/callback'
+    : 'http://localhost:5000/api/user/google/callback'
+},
   async (accessToken, refreshToken, profile, done) => {
     try {
-      let user = await User.findOne({ 
+      let user = await User.findOne({
         $or: [
           { googleId: profile.id },
           { email: profile.emails[0].value }
         ]
       });
-      
+
       if (!user) {
         // Create new user with Google OAuth
         user = await User.create({
@@ -32,7 +32,7 @@ passport.use(new GoogleStrategy({
         user.googleId = profile.id;
         await user.save();
       }
-      
+
       return done(null, user);
     } catch (err) {
       return done(err, null);
@@ -51,4 +51,4 @@ passport.deserializeUser(async (id, done) => {
   } catch (err) {
     done(err, null);
   }
-}); 
+});

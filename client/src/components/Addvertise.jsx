@@ -94,14 +94,14 @@ const Advertise = () => {
                 <div className='w-full h-full flex-shrink-0'>
                     <div className={`bg-[url('${backgroundImages[0]}')] bg-cover bg-center bg-no-repeat w-full h-full lg:bg-none transition-all duration-700`}>
                         <div className="relative z-10 flex flex-col items-center justify-center text-center h-full">
-                            <h1 className='text-4xl md:text-5xl lg:text-4xl font-bold text-white [text-shadow:_1px_1px_0_rgb(0_0_0_/_100%)]'>G-SHOCK WATCHES</h1>
+                            <h1 className='text-4xl md:text-5xl lg:text-4xl font-bold text-white [text-shadow:_1px_1px_0_rgb(0_0_0_/_100%)]'>GAME</h1>
                             <p className='text-lg md:text-xl text-white outline outline-black mt-4 [text-shadow:_1px_1px_0_rgb(0_0_0_/_100%)] md:text-left'>
                                 Best offer price,<br className='block md:hidden' />
                                 Exclusive top brand,<br className=' block md: hidden' />
                             </p>
                             <div className='flex items-center gap-4 mt-6'>
-                                <button onClick={() => navigate('/products')} className='px-4 mt-10 py-3 bg-[var(--color-primary)] shadow-lg p-2 text-white font-medium rounded-none border-2 border-white border-transparent hover:border-white active:border-white transition'>
-                                    Shop now
+                                <button onClick={() => navigate('/game')} className='px-4 mt-10 py-3 bg-[var(--color-primary)] shadow-lg p-2 text-white font-medium rounded-none border-2 border-white border-transparent hover:border-white active:border-white transition'>
+                                    Play now
                                 </button>
                                 <p className='text-white text-center mt-10 text-lg [text-shadow:_1px_1px_0_rgb(0_0_0_/_100%)] relative'>
                                     Shop while product is still avialable
