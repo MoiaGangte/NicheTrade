@@ -12,6 +12,7 @@ import orderRouter from './routes/orderRoutes.js';
 import addressRouter from './routes/addressRoute.js';
 import reviewRouter from './routes/reviewRoutes.js';
 import paymentRouter from './routes/paymentRoute.js';
+import adminRouter from './routes/adminRoute.js';
 import session from 'express-session';
 import passport from 'passport';
 import './configs/passport.js';
@@ -58,6 +59,12 @@ app.use(cors({
     credentials: true
 }));
 
+// Permissions-Policy header: disable device sensor features to avoid browser warnings
+app.use((req, res, next) => {
+    res.setHeader('Permissions-Policy', 'accelerometer=(), gyroscope=(), magnetometer=()');
+    next();
+});
+
 //Middleware configuration//
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -78,6 +85,7 @@ app.use('/api/address', addressRouter);
 app.use('/api/review', reviewRouter);
 app.use('/api/order', orderRouter);
 app.use('/api/payment', paymentRouter);
+app.use('/api/admin', adminRouter);
 
 //////////////////////////
 app.get('/api/user/google', (req, res, next) => {
@@ -95,12 +103,13 @@ app.get('/api/user/google/callback',
 
     // Redirect to frontend with token and user info as query params//
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5174';
-    const params = queryString.stringify({
-      token,
-      name: user.name,
-      email: user.email
-    });
-    res.redirect(`${frontendUrl}/google-auth-success?${params}`);
+        const params = queryString.stringify({
+            token,
+            name: user.name,
+            email: user.email,
+            userId: user._id
+        });
+        res.redirect(`${frontendUrl}/google-auth-success?${params}`);
   }
 );
 

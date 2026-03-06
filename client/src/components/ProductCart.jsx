@@ -14,7 +14,7 @@ const ProductCart = ({ product, small, smaller }) => {
         window.scrollTo(0, 0);
     };
 
-    // Determine which style to use
+    // Determine which style to use//
     const boxClass = small
         ? 'p-1 w-full max-w-[110px] min-w-[90px]'
         : smaller

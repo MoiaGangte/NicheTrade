@@ -43,6 +43,8 @@ const Cart = () => {
                 currency: "INR"
             });
 
+            console.log('Create-order API response:', data);
+
             if (!data.success) {
                 toast.error("Order creation failed");
                 return;
@@ -54,20 +56,22 @@ const Cart = () => {
                 amount: data.order.amount,
                 currency: data.order.currency,
                 order_id: data.order.id,
-                handler: function (response) {
+                handler: async function (response) {
                     setIsProcessingPayment(true);
                     console.log("Razorpay handler response:", response);
-                    // 3. Verify payment on backend
-                    axios.post("/api/payment/verify", {
-                        razorpay_order_id: response.razorpay_order_id,
-                        razorpay_payment_id: response.razorpay_payment_id,
-                        razorpay_signature: response.razorpay_signature,
-                        items: cartArray.map(item => ({
-                            product: item._id,
-                            quantity: item.quantity
-                        })),
-                        address: selectedAddress._id
-                    }).then(res => {
+                    try {
+                        // 3. Verify payment on backend (await to ensure sequential flow)
+                        const res = await axios.post("/api/payment/verify", {
+                            razorpay_order_id: response.razorpay_order_id,
+                            razorpay_payment_id: response.razorpay_payment_id,
+                            razorpay_signature: response.razorpay_signature,
+                            items: cartArray.map(item => ({
+                                product: item._id,
+                                quantity: item.quantity
+                            })),
+                            address: selectedAddress._id
+                        });
+
                         if (res.data.success) {
                             toast.success("Payment successful! Order placed successfully.");
                             setCartItems({});
@@ -75,10 +79,12 @@ const Cart = () => {
                         } else {
                             toast.error("Payment verification failed: " + res.data.message);
                         }
-                    }).catch(error => {
+                    } catch (error) {
                         console.error('Payment verification error:', error);
                         toast.error("Payment verification failed: " + (error.response?.data?.message || error.message));
-                    });
+                    } finally {
+                        setIsProcessingPayment(false);
+                    }
                 },
                 prefill: {
                     name: user?.name || "",

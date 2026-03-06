@@ -4,13 +4,30 @@ const sendOrderEmail = async (orderDetails, toUser = false) => {
   const user = orderDetails.userId;
   const product = orderDetails.items?.[0]?.product;
 
+  // Normalize credentials (strip surrounding quotes and trim)
+  const gmailUser = process.env.GMAIL_USER ? process.env.GMAIL_USER.replace(/^['"]|['"]$/g, '').trim() : undefined;
+  const gmailPass = process.env.GMAIL_APP_PASSWORD ? process.env.GMAIL_APP_PASSWORD.replace(/^['"]|['"]$/g, '').trim() : undefined;
+
+  if (!gmailUser || !gmailPass) {
+    console.warn('Gmail credentials are missing. Skipping sendOrderEmail.');
+    return;
+  }
+
   const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-      user: process.env.GMAIL_USER,
-      pass: process.env.GMAIL_APP_PASSWORD,
+      user: gmailUser,
+      pass: gmailPass,
     },
   });
+
+  // Verify transporter to surface auth errors early
+  try {
+    await transporter.verify();
+  } catch (err) {
+    console.error('Failed to verify Gmail transporter. Check GMAIL_USER and GMAIL_APP_PASSWORD (use an App Password if 2FA is enabled).', err.message);
+    return;
+  }
 
   let mailOptions;
 
@@ -53,7 +70,12 @@ ${JSON.stringify(orderDetails, null, 2)}
     };
   }
 
-  await transporter.sendMail(mailOptions);
+  try {
+    await transporter.sendMail(mailOptions);
+  } catch (err) {
+    console.error('Error sending order email:', err.message);
+    // Do not throw to avoid blocking order processing; log for investigation
+  }
 };
 
 export default sendOrderEmail;

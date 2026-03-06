@@ -14,10 +14,10 @@ const GoogleAuthSuccess = () => {
         const email = searchParams.get('email');
         const userId = searchParams.get('userId');
 
-        if (token && name && email && userId) {
-            // Create user data object
+        if (token && name && email) {
+            // Create user data object (userId optional)
             const userData = {
-                _id: userId,
+                _id: userId || undefined,
                 name,
                 email,
                 cartItems: {},

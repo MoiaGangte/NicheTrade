@@ -153,6 +153,7 @@ export const createOrder = async (req, res) => {
             receipt: `order_rcptid_${Date.now()}`,
         };
         const order = await razorpay.orders.create(options);
+        console.log('Razorpay createOrder response:', order);
         res.json({ success: true, order });
     } catch (error) {
         console.error('Error in createOrder:', error);

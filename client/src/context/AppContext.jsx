@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from "react"
+import { createContext, useContext, useEffect, useState, useCallback } from "react"
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import axios from "axios";
@@ -185,12 +185,27 @@ export const AppContextProvider = ({ children }) => {
         }
     }, [cartItems, user])
 
+    // Handle Google OAuth success from server redirect
+    const handleGoogleAuthSuccess = useCallback((token, userData) => {
+        if (token) {
+            localStorage.setItem('token', token);
+        }
+        if (userData) {
+            setUser(userData);
+            setCartItems(userData.cartItems || {});
+        }
+        setShowUserLogin(false);
+        toast.success('Logged in successfully');
+        navigate('/');
+    }, [navigate]);
+
     const value = {
         navigate, user, setUser, setIsSeller, isSeller,
         showUserLogin, setShowUserLogin, products, currency, 
         addToCart, updateCartItem, removeFromCart, cartItems, 
         setCartItems, searchQuery, setSearchQuery, getCartAmount, 
         getCartCount, axios: axiosInstance, fetchProducts, favorites,
+        handleGoogleAuthSuccess,
     }
 
     return <AppContext.Provider value={value}>
