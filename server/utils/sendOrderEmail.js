@@ -34,7 +34,7 @@ const sendOrderEmail = async (orderDetails, toUser = false) => {
   if (toUser) {
     // Email to user: only product id, name, price, status, payment type, and a thank you text
     mailOptions = {
-      from: process.env.GMAIL_USER,
+      from: gmailUser,
       to: user?.email,
       subject: 'Your Order Confirmation',
       text: `
@@ -53,8 +53,8 @@ We appreciate your purchase!
   } else {
     // Email to admin (yourself): full order details
     mailOptions = {
-      from: process.env.GMAIL_USER,
-      to: process.env.GMAIL_USER,
+      from: gmailUser,
+      to: gmailUser,
       subject: 'New Order Received',
       text: `
 New Order Details:
@@ -70,10 +70,17 @@ ${JSON.stringify(orderDetails, null, 2)}
     };
   }
 
+  // If sending to user but user email is missing, skip and log
+  if (toUser && !mailOptions.to) {
+    console.warn('Skipping user order email: recipient email missing', { orderId: orderDetails._id });
+    return;
+  }
+
   try {
-    await transporter.sendMail(mailOptions);
+    const info = await transporter.sendMail(mailOptions);
+    console.log('Order email sent:', { messageId: info.messageId, to: mailOptions.to });
   } catch (err) {
-    console.error('Error sending order email:', err.message);
+    console.error('Error sending order email:', err);
     // Do not throw to avoid blocking order processing; log for investigation
   }
 };

@@ -43,10 +43,10 @@ const Cart = () => {
                 currency: "INR"
             });
 
-            console.log('Create-order API response:', data);
+            console.log('Create-order API response:', JSON.stringify(data, null, 2));
 
-            if (!data.success) {
-                toast.error("Order creation failed");
+            if (!data || !data.success || !data.order || !data.order.id) {
+                toast.error('Order creation failed: ' + (data?.message || 'missing order id'));
                 return;
             }
 

@@ -47,9 +47,20 @@ try {
 }
 
 // CORS middleware configuration
+// CORS middleware configuration
 app.use(cors({
     origin: (origin, callback) => {
-        const allowedOrigins = ['https://eimi-cart.vercel.app', 'http://localhost:5173' ];
+        const envOrigins = process.env.FRONTEND_URL || '';
+        const allowedOrigins = envOrigins
+            .split(',')
+            .map(s => s.trim())
+            .filter(Boolean);
+
+        // Fallback defaults when no env var provided
+        if (allowedOrigins.length === 0) {
+            allowedOrigins.push('https://eimi-cart.vercel.app', 'http://localhost:5173');
+        }
+
         if (!origin || allowedOrigins.includes(origin)) {
             callback(null, true);
         } else {
