@@ -33,7 +33,7 @@ const Footer = () => {
                 <div className="flex flex-col md:flex-row items-start justify-between gap-10 py-10 border-b border-gray-500/30 text-gray-800">
                     <div>
                     <p className="text-xl font-medium">EimiCart</p>
-                        <p className="max-w-[410px] mt-6">This is just a demo project. Any Payment made should be considered as a donation for the development of this app and the cost of hosting. </p>
+                        <p className="max-w-[410px] mt-6">This is just a demo project, Still in development. Any Payment made should be considered as a donation for the development of this app and the cost of hosting. </p>
                         <p className="mt-2">If you have any feedback or encounter any errors, please let me know THANK YOU!!</p>
                         <form onSubmit={handleSubmit} className="mt-4 flex gap-2 flex-nowrap">
                             <input 
