@@ -38,7 +38,7 @@ const sendOrderEmail = async (orderDetails, toUser = false) => {
       to: user?.email,
       subject: 'Your Order Confirmation',
       text: `
-Thank you for your order|(Your Order will be Delivered after 2-3 days), ${user?.name || 'Customer'}!
+Thank you for your order||(Your Order will be Delivered after 2-3 days), ${user?.name || 'Customer'}!
 
 Order Details:
 Product ID: ${product?._id || 'N/A'}
@@ -47,7 +47,7 @@ Price: ₹${product?.offerPrice || 'N/A'}
 Order Status: ${orderDetails.status || 'N/A'}
 Payment Type: ${orderDetails.paymentType || 'N/A'}
 
-We appreciate your purchase!
+We appreciate your purchase!!_However This is just a demo project any Payment made are non-refundable and will be considered as a donation to support the project development and hosting costs.(By--MoiaGt)
       `,
     };
   } else {
