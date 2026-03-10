@@ -61,7 +61,7 @@ const Navbar = () => {
             <div className="px-6 md:px-16 lg:px-24 xl:px-32 py-4 flex items-center justify-between">
                 <NavLink to='/' className="flex items-center gap-2">
                     {/* site logo/favicon image */}
-                    <img src={assets.logo || assets.favicon} alt="EimiCart logo" className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10" />
+                    <img src={assets.logo || assets.favicon} alt="EimiCart logo" className="hidden md:block w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10" />
                     <p className="text-xl font-medium">EimiCart</p>
                 </NavLink>
 
