@@ -1,10 +1,45 @@
-import React from 'react'
-import { categories, assets } from '../assets/assets'
+import React, { useState, useEffect } from 'react'
+import { categories as defaultCategories, assets } from '../assets/assets'
 import { useAppContext } from '../context/AppContext'
 import { Link } from 'react-router-dom'
 
 const Categories = () => {
-    const { navigate } = useAppContext()
+    const { navigate, axios } = useAppContext()
+    const [categories, setCategories] = useState(defaultCategories);
+
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const { data } = await axios.get('/api/product/categories');
+                if (data.success) {
+                    // Merge API categories with default categories
+                    const apiCategories = data.categories.map(cat => {
+                        const defaultCat = defaultCategories.find(dc => dc.path === cat);
+                        if (defaultCat) {
+                            return defaultCat;
+                        } else {
+                            // For new categories, assign a default bgColor and image
+                            const colors = ['#FEF6DA', '#FEE0E0', '#E1F5EC', '#FEE6CD', '#FEF3C7', '#D1FAE5'];
+                            const colorIndex = cat.length % colors.length;
+                            return {
+                                text: cat,
+                                path: cat,
+                                bgColor: colors[colorIndex],
+                                image: assets.upload_area // Use upload_area as default image
+                            };
+                        }
+                    });
+                    setCategories(apiCategories);
+                }
+            } catch (error) {
+                console.error('Error fetching categories:', error);
+                // Fallback to default categories
+            }
+        };
+
+        fetchCategories();
+    }, [axios]);
+
     return (
         <div className='mt-16'>
             <p className='text-2xl md:text-3xl font-medium'>Categories</p>

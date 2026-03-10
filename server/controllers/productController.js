@@ -148,6 +148,34 @@ export const changeStock = async (req, res) => {
 };
 
 //delete product : /api/product/delete/:id
+export const getCategories = async (req, res) => {
+    try {
+        const categories = await Product.distinct('category', { isVisible: true });
+        res.json({ success: true, categories });
+    } catch (error) {
+        console.log(error.message);
+        res.json({ success: false, message: error.message });
+    }
+};
+
+//delete product : /api/product/delete/:id
+export const deleteCategory = async (req, res) => {
+    try {
+        const { category } = req.body;
+        if (!category) {
+            return res.json({ success: false, message: "Category name is required" });
+        }
+
+        // Update all products with this category to have empty category
+        await Product.updateMany({ category: category }, { $unset: { category: "" } });
+
+        res.json({ success: true, message: `Category "${category}" deleted successfully. All products in this category have been uncategorized.` });
+    } catch (error) {
+        console.log(error.message);
+        res.json({ success: false, message: error.message });
+    }
+};
+
 export const deleteProduct = async (req, res) => {
     try {
         const { id } = req.params;

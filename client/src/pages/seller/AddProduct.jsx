@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { assets } from "../../assets/assets";
 import { categories as defaultCategories } from "../../assets/assets";
 import { useAppContext } from "../../context/AppContext";
@@ -19,21 +19,68 @@ const AddProduct = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     // Track custom categories
     const [customCategories, setCustomCategories] = useState([]);
+    // Track all available categories from API
+    const [availableCategories, setAvailableCategories] = useState([]);
 
     const { axios } = useAppContext();
 
-    // Merge default and custom categories for shortcuts
+    // Fetch categories on component mount
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const { data } = await axios.get('/api/product/categories');
+                if (data.success) {
+                    setAvailableCategories(data.categories);
+                }
+            } catch (error) {
+                console.error('Error fetching categories:', error);
+            }
+        };
+        fetchCategories();
+    }, [axios]);
+
+    const refetchCategories = async () => {
+        try {
+            const { data } = await axios.get('/api/product/categories');
+            if (data.success) {
+                setAvailableCategories(data.categories);
+            }
+        } catch (error) {
+            console.error('Error fetching categories:', error);
+        }
+    };
+
+    // Merge default, API, and custom categories for shortcuts
     const allCategoryShortcuts = [
-        ...defaultCategories.map(cat => ({ text: cat.text, value: cat.path, isDefault: true })),
-        ...customCategories.map(cat => ({ text: cat, value: cat, isDefault: false }))
+        ...defaultCategories.map(cat => ({ text: cat.text, value: cat.path, isDefault: true, canDelete: false })),
+        ...availableCategories.filter(cat => !defaultCategories.some(dc => dc.path === cat)).map(cat => ({ text: cat, value: cat, isDefault: false, canDelete: true })),
+        ...customCategories.map(cat => ({ text: cat, value: cat, isDefault: false, canDelete: true }))
     ];
 
     const handleCategoryShortcut = (catValue) => {
         setCategory(catValue);
     };
 
-    const handleRemoveShortcut = (catValue) => {
-        setCustomCategories(prev => prev.filter(c => c !== catValue));
+    const handleRemoveShortcut = async (catValue) => {
+        // If it's a category from the API (not default), delete it from database
+        if (availableCategories.includes(catValue) && !defaultCategories.some(dc => dc.path === catValue)) {
+            try {
+                const { data } = await axios.delete('/api/product/category', { data: { category: catValue } });
+                if (data.success) {
+                    toast.success(data.message);
+                    // Remove from available categories
+                    setAvailableCategories(prev => prev.filter(c => c !== catValue));
+                } else {
+                    toast.error(data.message);
+                }
+            } catch (error) {
+                console.error('Error deleting category:', error);
+                toast.error('Failed to delete category');
+            }
+        } else {
+            // It's a custom category, just remove from local state
+            setCustomCategories(prev => prev.filter(c => c !== catValue));
+        }
         // If the removed category is currently selected, clear it
         if (category === catValue) setCategory("");
     };
@@ -103,6 +150,8 @@ const AddProduct = () => {
                         boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
                     },
                 });
+                // Refetch categories to include any new ones
+                await refetchCategories();
                 // Add a small delay before navigation to ensure the toast is visible
                 setTimeout(() => {
                     navigate("/seller/product-list", { replace: true });
@@ -236,11 +285,11 @@ const AddProduct = () => {
                                 >
                                     {cat.text}{cat.text !== cat.value ? ` (${cat.value})` : ''}
                                 </button>
-                                {!cat.isDefault && (
+                                {cat.canDelete && (
                                     <button
                                         type="button"
-                                        className="text-red-500 text-xs px-1"
-                                        title="Remove this category shortcut"
+                                        className="text-red-500 text-xs px-1 hover:bg-red-100 rounded"
+                                        title="Delete this category"
                                         onClick={() => handleRemoveShortcut(cat.value)}
                                     >
                                         ✕
