@@ -5,19 +5,24 @@ const sendOrderEmail = async (orderDetails, toUser = false) => {
   const product = orderDetails.items?.[0]?.product;
 
   // Normalize credentials (strip surrounding quotes and trim)
-  const gmailUser = process.env.GMAIL_USER ? process.env.GMAIL_USER.replace(/^['"]|['"]$/g, '').trim() : undefined;
-  const gmailPass = process.env.GMAIL_APP_PASSWORD ? process.env.GMAIL_APP_PASSWORD.replace(/^['"]|['"]$/g, '').trim() : undefined;
+  const smtpHost = process.env.SMTP_HOST ? process.env.SMTP_HOST.replace(/^['"]|['"]$/g, '').trim() : 'smtp.gmail.com';
+  const smtpPort = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT.replace(/^['"]|['"]$/g, '').trim()) : 587;
+  const smtpSecure = process.env.SMTP_SECURE === 'true';
+  const smtpUser = (process.env.SMTP_USER || process.env.GMAIL_USER) ? (process.env.SMTP_USER || process.env.GMAIL_USER).replace(/^['"]|['"]$/g, '').trim() : undefined;
+  const smtpPass = (process.env.SMTP_PASS || process.env.GMAIL_APP_PASSWORD) ? (process.env.SMTP_PASS || process.env.GMAIL_APP_PASSWORD).replace(/^['"]|['"]$/g, '').trim() : undefined;
 
-  if (!gmailUser || !gmailPass) {
-    console.warn('Gmail credentials are missing. Skipping sendOrderEmail.');
+  if (!smtpUser || !smtpPass) {
+    console.warn('SMTP credentials are missing. Skipping sendOrderEmail.');
     return;
   }
 
-  const transporter = nodemailer.createTransport({
-    service: 'gmail',
+  const transporter = nodemailer.createTransporter({
+    host: smtpHost,
+    port: smtpPort,
+    secure: smtpSecure,
     auth: {
-      user: gmailUser,
-      pass: gmailPass,
+      user: smtpUser,
+      pass: smtpPass,
     },
   });
 
@@ -25,7 +30,7 @@ const sendOrderEmail = async (orderDetails, toUser = false) => {
   try {
     await transporter.verify();
   } catch (err) {
-    console.error('Failed to verify Gmail transporter. Check GMAIL_USER and GMAIL_APP_PASSWORD (use an App Password if 2FA is enabled).', err.message);
+    console.error('Failed to verify SMTP transporter. Check SMTP_USER and SMTP_PASS.', err.message);
     return;
   }
 
@@ -34,7 +39,7 @@ const sendOrderEmail = async (orderDetails, toUser = false) => {
   if (toUser) {
     // Email to user: only product id, name, price, status, payment type, and a thank you text
     mailOptions = {
-      from: gmailUser,
+      from: smtpUser,
       to: user?.email,
       subject: 'Your Order Confirmation',
       text: `
@@ -53,8 +58,8 @@ We appreciate your purchase!!_However This is just a demo project any Payment ma
   } else {
     // Email to admin (yourself): full order details
     mailOptions = {
-      from: gmailUser,
-      to: gmailUser,
+      from: smtpUser,
+      to: smtpUser,
       subject: 'New Order Received',
       text: `
 New Order Details:

@@ -13,6 +13,7 @@ import addressRouter from './routes/addressRoute.js';
 import reviewRouter from './routes/reviewRoutes.js';
 import paymentRouter from './routes/paymentRoute.js';
 import adminRouter from './routes/adminRoute.js';
+import feedbackRouter from './routes/feedbackRoute.js';
 import session from 'express-session';
 import passport from 'passport';
 import './configs/passport.js';
@@ -97,6 +98,7 @@ app.use('/api/review', reviewRouter);
 app.use('/api/order', orderRouter);
 app.use('/api/payment', paymentRouter);
 app.use('/api/admin', adminRouter);
+app.use('/api/feedback', feedbackRouter);
 
 //////////////////////////
 app.get('/api/user/google', (req, res, next) => {

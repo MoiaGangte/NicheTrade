@@ -1,6 +1,31 @@
+import React, { useState } from 'react';
+import axios from 'axios';
 import { assets, footerLinks } from "../assets/assets";
 
 const Footer = () => {
+    const [feedback, setFeedback] = useState('');
+    const [loading, setLoading] = useState(false);
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        if (!feedback.trim()) return;
+
+        setLoading(true);
+        try {
+            const { data } = await axios.post('/api/feedback/send', { feedback });
+            if (data.success) {
+                alert('Feedback sent successfully!');
+                setFeedback('');
+            } else {
+                alert(data.message || 'Failed to send feedback');
+            }
+        } catch (error) {
+            console.error('Error sending feedback:', error);
+            alert('Failed to send feedback. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <footer className="bg-[var(--color-primary)]/10 border-t border-gray-300">
@@ -9,6 +34,24 @@ const Footer = () => {
                     <div>
                     <p className="text-xl font-medium">EimiCart</p>
                         <p className="max-w-[410px] mt-6">This is just a demo project. Any Payment made should be considered as a donation for the development of this app and the cost of hosting. </p>
+                        <p className="mt-2">If you have any feedback or encounter any errors, please let me know THANK YOU!!</p>
+                        <form onSubmit={handleSubmit} className="mt-4 flex gap-2 flex-nowrap">
+                            <input 
+                                type="text" 
+                                placeholder="Enter your feedback here"
+                                value={feedback}
+                                onChange={(e) => setFeedback(e.target.value)}
+                                className="border border-black-500 rounded px-3 py-2 flex-1 min-w-0"
+                                disabled={loading}
+                            />
+                            <button 
+                                type="submit" 
+                                className="px-4 py-2 bg-[var(--color-primary)] text-white rounded hover:bg-[var(--color-primary)]/80 transition disabled:opacity-50 whitespace-nowrap text-sm md:text-base"
+                                disabled={loading}
+                            >
+                                {loading ? 'Sending...' : 'Send'}
+                            </button>
+                        </form>
                     </div>
                     <div className="flex flex-wrap justify-between w-full md:w-[45%] gap-5">
                         {footerLinks.map((section, index) => (
