@@ -1,8 +1,8 @@
 import express from 'express';
 import { sendFeedbackEmail } from '../controllers/feedbackController.js';
 
-const feedbackRouter = express.Router();
+const router = express.Router();
 
-feedbackRouter.post('/send', sendFeedbackEmail);
+router.post('/send', sendFeedbackEmail);
 
-export default feedbackRouter;
+export default router;

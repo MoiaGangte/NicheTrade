@@ -105,7 +105,7 @@ app.get('/api/user/google', (req, res, next) => {
   console.log('Google OAuth route hit');
   next();
 }, passport.authenticate('google', { scope: ['profile', 'email'] }));
-/////////////////////////
+/////////////////////
 
 app.get('/api/user/google/callback',
   passport.authenticate('google', { failureRedirect: '/' }),
