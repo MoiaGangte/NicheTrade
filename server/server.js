@@ -71,11 +71,11 @@ app.use(cors({
     credentials: true
 }));
 
-// Permissions-Policy header: disable device sensor features to avoid browser warnings
-app.use((req, res, next) => {
-    res.setHeader('Permissions-Policy', 'accelerometer=(), gyroscope=(), magnetometer=()');
-    next();
-});
+// Removed Permissions-Policy header to avoid violations with tracking scripts
+// app.use((req, res, next) => {
+//     res.setHeader('Permissions-Policy', 'accelerometer=(), gyroscope=(), magnetometer=()');
+//     next();
+// });
 
 //Middleware configuration//
 app.use(express.json());
