@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
 const AddProduct = () => {
-    const { products, axios } = useAppContext();
+    const { products } = useAppContext();
     const navigate = useNavigate();
     const [files, setfiles] = useState([]);
     const [name, setName] = useState("");

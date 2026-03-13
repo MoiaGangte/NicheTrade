@@ -69,7 +69,7 @@ const Footer = () => {
                         ))}
                     </div>
                 </div>
-                <p className="py-4 text-center text-sm md:text-base text-gray-500/80">
+                <p className="py-4 text-center text-sm md:text-base text-gray-600/80">
                     MOIA GANGTE Copyright {new Date().getFullYear()} © All Right Reserved.
                 </p>
             </div>
