@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
-import axios from 'axios';
+import React, { useState, useContext } from 'react';
+import { AppContext } from '../context/AppContext';
 import { assets, footerLinks } from "../assets/assets";
 
 const Footer = () => {
     const [feedback, setFeedback] = useState('');
     const [loading, setLoading] = useState(false);
+    const { axios } = useContext(AppContext);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
