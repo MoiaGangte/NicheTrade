@@ -24,6 +24,7 @@ import Favorites from './pages/Favorites'
 import { assets } from './assets/assets'
 import GoogleAuthSuccess from './pages/GoogleAuthSuccess'
 import CategoryNav from './components/CategoryNav'
+import Ai_chatBox from './pages/Ai_chatBox'
 
 const App = () => {
   const isSellerPath = useLocation().pathname.includes("seller")
@@ -59,6 +60,7 @@ const App = () => {
           <Route path='/my-orders' element={<MyOrders />} />
           <Route path='/order-details/:orderId' element={<OrderDetails />} />
           <Route path='/profile' element={<Profile />} />
+          <Route path='/ai-chat' element={<Ai_chatBox />} />
           <Route path='/google-auth-success' element={<GoogleAuthSuccess />} />
           <Route path='/seller' element={isSeller ? <SellerLayout /> : <SellerLogin />}>
             <Route index element={isSeller ? <AddProduct /> : null} />

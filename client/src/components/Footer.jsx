@@ -36,7 +36,7 @@ const Footer = () => {
                     <p className="text-xl font-medium">EimiCart</p>
                         <p className="max-w-[410px] mt-6">This is just a demo project, Still in development. Therefore the site is currently operating with a payment integration test API key. Any payments attempted through this website will not be processed or accepted.” </p>
                         <p className="mt-2">If you have any feedback or encounter any errors, please let me know THANK YOU!!</p>
-                        <form onSubmit={handleSubmit} className="mt-4 flex gap-2 flex-nowrap">
+                        <form onSubmit={handleSubmit} className="mt-4 flex w-full gap-2 flex-nowrap">
                             <input 
                                 type="text" 
                                 placeholder="Enter your feedback here"
