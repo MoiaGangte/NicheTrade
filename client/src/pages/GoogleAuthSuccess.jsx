@@ -10,22 +10,8 @@ const GoogleAuthSuccess = () => {
 
     useEffect(() => {
         const token = searchParams.get('token');
-        const name = searchParams.get('name');
-        const email = searchParams.get('email');
-        const userId = searchParams.get('userId');
-
-        if (token && name && email) {
-            // Create user data object (userId optional)
-            const userData = {
-                _id: userId || undefined,
-                name,
-                email,
-                cartItems: {},
-                favorites: {}
-            };
-
-            // Handle the successful Google authentication
-            handleGoogleAuthSuccess(token, userData);
+        if (token) {
+            handleGoogleAuthSuccess(token);
         } else {
             toast.error('Google authentication failed. Please try again.');
             navigate('/');

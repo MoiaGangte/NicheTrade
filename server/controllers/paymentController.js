@@ -4,7 +4,6 @@ import Order from "../models/Order.js";
 import Product from "../models/Product.js";
 import User from "../models/User.js";
 import mongoose from "mongoose";
-import sendOrderEmail from "../utils/sendOrderEmail.js";
 
 export const verifyPayment = async (req, res) => {
     try {
@@ -84,17 +83,6 @@ export const verifyPayment = async (req, res) => {
                 paymentId: razorpay_payment_id,
                 razorpayOrderId: razorpay_order_id
             });
-
-            // Populate user and product details before sending email
-            const populatedOrder = await Order.findById(order._id)
-                .populate('userId')
-                .populate('items.product')
-                .populate('address');
-
-            // Send order details to Gmail////////////////////
-            await sendOrderEmail(populatedOrder);
-
-            await sendOrderEmail(populatedOrder, true);
 
             // Update stock quantities
             for (const item of items) {

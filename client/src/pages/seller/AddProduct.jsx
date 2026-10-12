@@ -17,6 +17,9 @@ const AddProduct = () => {
     const [isBestSeller, setIsBestSeller] = useState(false);
     const [category, setCategory] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isCheckingSubscription, setIsCheckingSubscription] = useState(true);
+    const [freeListingsRemaining, setFreeListingsRemaining] = useState(0);
+    const [hasActiveSubscription, setHasActiveSubscription] = useState(false);
     // Track custom categories
     const [customCategories, setCustomCategories] = useState([]);
     // Track all available categories from API
@@ -38,6 +41,27 @@ const AddProduct = () => {
         };
         fetchCategories();
     }, [axios]);
+
+    useEffect(() => {
+        const checkSubscription = async () => {
+            try {
+                const { data } = await axios.get("/api/seller/subscription/status");
+                if (data.success) {
+                    setFreeListingsRemaining(data.subscription.freeTrial.remaining);
+                    setHasActiveSubscription(data.subscription.active);
+                }
+                if (data.success && !data.subscription.canCreateListings) {
+                    navigate("/seller/subscription", { replace: true });
+                }
+            } catch (error) {
+                toast.error(error.response?.data?.message || "Unable to check seller subscription");
+            } finally {
+                setIsCheckingSubscription(false);
+            }
+        };
+
+        checkSubscription();
+    }, [axios, navigate]);
 
     const refetchCategories = async () => {
         try {
@@ -138,6 +162,9 @@ const AddProduct = () => {
             });
 
             if (data.success) {
+                if (!hasActiveSubscription) {
+                    setFreeListingsRemaining((remaining) => Math.max(0, remaining - 1));
+                }
                 toast.success('Product added successfully! Redirecting to product list...', {
                     duration: 3000,
                     position: 'top-center',
@@ -161,6 +188,10 @@ const AddProduct = () => {
             }
         } catch (error) {
             console.error('Error adding product:', error);
+            if (error.response?.status === 403 && error.response?.data?.subscriptionRequired) {
+                navigate("/seller/subscription", { replace: true });
+                return;
+            }
             toast.error(error.response?.data?.message || "Failed to add product. Please try again.");
         } finally {
             setIsSubmitting(false);
@@ -169,7 +200,16 @@ const AddProduct = () => {
 
     return (
         <div className="no-scrollbar flex-1 h-[95vh] overflow-y-scroll flex flex-col justify-between">
-            <h1 className="text-3xl font-semibold mb-8">Add New Product</h1>
+            {isCheckingSubscription ? (
+                <div className="grid min-h-[60vh] place-items-center text-gray-600">Checking subscription...</div>
+            ) : (
+                <>
+            <h1 className="text-3xl font-semibold mb-2">Add New Product</h1>
+            <p className="px-4 text-sm text-gray-600">
+                {hasActiveSubscription
+                    ? "Your subscription is active. You can add products."
+                    : `Free trial: ${freeListingsRemaining} of 10 free product listings remaining.`}
+            </p>
             <form onSubmit={handleSubmit} className="md:p-10 p-4 space-y-5 max-w-lg">
                 <div>
                     <p className="text-base font-medium">Product Image <span className="text-red-500">*</span></p>
@@ -316,6 +356,8 @@ const AddProduct = () => {
                     {isSubmitting ? 'Adding...' : 'ADD'}
                 </button>
             </form>
+                </>
+            )}
         </div>
     );
 };

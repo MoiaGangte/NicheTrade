@@ -31,21 +31,20 @@ const ProductList = () => {
         }
     };
 
-    const toggleStockStatus = async (productId, currentStatus) => {
-        if (!productId) {
+    const toggleStockStatus = async (product) => {
+        if (!product?._id) {
             toast.error("Invalid product ID");
             return;
         }
 
         try {
             const { data } = await axios.post('/api/product/stock', {
-                id: productId,
-                inStock: !currentStatus,
-                isVisible: !currentStatus
+                id: product._id,
+                stockQuantity: product.inStock ? 0 : Math.max(1, product.stockQuantity || 0)
             });
             
             if (data.success) {
-                toast.success(currentStatus ? "Product is now out of stock" : "Product is now in stock");
+                toast.success(product.inStock ? "Product is now out of stock" : "Product is now in stock");
                 await fetchProducts();
             } else {
                 throw new Error(data.message || "Failed to update stock status");
@@ -186,7 +185,7 @@ const ProductList = () => {
                                         <td className="p-3">${product.offerPrice || 0}</td>
                                         <td className="p-3">
                                             <button
-                                                onClick={() => toggleStockStatus(product._id, product.inStock)}
+                                                onClick={() => toggleStockStatus(product)}
                                                 className={`px-4 py-2 rounded ${
                                                     product.inStock ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
                                                 }`}

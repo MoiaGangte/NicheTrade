@@ -134,8 +134,13 @@ const MyOrders = () => {
         >
           <div className='flex justify-between md:items-center text-black-400 md:font-medium max-md:flex-col mb-4'>
             <span className="text-sm">Order ID: {order._id}</span>
-            <span className="text-sm">Payment: {order.paymentType}</span>
             <span className="text-sm">Total: {currency}{order.amount}</span>
+            {order.deliveryLocation && (
+              <div className="text-sm">
+                <p>Delivery: {order.deliveryLocation === 'Other' ? order.customDeliveryLocation : order.deliveryLocation}</p>
+                <p>Time: {order.deliveryTime === 'Other' ? order.customDeliveryTime : order.deliveryTime}</p>
+              </div>
+            )}
           </div>
           
           {order.items?.map((item, index) => (

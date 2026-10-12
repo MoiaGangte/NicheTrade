@@ -40,7 +40,7 @@ const CategoryNav = () => {
   }, [axios]);
 
   return (
-    <nav className="w-full bg-white shadow-sm py-1 mb-1 overflow-x-auto sticky top-[60px] z-40">
+    <nav className="w-full bg-white shadow-sm py-1 mb-1 overflow-x-auto sticky top-16 z-40">
       <div className="flex gap-2 px-2 md:px-8 lg:px-6 xl:px-8 whitespace-nowrap">
         {categories.map((cat) => (
           <NavLink

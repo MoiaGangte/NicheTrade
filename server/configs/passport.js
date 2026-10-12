@@ -5,31 +5,55 @@ import User from '../models/User.js';
 passport.use(new GoogleStrategy({
   clientID: process.env.GOOGLE_CLIENT_ID,
   clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+  passReqToCallback: true,
   callbackURL: process.env.NODE_ENV === 'development'
     ? 'http://localhost:5000/api/user/google/callback'
     : 'https://eimi-cart-backend.vercel.app/api/user/google/callback'
 },
-  async (accessToken, refreshToken, profile, done) => {
+  async (req, accessToken, refreshToken, profile, done) => {
     try {
+      const studentDetails = req.session?.googleStudentDetails;
+      const email = profile.emails?.[0]?.value;
+      if (!studentDetails || !email) {
+        return done(new Error('Google sign-in requires complete student information'));
+      }
+
       let user = await User.findOne({
         $or: [
           { googleId: profile.id },
-          { email: profile.emails[0].value }
+          { email }
         ]
       });
 
       if (!user) {
-        // Create new user with Google OAuth
         user = await User.create({
           googleId: profile.id,
-          name: profile.displayName,
-          email: profile.emails[0].value,
+          name: studentDetails.name,
+          email,
+          department: studentDetails.department,
+          registerNumber: studentDetails.registerNumber,
+          mobileNumber: studentDetails.mobileNumber,
+          studentType: studentDetails.studentType,
+          dateOfBirth: studentDetails.dateOfBirth,
           cartItems: {},
           favorites: {}
         });
       } else if (!user.googleId) {
-        // Link existing email account with Google OAuth
         user.googleId = profile.id;
+        await user.save();
+      }
+
+      const missingStudentDetails = ['department', 'registerNumber', 'mobileNumber', 'studentType', 'dateOfBirth']
+        .some((field) => !user[field]);
+      if (missingStudentDetails) {
+        user.set({
+          name: user.name || studentDetails.name,
+          department: user.department || studentDetails.department,
+          registerNumber: user.registerNumber || studentDetails.registerNumber,
+          mobileNumber: user.mobileNumber || studentDetails.mobileNumber,
+          studentType: user.studentType || studentDetails.studentType,
+          dateOfBirth: user.dateOfBirth || studentDetails.dateOfBirth,
+        });
         await user.save();
       }
 

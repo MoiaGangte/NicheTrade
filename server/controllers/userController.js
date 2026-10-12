@@ -1,14 +1,35 @@
 import User from "../models/User.js";
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { getStudentDetails, parseDateOfBirth } from '../utils/studentDetails.js';
+
+const getAuthCookieOptions = () => ({
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+    path: '/',
+});
+
+const getPublicUser = (user) => {
+    const publicUser = user.toObject();
+    delete publicUser.password;
+    return publicUser;
+};
 
 //register user : /api/user/register
 export const register = async (req, res) => {
     try {
         const { name, email, password } = req.body;
+        const studentDetails = getStudentDetails(req.body);
 
-        if (!name || !email || !password) {
-            return res.json({ success: false, message: 'Missing Details' });
+        if (
+            typeof name !== 'string' || !name.trim() ||
+            typeof email !== 'string' || !email.trim() ||
+            typeof password !== 'string' || !password ||
+            !studentDetails
+        ) {
+            return res.status(400).json({ success: false, message: 'Complete all account and student information fields' });
         }
 
         const existingUser = await User.findOne({ email });
@@ -16,32 +37,35 @@ export const register = async (req, res) => {
             return res.json({ success: false, message: 'User already exists' });
         }
 
+        const existingRegisterNumber = await User.findOne({ registerNumber: studentDetails.registerNumber });
+        if (existingRegisterNumber) {
+            return res.status(409).json({ success: false, message: 'Register number is already associated with another account' });
+        }
+
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
         const user = await User.create({
             name,
-            email,
+            email: email.trim(),
             password: hashedPassword,
+            ...studentDetails,
             cartItems: {},
             favorites: {}
         });
 
         const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
-        res.cookie('token', token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'none',
-            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-            path: '/'
-        });
+        res.cookie('token', token, getAuthCookieOptions());
 
-        return res.json({ success: true, user });
+        return res.json({ success: true, user: getPublicUser(user), token });
 
     } catch (error) {
+        if (error.code === 11000) {
+            return res.status(409).json({ success: false, message: 'Email or register number is already associated with an account' });
+        }
         console.error('Registration error:', error);
-        res.json({ success: false, message: error.message });
+        res.status(500).json({ success: false, message: error.message });
     }
 };
 
@@ -65,21 +89,43 @@ export const login = async (req, res) => {
 
         const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
-        res.cookie('token', token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'development',
-            sameSite: 'none',
-            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-            path: '/'
-        });
+        res.cookie('token', token, getAuthCookieOptions());
 
-        return res.json({ success: true, user });
+        return res.json({ success: true, user: getPublicUser(user), token });
 
     } catch (error) {
         console.error('Login error:', error);
         res.json({ success: false, message: error.message });
     }
 }
+
+export const loginWithRegisterNumber = async (req, res) => {
+    try {
+        const { registerNumber, dateOfBirth } = req.body;
+        const parsedDateOfBirth = parseDateOfBirth(dateOfBirth);
+
+        if (typeof registerNumber !== 'string' || !registerNumber.trim() || !parsedDateOfBirth) {
+            return res.status(400).json({ success: false, message: 'Register number and date of birth are required' });
+        }
+
+        const user = await User.findOne({
+            registerNumber: registerNumber.trim(),
+            dateOfBirth: parsedDateOfBirth,
+        });
+
+        if (!user) {
+            return res.status(401).json({ success: false, message: 'Invalid register number or date of birth' });
+        }
+
+        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+        res.cookie('token', token, getAuthCookieOptions());
+
+        return res.json({ success: true, user: getPublicUser(user), token });
+    } catch (error) {
+        console.error('Register number login error:', error);
+        return res.status(500).json({ success: false, message: error.message });
+    }
+};
 
 //check Auth : /api/user/is-auth
 export const isAuth = async (req, res) => {
@@ -98,11 +144,11 @@ export const isAuth = async (req, res) => {
 //logout User : /api/user/logout
 export const logout = async (_req, res) => {
     try {
+        res.clearCookie('token', getAuthCookieOptions());
         res.clearCookie('token', {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
+            ...getAuthCookieOptions(),
+            secure: true,
             sameSite: 'none',
-            path: '/'
         });
         return res.json({ success: true, message: "Logged out successfully" });
     } catch (error) {
@@ -122,3 +168,38 @@ export const updateFavorites = async (req, res) => {
         res.json({ success: false, message: error.message });
     }
 }
+
+export const updateProfile = async (req, res) => {
+    try {
+        const studentDetails = getStudentDetails(req.body);
+        if (!studentDetails) {
+            return res.status(400).json({ success: false, message: 'Invalid profile information' });
+        }
+
+        const existingUser = await User.findOne({
+            registerNumber: studentDetails.registerNumber,
+            _id: { $ne: req.userId },
+        });
+        if (existingUser) {
+            return res.status(409).json({ success: false, message: 'Register number is already associated with another account' });
+        }
+
+        const user = await User.findByIdAndUpdate(
+            req.userId,
+            studentDetails,
+            { new: true, runValidators: true }
+        ).select('-password');
+
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        return res.json({ success: true, user, message: 'Profile information saved' });
+    } catch (error) {
+        if (error.code === 11000) {
+            return res.status(409).json({ success: false, message: 'Register number is already associated with another account' });
+        }
+        console.error('Profile update error:', error);
+        return res.status(500).json({ success: false, message: error.message });
+    }
+};

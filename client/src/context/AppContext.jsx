@@ -40,7 +40,12 @@ export const AppContextProvider = ({ children }) => {
     const currency = import.meta.env.VITE_CURRENCY;
     const navigate = useNavigate();
     const [user, setUser] = useState(null)
+    const [isUserLoading, setIsUserLoading] = useState(true)
     const [isSeller, setIsSeller] = useState(false)
+    const [seller, setSeller] = useState(null)
+    const [isSellerLoading, setIsSellerLoading] = useState(true)
+    const [isAdmin, setIsAdmin] = useState(false)
+    const [isAdminLoading, setIsAdminLoading] = useState(true)
     const [showUserLogin, setShowUserLogin] = useState(false)
     const [products, setProducts] = useState([])
     const [cartItems, setCartItems] = useState({})
@@ -51,17 +56,31 @@ export const AppContextProvider = ({ children }) => {
     const fetchSeller = async () => {
         try {
             const { data } = await axiosInstance.get('/api/seller/is-auth');
-            if (data.success) {
-                setIsSeller(true)
-            } else {
-                setIsSeller(false)
-            }
+            setIsSeller(Boolean(data.success))
+            setSeller(data.seller || null)
         } catch (error) {
             // Don't show error for 401 as it's expected for non-sellers
             if (error.response?.status !== 401) {
                 console.error('Error checking seller status:', error);
             }
             setIsSeller(false)
+            setSeller(null)
+        } finally {
+            setIsSellerLoading(false)
+        }
+    }
+
+    const fetchAdmin = async () => {
+        try {
+            const { data } = await axiosInstance.get('/api/admin/is-auth')
+            setIsAdmin(Boolean(data.success))
+        } catch (error) {
+            if (error.response?.status !== 401) {
+                console.error('Error checking admin status:', error)
+            }
+            setIsAdmin(false)
+        } finally {
+            setIsAdminLoading(false)
         }
     }
 
@@ -78,8 +97,13 @@ export const AppContextProvider = ({ children }) => {
                 setCartItems({}) // Clear cart items when no user
             }
         } catch (error) {
+            if (error.response?.status === 401) {
+                localStorage.removeItem('token');
+            }
             setUser(null)
             setCartItems({}) // Clear cart items on error
+        } finally {
+            setIsUserLoading(false)
         }
     }
 
@@ -162,6 +186,7 @@ export const AppContextProvider = ({ children }) => {
     useEffect(() => {
         fetchUser()
         fetchSeller()
+        fetchAdmin()
         fetchProducts()
     }, [])
 
@@ -186,21 +211,39 @@ export const AppContextProvider = ({ children }) => {
     }, [cartItems, user])
 
     // Handle Google OAuth success from server redirect
-    const handleGoogleAuthSuccess = useCallback((token, userData) => {
+    const handleGoogleAuthSuccess = useCallback(async (token) => {
         if (token) {
             localStorage.setItem('token', token);
         }
-        if (userData) {
-            setUser(userData);
-            setCartItems(userData.cartItems || {});
+        setIsUserLoading(true);
+
+        try {
+            const { data } = await axiosInstance.get('/api/user/is-auth');
+            if (!data.success || !data.user) {
+                throw new Error(data.message || 'Could not load the authenticated account');
+            }
+
+            setUser(data.user);
+            setCartItems(data.user.cartItems || {});
+            setShowUserLogin(false);
+            toast.success('Logged in successfully');
+            navigate('/');
+        } catch (error) {
+            localStorage.removeItem('token');
+            setUser(null);
+            setCartItems({});
+            setShowUserLogin(false);
+            console.error('Error loading Google-authenticated account:', error);
+            toast.error(error.response?.data?.message || 'Could not complete Google sign-in');
+            navigate('/');
+        } finally {
+            setIsUserLoading(false);
         }
-        setShowUserLogin(false);
-        toast.success('Logged in successfully');
-        navigate('/');
     }, [navigate]);
 
     const value = {
-        navigate, user, setUser, setIsSeller, isSeller,
+        navigate, user, setUser, isUserLoading, setIsSeller, isSeller, seller, setSeller, isSellerLoading,
+        isAdmin, setIsAdmin, isAdminLoading,
         showUserLogin, setShowUserLogin, products, currency, 
         addToCart, updateCartItem, removeFromCart, cartItems, 
         setCartItems, searchQuery, setSearchQuery, getCartAmount, 
@@ -216,4 +259,3 @@ export const AppContextProvider = ({ children }) => {
 export const useAppContext = () => {
     return useContext(AppContext)
 }
-

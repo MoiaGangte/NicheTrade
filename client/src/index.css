@@ -20,6 +20,32 @@
   scrollbar-width: none;
 }
 
+@media (min-width: 768px) {
+  .home-page-background {
+    background-color: #f3f4f6;
+    background-image: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+    background-repeat: no-repeat;
+  }
+}
+
+@media (min-width: 1024px) {
+  .home-dashboard-panel {
+    margin-top: 1.5rem;
+    padding: 1.5rem;
+    border: 1px solid #d1d5db;
+    border-top: 3px solid var(--color-primary-dull);
+    border-radius: 1rem;
+    background: rgb(255 255 255 / 65%);
+    box-shadow: 0 8px 24px rgb(15 23 42 / 6%);
+    transition: box-shadow 180ms ease, transform 180ms ease;
+  }
+
+  .home-dashboard-panel:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 28px rgb(15 23 42 / 10%);
+  }
+}
+
 @media (max-width: 767px) {
   .no-bg-mobile {
     background-image: none !important;

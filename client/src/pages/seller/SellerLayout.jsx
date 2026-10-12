@@ -5,7 +5,7 @@ import toast from "react-hot-toast";
 import { useRef } from "react";
 
 const SellerLayout = () => {
-    const { axios, navigate } = useAppContext();
+    const { axios, navigate, seller, setIsSeller, setSeller } = useAppContext();
     const touchStartX = useRef(null);
     const touchEndX = useRef(null);
 
@@ -13,6 +13,7 @@ const SellerLayout = () => {
         { name: "Add Product", path: "/seller", icon: assets.add_icon },
         { name: "Product List", path: "/seller/product-list", icon: assets.product_list_icon },
         { name: "Orders", path: "/seller/orders", icon: assets.order_icon },
+        { name: "Subscription", path: "/seller/subscription", icon: assets.product_list_icon },
     ];
 
     // Swipe handlers for mobile
@@ -29,6 +30,7 @@ const SellerLayout = () => {
             // Find current page index
             const currentPath = window.location.pathname;
             const currentIndex = sidebarLinks.findIndex(link => link.path === currentPath || (link.path === "/seller" && currentPath === "/seller"));
+            if (currentIndex < 0) return;
             if (diff > 0) {
                 // Swipe left: next page (loop)
                 const nextIndex = (currentIndex + 1) % sidebarLinks.length;
@@ -47,13 +49,15 @@ const SellerLayout = () => {
         try {
             const {data} = await axios.get('/api/seller/logout');
             if(data.success){
+                setIsSeller(false);
+                setSeller(null);
                 toast.success(data.message)
                 navigate('/')
             }else{
                 toast.error(data.message)
             }
         } catch (error) {
-            toast.error(data.message)
+            toast.error(error.response?.data?.message || error.message || "Unable to log out");
         }
     }
 
@@ -61,10 +65,10 @@ const SellerLayout = () => {
         <>
             <div className="flex items-center justify-between px-4 md:px-8 border-b border-gray-300 py-3 bg-white shadow-sm">
                 <Link to='/' className="flex items-center gap-2">
-                    <span className="text-2xl font-bold text-[var(--color-primary)]">EimiCart Seller</span>
+                    <span className="text-2xl font-bold text-[var(--color-primary)]">NicheTrade Seller</span>
                 </Link>
                 <div className="flex items-center gap-5 text-black">
-                    <p className="font-medium">Hi Boss MoiaGangte</p>
+                    <p className="font-medium">Hi {seller?.name || "Seller"}</p>
                     <button 
                         onClick={logout} 
                         className='border border-[var(--color-primary)] text-[var(--color-primary)] rounded-full text-sm px-4 py-1 hover:bg-[var(--color-primary)] hover:text-white transition-colors duration-200'

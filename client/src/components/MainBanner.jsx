@@ -26,6 +26,13 @@ const MainBanner = () => {
     const [touchEndX, setTouchEndX] = useState(null);
     const isLargeScreen = useIsLargeScreen();
 
+    const navigateToDashboardSection = (sectionId) => {
+        navigate(`/#${sectionId}`);
+        requestAnimationFrame(() => {
+            document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+    };
+
     // Only run sliding logic on non-large screens
     useEffect(() => {
         if (isLargeScreen) return; // skip on large screens
@@ -96,7 +103,7 @@ const MainBanner = () => {
                 <div>
                     <div className="relative z-10 flex flex-col items-center justify-center text-center" >
                         <img src={assets.gocc} alt="" className='w-full h-full object-cover' />
-                        <h1 className='hidden md:block text-4xl md:text-4xl lg:text-4xl font-bold text-white [text-shadow:_1px_1px_0_rgb(0_0_0_/_100%)]'>Welcome To EimiCart</h1>
+                        <h1 className='hidden md:block text-4xl md:text-4xl lg:text-4xl font-bold text-black [text-shadow:_1px_1px_0_rgb(0_0_0_/_100%)]'>Welcome To NicheTrade</h1>
                         <div className='flex lg:hidden self-start gap-4 mt-7'>
                             <button onClick={() => navigate('/products')} className='px-1 mt-52 py-2 bg-[var(--color-primary)] shadow-lg p-2 text-white font-medium rounded-none border-1 border-white border-transparent hover:border-white active:border-white transition'>
                                 Shop now
@@ -118,10 +125,10 @@ const MainBanner = () => {
             />
             <div className="lg:hidden relative z-10 flex flex-col items-start justify-center text-center h-full">
                 <button
-                    onClick={() => navigate('/products')}
+                    onClick={() => navigateToDashboardSection('lost-and-found')}
                     className="lg:hidden px-4 mt-59 py-2 bg-[var(--color-primary)] shadow-lg text-white font-medium rounded border border-white hover:border-white active:border-white transition"
                 >
-                    Shop now
+                    Lost and found
                 </button>
             </div>
         </div>,
@@ -137,20 +144,15 @@ const MainBanner = () => {
                 playsInline
                 className="absolute top-0 left-0 w-full h-full object-cover block md:hidden z-0"
             />
-            <div className="lg:hidden relative z-10 flex flex-col items-center justify-center text-center" >
-                <h1 className='text-4xl md:text-5xl lg:text-4xl font-bold text-white [text-shadow:_1px_1px_0_rgb(0_0_0_/_100%)]'>Top Brand Fasion</h1>
-                <p className='text-lg md:text-xl text-white outline outline-black mt-4 [text-shadow:_1px_1px_0_rgb(0_0_0_/_100%)] md:text-left'>
-                    Styliest fasion,<br className='block md:hidden' />
-                    Branded and Exclusive,<br className=' block md: hidden' />
-                    DoorStep Delivery at LAMKA!!<br className='block md:hidden' />
-                </p>
-                <div className='lg:hidden flex self-start mt-6'>
-                    <button onClick={() => navigate('/products?category=fasion')} className='px-1 mt-18 py-2 bg-[var(--color-primary)] shadow-lg p-2 text-white font-medium rounded-none border-1 border-white border-transparent hover:border-white active:border-white transition'>
-                        Shop now
-                    </button>
-                </div>
+            <div className="lg:hidden relative z-10 flex flex-col items-start justify-center text-center h-full">
+                <button
+                    onClick={() => navigateToDashboardSection('lost-and-found')}
+                    className="lg:hidden px-4 mt-59 py-2 bg-[var(--color-primary)] shadow-lg text-white font-medium rounded border border-white hover:border-white active:border-white transition"
+                >
+                    Earn Money
+                </button>
             </div>
-        </div>
+        </div>,
     ];
 
     if (isLargeScreen) {

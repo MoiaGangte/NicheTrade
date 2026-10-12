@@ -1,73 +1,115 @@
-import jwt from 'jsonwebtoken';
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import Seller from "../models/Seller.js";
 
-// Login Seller : /api/seller/login
+const cookieOptions = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+    path: "/",
+};
+
+const publicSeller = (seller) => ({
+    _id: seller._id,
+    name: seller.name,
+    email: seller.email,
+    phone: seller.phone,
+    department: seller.department || "",
+    isApproved: seller.isApproved,
+    isActive: seller.isActive !== false,
+});
+
+export const sellerRegister = async (req, res) => {
+    try {
+        const name = typeof req.body.name === "string" ? req.body.name.trim() : "";
+        const email = typeof req.body.email === "string" ? req.body.email.trim().toLowerCase() : "";
+        const phone = typeof req.body.phone === "string" ? req.body.phone.trim() : "";
+        const department = typeof req.body.department === "string" ? req.body.department.trim() : "";
+        const { password, confirmPassword } = req.body;
+        const phoneDigits = phone.replace(/\D/g, "");
+
+        if (!name || !email || !phone || !department || typeof password !== "string" || typeof confirmPassword !== "string" || !password || !confirmPassword) {
+            return res.status(400).json({ success: false, message: "All fields are required" });
+        }
+        if (name.length < 2) {
+            return res.status(400).json({ success: false, message: "Name must be at least 2 characters" });
+        }
+        if (department.length < 2 || department.length > 100) {
+            return res.status(400).json({ success: false, message: "Department must be between 2 and 100 characters" });
+        }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            return res.status(400).json({ success: false, message: "Enter a valid email address" });
+        }
+        if (phoneDigits.length < 7 || phoneDigits.length > 15) {
+            return res.status(400).json({ success: false, message: "Enter a valid phone number" });
+        }
+        if (password.length < 8) {
+            return res.status(400).json({ success: false, message: "Password must be at least 8 characters" });
+        }
+        if (password !== confirmPassword) {
+            return res.status(400).json({ success: false, message: "Passwords do not match" });
+        }
+        if (await Seller.exists({ email })) {
+            return res.status(409).json({ success: false, message: "A seller account with this email already exists" });
+        }
+
+        const seller = await Seller.create({
+            name,
+            email,
+            phone,
+            department,
+            password: await bcrypt.hash(password, 10),
+            isApproved: false,
+        });
+
+        return res.status(201).json({
+            success: true,
+            message: "Registration submitted. An admin must approve your seller account before you can log in.",
+            seller: publicSeller(seller),
+        });
+    } catch (error) {
+        if (error.code === 11000) {
+            return res.status(409).json({ success: false, message: "A seller account with this email already exists" });
+        }
+        console.error("Seller registration error:", error);
+        return res.status(500).json({ success: false, message: "Unable to register seller" });
+    }
+};
+
 export const sellerLogin = async (req, res) => {
     try {
-        const { email, password } = req.body;
-
-        if (!email || !password) {
-            return res.status(400).json({ success: false, message: 'Email and password are required' });
+        const email = typeof req.body.email === "string" ? req.body.email.trim().toLowerCase() : "";
+        const { password } = req.body;
+        if (!email || typeof password !== "string" || !password) {
+            return res.status(400).json({ success: false, message: "Email and password are required" });
         }
 
-        if (password === process.env.SELLER_PASSWORD && email === process.env.SELLER_EMAIL) {
-            const token = jwt.sign({ 
-                id: 'seller', // Add a fixed ID for the seller
-                email 
-            }, process.env.JWT_SECRET, { expiresIn: '7d' });
-
-            res.cookie('sellerToken', token, {
-                httpOnly: true,
-                // In production we need `secure: true` and `sameSite: 'none'` for cross-site cookies
-                // In development use `sameSite: 'lax'` and secure=false so browsers accept the cookie
-                secure: process.env.NODE_ENV === 'production',
-                sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-                maxAge: 7 * 24 * 60 * 60 * 1000,
-                path: '/'
-            });
-
-            return res.json({ success: true, message: "Logged In Successfully" });
-        } else {
-            return res.status(401).json({ success: false, message: "Invalid Credentials" });
+        const seller = await Seller.findOne({ email });
+        if (!seller || !(await bcrypt.compare(password, seller.password))) {
+            return res.status(401).json({ success: false, message: "Invalid email or password" });
         }
+        if (!seller.isApproved) {
+            return res.status(403).json({ success: false, message: "Your seller account is awaiting admin approval" });
+        }
+        if (seller.isActive === false) {
+            return res.status(403).json({ success: false, message: "Your seller account has been disabled. Contact the administrator." });
+        }
+
+        const token = jwt.sign({ id: seller._id.toString(), role: "seller" }, process.env.JWT_SECRET, { expiresIn: "7d" });
+        res.cookie("sellerToken", token, cookieOptions);
+        return res.json({ success: true, message: "Logged in successfully", seller: publicSeller(seller) });
     } catch (error) {
-        console.error('Seller login error:', error);
-        res.status(500).json({ success: false, message: error.message });
+        console.error("Seller login error:", error);
+        return res.status(500).json({ success: false, message: "Unable to log in" });
     }
 };
 
-// Seller isAuth : /api/seller/is-auth
 export const isSellerAuth = async (req, res) => {
-    try {
-        const { sellerToken } = req.cookies;
-        
-        if (!sellerToken) {
-            return res.status(401).json({ success: false, message: 'Not authenticated' });
-        }
-
-        const tokenDecode = jwt.verify(sellerToken, process.env.JWT_SECRET);
-        if (!tokenDecode || tokenDecode.email !== process.env.SELLER_EMAIL) {
-            return res.status(401).json({ success: false, message: 'Invalid token' });
-        }
-
-        return res.json({ success: true, message: 'Authenticated' });
-    } catch (error) {
-        console.error('Seller auth check error:', error);
-        res.status(401).json({ success: false, message: error.message });
-    }
+    return res.json({ success: true, seller: publicSeller(req.seller) });
 };
 
-// Logout seller : /api/seller/logout
-export const sellerLogout = async (req, res) => {
-    try {
-        res.clearCookie('sellerToken', {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
-            path: '/'
-        });
-        return res.json({ success: true, message: "Logged out successfully" });
-    } catch (error) {
-        console.error('Seller logout error:', error);
-        res.status(500).json({ success: false, message: error.message });
-    }
+export const sellerLogout = async (_req, res) => {
+    res.clearCookie("sellerToken", { ...cookieOptions, maxAge: undefined });
+    return res.json({ success: true, message: "Logged out successfully" });
 };

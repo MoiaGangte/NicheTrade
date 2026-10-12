@@ -1,0 +1,226 @@
+.rules-page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 4rem 1.5rem 3rem;
+  color: #111827;
+}
+
+/* Hero Section */
+.rules-hero {
+  max-width: 780px;
+  margin: 0 auto 3rem;
+  text-align: center;
+}
+
+.rules-eyebrow {
+  display: inline-block;
+  padding: 0.45rem 0.8rem;
+  border: 1px solid rgb(99 109 185 / 25%);
+  border-radius: 9999px;
+  background: rgb(99 109 185 / 8%);
+  color: #525da7;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+}
+
+.rules-hero h1 {
+  margin: 1rem 0;
+  font-size: clamp(2.25rem, 6vw, 4rem);
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.rules-hero h1 span {
+  color: #636db9;
+}
+
+.rules-hero p {
+  margin: 0 auto;
+  color: #4b5563;
+  font-size: 1.05rem;
+  line-height: 1.8;
+}
+
+/* Introduction */
+.rules-intro {
+  max-width: 850px;
+  margin: 0 auto 2.5rem;
+  padding: 1.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 1rem;
+  background: rgb(255 255 255 / 85%);
+  box-shadow: 0 10px 25px rgb(15 23 42 / 4%);
+}
+
+.rules-intro h2 {
+  margin: 0 0 0.75rem;
+  color: #111827;
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.rules-intro p {
+  margin: 0;
+  color: #4b5563;
+  line-height: 1.8;
+}
+
+/* Rules Grid */
+.rules-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem;
+}
+
+/* Individual Cards */
+.rules-card {
+  padding: 1.5rem;
+  border: 1px solid #e5e7eb;
+  border-top: 3px solid #636db9;
+  border-radius: 1rem;
+  background: rgb(255 255 255 / 90%);
+  box-shadow: 0 10px 25px rgb(15 23 42 / 5%);
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease,
+    border-color 0.25s ease;
+}
+
+.rules-card:hover {
+  transform: translateY(-4px);
+  border-color: rgb(99 109 185 / 35%);
+  border-top-color: #525da7;
+  box-shadow: 0 16px 32px rgb(15 23 42 / 9%);
+}
+
+.rules-card-number {
+  display: inline-block;
+  margin-bottom: 0.75rem;
+  padding: 0.35rem 0.6rem;
+  border-radius: 9999px;
+  background: rgb(99 109 185 / 10%);
+  color: #636db9;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.rules-card h2 {
+  margin: 0 0 0.65rem;
+  color: #111827;
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.rules-card-description {
+  margin: 0 0 1rem;
+  color: #4b5563;
+  line-height: 1.7;
+}
+
+.rules-card ul {
+  display: grid;
+  gap: 0.65rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rules-card li {
+  position: relative;
+  padding-left: 1.25rem;
+  color: #374151;
+  line-height: 1.6;
+}
+
+.rules-card li::before {
+  position: absolute;
+  top: 0.65em;
+  left: 0;
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 50%;
+  background: #636db9;
+  content: "";
+}
+
+/* Administrator policy */
+.rules-policy {
+  max-width: 900px;
+  margin: 3rem auto 0;
+  padding: 2rem;
+  border: 1px solid rgb(99 109 185 / 20%);
+  border-radius: 1rem;
+  background: linear-gradient(135deg, rgb(99 109 185 / 8%), #fff 70%);
+}
+
+.rules-policy h2 {
+  margin: 1rem 0 0.75rem;
+  color: #111827;
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+.rules-policy > p {
+  margin: 0;
+  color: #4b5563;
+  line-height: 1.8;
+}
+
+.rules-policy-highlight {
+  margin-top: 1.25rem;
+  padding: 1rem 1.1rem;
+  border-left: 4px solid #636db9;
+  border-radius: 0.4rem;
+  background: #fff;
+  color: #374151;
+  line-height: 1.7;
+}
+
+.rules-policy-highlight strong {
+  color: #252f70;
+}
+
+/* Closing statement */
+.rules-closing {
+  max-width: 780px;
+  margin: 3rem auto 0;
+  text-align: center;
+}
+
+.rules-closing h2 {
+  margin: 0 0 0.75rem;
+  color: #111827;
+  font-size: 1.65rem;
+  font-weight: 700;
+}
+
+.rules-closing p {
+  margin: 0;
+  color: #4b5563;
+  line-height: 1.8;
+}
+
+@media (max-width: 700px) {
+  .rules-page {
+    padding: 2.5rem 1rem;
+  }
+
+  .rules-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .rules-intro,
+  .rules-card,
+  .rules-policy {
+    padding: 1.25rem;
+  }
+
+  .rules-policy h2,
+  .rules-closing h2 {
+    font-size: 1.35rem;
+  }
+}
+ 

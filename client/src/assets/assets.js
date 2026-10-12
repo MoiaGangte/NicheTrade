@@ -22,8 +22,6 @@ import black_arrow_icon from "./black_arrow_icon.svg";
 import white_arrow_icon from "./white_arrow_icon.svg";
 import main_banner_bg from "./main_banner_bg.png";
 import main_banner_bg_sm from "./main_banner_bg_sm.png";
-import bottom_banner_image from "./bottom_banner_image.png";
-import bottom_banner_image_sm from "./bottom_banner_image_sm.png";
 import add_address_iamge from "./add_address_image.svg";
 import organic_vegitable_image from "./organic_vegitable_image.png";
 import fresh_fruits_image from "./fresh_fruits_image.png";
@@ -99,8 +97,6 @@ export const assets = {
   white_arrow_icon,
   main_banner_bg,
   main_banner_bg_sm,
-  bottom_banner_image,
-  bottom_banner_image_sm,
   add_address_iamge,
   box_icon,
 };
@@ -147,29 +143,28 @@ export const footerLinks = [
   {
     title: "Quick Links",
     links: [
-      { text: "Home", url: "#" },
-      { text: "Offers & Deals", url: "#" },
-      { text: "Contact Us", url: "#" },
-      { text: "FAQs", url: "#" },
+      { text: "Home", url: "/" },
+      { text: "Product", url: "/products" },
+      { text: "Lost and Found", url: "/#lost-and-found" },
+      { text: "Request Item", url: "/#request-items" },
     ],
   },
   {
-    title: "Need help?",
+    title: "About Us",
     links: [
-      { text: "Delivery Information", url: "#" },
-      { text: "Return & Refund Policy", url: "#" },
-      { text: "Payment Methods", url: "#" },
-      { text: "Track your Order", url: "#" },
-      { text: "Contact Us", url: "#" },
+      { text: "Developer Team", url: "/developer-team" },
+      { text: "Admin Regulation", url: "/regulation" },
+      { text: "Objective", url: "/objective" },
+      { text: "Documentation", url: "/documentation" },
     ],
   },
   {
     title: "Follow Us",
     links: [
-      { text: "Instagram", url: "#" },
-      { text: "twitter", url: "#" },
-      { text: "Facebook", url: "#" },
-      { text: "whatapps", url: "#" },
+      { text: "Instagram", url: "https://www.instagram.com/nicheuniversityonline?mdxt=dmlrcmxraHZ2czFl" },
+      { text: "Facebook", url: "https://www.facebook.com/share/g/1b4ohpdMJ2/" },
+      { text: "Website", url: "https://www.niuniv.com/" },
+      { text: "Youtube", url: "https://youtube.com/@nicheuniversityonline?si=JMZ_WMGvKk8_Td0k" },
     ],
   },
 ];

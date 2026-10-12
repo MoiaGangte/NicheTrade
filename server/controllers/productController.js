@@ -1,5 +1,6 @@
 import { v2 as cloudinary } from "cloudinary";
 import Product from "../models/Product.js";
+import { releaseSellerProductUpload } from "../utils/sellerFreeListingTrial.js";
 
 // Configure Cloudinary
 cloudinary.config({
@@ -10,11 +11,16 @@ cloudinary.config({
 
 //add product : /api/product/add
 export const addProduct = async (req, res) => {
+    let productCreated = false;
     try {
         let productData = JSON.parse(req.body.productData);
         const images = req.files;
 
         if (!images || images.length === 0) {
+            if (req.productUploadReserved) {
+                await releaseSellerProductUpload(req.sellerId);
+                req.productUploadReserved = false;
+            }
             return res.json({ success: false, message: "Please upload at least one image" });
         }
 
@@ -33,10 +39,12 @@ export const addProduct = async (req, res) => {
         const newProduct = await Product.create({
             ...productData,
             image: imagesUrl,
+            sellerId: req.sellerId,
             inStock: true,
             isVisible: true,
             isBestSeller: productData.isBestSeller || false // Ensure isBestSeller is set
         });
+        productCreated = true;
 
         res.json({
             success: true,
@@ -45,6 +53,14 @@ export const addProduct = async (req, res) => {
         });
 
     } catch (error) {
+        if (req.productUploadReserved && !productCreated) {
+            try {
+                await releaseSellerProductUpload(req.sellerId);
+                req.productUploadReserved = false;
+            } catch (releaseError) {
+                console.error("Unable to release failed free listing reservation:", releaseError);
+            }
+        }
         console.error('Error in addProduct:', error);
         res.json({
             success: false,
@@ -57,6 +73,12 @@ export const addProduct = async (req, res) => {
 export const productList = async (_req, res) => {
     try {
         const products = await Product.find({ isVisible: true })
+            .populate({
+                path: "sellerId",
+                select: "name department isActive isApproved",
+                match: { isActive: { $ne: false }, isApproved: true },
+            })
+            .lean();
         res.json({ success: true, products })
     } catch (error) {
         console.log(error.message);
@@ -67,7 +89,9 @@ export const productList = async (_req, res) => {
 // Seller product list : /api/product/seller/list
 export const sellerProductList = async (req, res) => {
     try {
-        const products = await Product.find({}).select('_id name price offerPrice image inStock stockQuantity category').lean();
+        const products = await Product.find({ sellerId: req.sellerId })
+            .select('_id name price offerPrice image inStock stockQuantity category')
+            .lean();
 
         if (!products || products.length === 0) {
             return res.json({
@@ -120,18 +144,25 @@ export const changeStock = async (req, res) => {
     try {
         const { id, stockQuantity } = req.body;
 
-        // Always parse stockQuantity as integer
-        const quantity = parseInt(stockQuantity);
+        const quantity = Number(stockQuantity);
+        if (!id || !Number.isInteger(quantity) || quantity < 0) {
+            return res.status(400).json({ success: false, message: "A valid product ID and non-negative stock quantity are required" });
+        }
 
-        // If stock is added, set inStock and isVisible to true
-        // If stock is 0, set inStock and isVisible to false
         const updateData = {
             stockQuantity: quantity,
             inStock: quantity > 0,
             isVisible: quantity > 0
         };
 
-        await Product.findByIdAndUpdate(id, updateData);
+        const product = await Product.findOneAndUpdate(
+            { _id: id, sellerId: req.sellerId },
+            updateData,
+            { new: true }
+        );
+        if (!product) {
+            return res.status(404).json({ success: false, message: "Product not found" });
+        }
 
         let message = `Stock quantity updated to ${quantity}`;
         if (quantity > 0) {
@@ -166,8 +197,10 @@ export const deleteCategory = async (req, res) => {
             return res.json({ success: false, message: "Category name is required" });
         }
 
-        // Update all products with this category to have empty category
-        await Product.updateMany({ category: category }, { $unset: { category: "" } });
+        await Product.updateMany(
+            { category, sellerId: req.sellerId },
+            { $set: { category: "uncategorized" } }
+        );
 
         res.json({ success: true, message: `Category "${category}" deleted successfully. All products in this category have been uncategorized.` });
     } catch (error) {
@@ -179,7 +212,10 @@ export const deleteCategory = async (req, res) => {
 export const deleteProduct = async (req, res) => {
     try {
         const { id } = req.params;
-        await Product.findByIdAndDelete(id);
+        const product = await Product.findOneAndDelete({ _id: id, sellerId: req.sellerId });
+        if (!product) {
+            return res.status(404).json({ success: false, message: "Product not found" });
+        }
         res.json({ success: true, message: "Product deleted successfully" });
     } catch (error) {
         console.log(error.message);

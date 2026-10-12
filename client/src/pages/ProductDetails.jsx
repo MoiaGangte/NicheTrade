@@ -138,6 +138,10 @@ const ProductDetails = () => {
 
                 <div className="text-sm w-full md:w-1/2">
                     <h1 className="text-3xl font-medium">{product.name}</h1>
+                    <div className="mt-1 text-sm text-gray-600">
+                        <p>Seller: {product.sellerId?.name || "NicheTrade Seller"}</p>
+                        <p>Department: {product.sellerId?.department || "Not provided"}</p>
+                    </div>
 
                     <div className="flex items-center gap-0.5 mt-1">
                         <p className="text-base">Stock Available: <span className={product.stockQuantity > 0 ? 'text-green-600' : 'text-red-600'}>{product.stockQuantity || 1}</span></p>

@@ -13,8 +13,8 @@ import addressRouter from './routes/addressRoute.js';
 import reviewRouter from './routes/reviewRoutes.js';
 import paymentRouter from './routes/paymentRoute.js';
 import adminRouter from './routes/adminRoute.js';
-import feedbackRouter from './routes/feedbackRoute.js';
-import aiRouter from './routes/aiRoute.js';
+import lostFoundRouter from './routes/lostFoundRoute.js';
+import requestItemRouter from './routes/requestItemRoute.js';
 import session from 'express-session';
 import passport from 'passport';
 import './configs/passport.js';
@@ -59,6 +59,7 @@ app.use(cors({
             .filter(Boolean);
 
         // Fallback defaults when no env var provided
+///////////////////// provided the origin in vercel and local host for development 
         if (allowedOrigins.length === 0) {
             allowedOrigins.push('https://eimi-cart.vercel.app', 'http://localhost:5173');
         }
@@ -99,8 +100,8 @@ app.use('/api/review', reviewRouter);
 app.use('/api/order', orderRouter);
 app.use('/api/payment', paymentRouter);
 app.use('/api/admin', adminRouter);
-app.use('/api/feedback', feedbackRouter);
-app.use('/api/ai', aiRouter);
+app.use('/api/lost-found', lostFoundRouter);
+app.use('/api/request-items', requestItemRouter);
 
 //////////////////////////
 app.get('/api/user/google', (req, res, next) => {
@@ -174,5 +175,3 @@ app.post("/order", async (req, res) => {
         res.status(500).send("Error");
     }
 });
-
-

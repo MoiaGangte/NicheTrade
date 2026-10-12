@@ -7,8 +7,6 @@ const ProductCart = ({ product, small, smaller }) => {
     const { currency, addToCart, removeFromCart, cartItems, navigate } = useAppContext()
     const location = useLocation();
     const isHomePage = location.pathname === '/';
-    const isProductDetails = location.pathname.match(/^\/products\/[^/]+\/[^/]+$/);
-
     const handleProductClick = () => {
         navigate(`/products/${product.category.toLowerCase()}/${product._id}`);
         window.scrollTo(0, 0);
@@ -61,6 +59,12 @@ const ProductCart = ({ product, small, smaller }) => {
             <div className={`text-black text-sm ${mtClass}`}>
                 <p className={`${isHomePage ? 'text-black' : 'text-black'} ${catTextClass}`}>{product.category}</p>
                 <p className={`${isHomePage ? 'text-black ' : 'text-black'} font-medium truncate w-full ${nameTextClass}`}>{product.name}</p>
+                <p className="truncate text-xs text-gray-500">
+                    Seller: {product.sellerId?.name || "NicheTrade Seller"}
+                </p>
+                <p className="truncate text-xs text-gray-500">
+                    Department: {product.sellerId?.department || "Not provided"}
+                </p>
                 <div className="flex items-center gap-2">
                     <span className="font-medium text-black text-xs">
                         Stock: {product.stockQuantity || 1}

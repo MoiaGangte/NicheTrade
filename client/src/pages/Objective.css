@@ -1,0 +1,94 @@
+.objective-page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 4rem 0 3rem;
+  color: #111827;
+}
+
+.objective-hero {
+  max-width: 780px;
+  margin: 0 auto 3rem;
+  text-align: center;
+}
+
+.objective-eyebrow {
+  display: inline-block;
+  padding: 0.45rem 0.8rem;
+  border: 1px solid rgb(99 109 185 / 25%);
+  border-radius: 9999px;
+  background: rgb(99 109 185 / 8%);
+  color: #525da7;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+}
+
+.objective-hero h1 {
+  margin: 1rem 0;
+  font-size: clamp(2.25rem, 6vw, 4rem);
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.objective-hero h1 span {
+  color: #636db9;
+}
+
+.objective-hero p {
+  margin: 0 auto;
+  color: #4b5563;
+  font-size: 1.05rem;
+  line-height: 1.8;
+}
+
+.objective-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.25rem;
+}
+
+.objective-card {
+  padding: 1.5rem;
+  border: 1px solid #e5e7eb;
+  border-top: 3px solid #636db9;
+  border-radius: 1rem;
+  background: rgb(255 255 255 / 85%);
+  box-shadow: 0 10px 25px rgb(15 23 42 / 5%);
+}
+
+.objective-card-number {
+  color: #636db9;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+.objective-card h2 {
+  margin: 0.85rem 0 0.6rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.objective-card p {
+  margin: 0;
+  color: #6b7280;
+  line-height: 1.7;
+}
+
+.objective-closing {
+  max-width: 760px;
+  margin: 2rem auto 0;
+  color: #4b5563;
+  line-height: 1.7;
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  .objective-page {
+    padding: 3rem 0 2rem;
+  }
+
+  .objective-cards {
+    grid-template-columns: 1fr;
+  }
+}

@@ -105,6 +105,9 @@ const Orders = () => {
                                 <p className="font-medium text-[var(--color-primary)] mb-2">
                                     {order.userId?.name || 'Unknown User'}
                                 </p>
+                                <p className="mb-2 text-sm text-gray-600">
+                                    {order.userId?.department || 'Department not provided'}
+                                </p>
                                 {order.items?.map((item, index) => (
                                     <div key={index} className="flex flex-col">
                                         <p className="font-medium">
@@ -117,12 +120,18 @@ const Orders = () => {
                         </div>
 
                         <div className="text-sm md:text-base text-black/60">
-                            <p className='text-black/80'>
-                                {order.address?.firstName || 'N/A'} {order.address?.lastName || ''}
-                            </p>
-                            <p>{order.address?.street || 'N/A'}, {order.address?.city || 'N/A'}</p>
-                            <p>{order.address?.state || 'N/A'}, {order.address?.zipcode || 'N/A'}, {order.address?.country || 'N/A'}</p>
-                            <p>{order.address?.phone || 'N/A'}</p>
+                            {order.deliveryLocation ? (
+                                <>
+                                    <p className="font-medium text-black/80">Delivery: {order.deliveryLocation === 'Other' ? order.customDeliveryLocation : order.deliveryLocation}</p>
+                                    <p>Time: {order.deliveryTime === 'Other' ? order.customDeliveryTime : order.deliveryTime}</p>
+                                </>
+                            ) : (
+                                <>
+                                    <p className="font-medium text-black/80">{order.address?.street || 'N/A'}, {order.address?.city || 'N/A'}</p>
+                                    <p>{order.address?.state || 'N/A'}, {order.address?.country || 'N/A'}</p>
+                                </>
+                            )}
+                            <p>Contact: {order.userId?.mobileNumber || order.address?.phone || 'N/A'}</p>
                         </div>
 
                         <div className="flex flex-col items-end gap-2">
@@ -130,13 +139,7 @@ const Orders = () => {
                                 {currency}{order.amount || 0}
                             </p>
                             <div className="flex flex-col text-sm text-right">
-                                <p>Method: {order.paymentType || 'N/A'}</p>
                                 <p>Date: {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'N/A'}</p>
-                                <p className={`font-medium ${
-                                    order.isPaid ? 'text-green-600' : 'text-red-600'
-                                }`}>
-                                    Payment: {order.isPaid ? "Paid" : "Pending"}
-                                </p>
                                 <p className={`font-medium ${
                                     order.status === 'Delivered' ? 'text-green-600' : 
                                     order.status === 'Cancelled' ? 'text-red-600' : 

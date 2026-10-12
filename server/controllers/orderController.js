@@ -21,6 +21,111 @@ try {
     console.error('Error initializing Razorpay:', error);
 }
 
+const deliveryLocationOptions = ['AFC', 'Near Department Store', 'MBA Canteen', 'Cafe Canteen', 'Other'];
+const deliveryTimeOptions = ['During lunch break', 'After college', 'Other'];
+
+export const placeOrder = async (req, res) => {
+    try {
+        const {
+            items,
+            deliveryLocation,
+            customDeliveryLocation = '',
+            deliveryTime,
+            customDeliveryTime = '',
+        } = req.body;
+
+        if (
+            !Array.isArray(items) ||
+            items.length === 0 ||
+            !deliveryLocationOptions.includes(deliveryLocation) ||
+            !deliveryTimeOptions.includes(deliveryTime) ||
+            typeof customDeliveryLocation !== 'string' ||
+            typeof customDeliveryTime !== 'string' ||
+            (deliveryLocation === 'Other' && !customDeliveryLocation.trim()) ||
+            (deliveryTime === 'Other' && !customDeliveryTime.trim()) ||
+            customDeliveryLocation.length > 120 ||
+            customDeliveryTime.length > 120
+        ) {
+            return res.status(400).json({ success: false, message: 'Choose valid delivery details and add custom details where needed' });
+        }
+
+        const normalizedItems = [];
+        const productsById = new Map();
+        const quantitiesByProduct = new Map();
+        for (const item of items) {
+            if (
+                !item ||
+                !mongoose.isValidObjectId(item.product) ||
+                !Number.isInteger(item.quantity) ||
+                item.quantity < 1 ||
+                item.quantity > 9
+            ) {
+                return res.status(400).json({ success: false, message: 'Invalid order items' });
+            }
+
+            const productId = item.product.toString();
+            quantitiesByProduct.set(productId, (quantitiesByProduct.get(productId) || 0) + item.quantity);
+        }
+
+        for (const [productId, quantity] of quantitiesByProduct) {
+            const product = await Product.findById(productId);
+            if (!product) {
+                return res.status(404).json({ success: false, message: 'A product in your cart is no longer available' });
+            }
+            if (!product.inStock || product.stockQuantity < quantity) {
+                return res.status(409).json({
+                    success: false,
+                    message: `Insufficient stock for ${product.name}. Available: ${product.stockQuantity}`,
+                });
+            }
+
+            productsById.set(productId, product);
+            normalizedItems.push({
+                product: new mongoose.Types.ObjectId(productId),
+                quantity,
+            });
+        }
+
+        const amount = normalizedItems.reduce((total, item) => {
+            const product = productsById.get(item.product.toString());
+            return total + product.offerPrice * item.quantity;
+        }, 0);
+
+        const order = await Order.create({
+            userId: new mongoose.Types.ObjectId(req.userId),
+            items: normalizedItems,
+            amount,
+            deliveryLocation,
+            customDeliveryLocation: deliveryLocation === 'Other' ? customDeliveryLocation.trim() : '',
+            deliveryTime,
+            customDeliveryTime: deliveryTime === 'Other' ? customDeliveryTime.trim() : '',
+            paymentType: 'NONE',
+            status: 'Order Placed',
+        });
+
+        for (const item of normalizedItems) {
+            const product = productsById.get(item.product.toString());
+            product.stockQuantity -= item.quantity;
+            if (product.stockQuantity <= 0) {
+                product.inStock = false;
+                product.isVisible = false;
+            }
+            await product.save();
+        }
+
+        await User.findByIdAndUpdate(req.userId, { cartItems: {} });
+
+        return res.status(201).json({
+            success: true,
+            message: 'Order placed successfully',
+            order,
+        });
+    } catch (error) {
+        console.error('Error placing order:', error);
+        return res.status(500).json({ success: false, message: error.message || 'Failed to place order' });
+    }
+};
+
 // placed order COD : /api/order/cod 
 export const placedOrderCOD = async (req, res) => {
     try {
@@ -187,7 +292,7 @@ export const getUserOrders = async (req, res) => {
         let orders = await Order.find({ 
             userId: userObjectId, 
             isHidden: false, // Only get non-hidden orders
-            $or: [{ paymentType: "COD" }, { isPaid: true }]
+            $or: [{ paymentType: "COD" }, { paymentType: "NONE" }, { isPaid: true }]
         }).populate("items.product address").sort({ createdAt: -1 });
         
         // Remove invalid products from each order
@@ -203,7 +308,7 @@ export const getUserOrders = async (req, res) => {
         orders = await Order.find({ 
             userId: userObjectId, 
             isHidden: false,
-            $or: [{ paymentType: "COD" }, { isPaid: true }]
+            $or: [{ paymentType: "COD" }, { paymentType: "NONE" }, { isPaid: true }]
         }).populate("items.product address").sort({ createdAt: -1 });
 
         res.json({ success: true, orders });
@@ -219,19 +324,23 @@ export const getUserOrders = async (req, res) => {
 // get all order (for seller / admin) : /api/order/seller
 export const getAllOrders = async (req, res) => {
     try {
-        // The authSeller middleware already ensures only sellers can access this endpoint
-        // No need to check req.isSeller again
+        const sellerProducts = await Product.find({ sellerId: req.sellerId }).select('_id').lean();
+        const productIds = sellerProducts.map((product) => product._id);
+        if (productIds.length === 0) {
+            return res.json({ success: true, orders: [] });
+        }
 
         const orders = await Order.find({
-            $or: [{ paymentType: "COD" }, { isPaid: true }]
+            'items.product': { $in: productIds },
+            $or: [{ paymentType: "COD" }, { paymentType: "NONE" }, { isPaid: true }]
         })
         .populate({
             path: 'userId',
-            select: 'name email'
+            select: 'name email mobileNumber department registerNumber studentType'
         })
         .populate({
             path: 'items.product',
-            select: 'name image category price offerPrice'
+            select: 'name image category price offerPrice sellerId'
         })
         .populate({
             path: 'address',
@@ -242,7 +351,7 @@ export const getAllOrders = async (req, res) => {
         res.json({ success: true, orders });
     } catch (error) {
         console.error('Error in getAllOrders:', error);
-        res.status(500).json({ 
+        res.status(500).json({
             success: false, 
             message: error.message || "Failed to fetch orders" 
         });
@@ -267,11 +376,11 @@ export const getOrderDetails = async (req, res) => {
         const order = await Order.findById(orderId)
             .populate({
                 path: 'userId',
-                select: 'name email'
+                select: 'name email mobileNumber department registerNumber studentType'
             })
             .populate({
                 path: 'items.product',
-                select: 'name image category price offerPrice'
+                select: 'name image category price offerPrice sellerId'
             })
             .populate({
                 path: 'address',
@@ -283,6 +392,18 @@ export const getOrderDetails = async (req, res) => {
                 success: false,
                 message: "Order not found"
             });
+        }
+
+        if (isSeller) {
+            order.items = order.items.filter((item) =>
+                item.product?.sellerId?.toString() === req.sellerId.toString()
+            );
+            if (order.items.length === 0) {
+                return res.status(403).json({
+                    success: false,
+                    message: "You don't have permission to view this order"
+                });
+            }
         }
 
         // Check permissions
@@ -416,23 +537,33 @@ export const deleteOrder = async (req, res) => {
 export const updateOrderStatus = async (req, res) => {
     try {
         const { status } = req.body;
-        const order = await Order.findById(req.params.id);
+        const order = await Order.findById(req.params.orderId);
 
         if (!order) {
-            return res.json({ success: false, message: "Order not found" });
+            return res.status(404).json({ success: false, message: "Order not found" });
+        }
+        if (!['Processing', 'Shipped', 'Delivered'].includes(status)) {
+            return res.status(400).json({ success: false, message: "Invalid order status" });
+        }
+
+        const sellerProducts = await Product.find({ sellerId: req.sellerId }).distinct('_id');
+        const sellerProductIds = new Set(sellerProducts.map((productId) => productId.toString()));
+        const ownsOrderItem = order.items.some((item) => sellerProductIds.has(item.product.toString()));
+        if (!ownsOrderItem) {
+            return res.status(403).json({ success: false, message: "You don't have permission to update this order" });
         }
 
         order.status = status;
         await order.save();
 
-        res.json({ 
+        res.json({
             success: true, 
             message: "Order status updated successfully",
             order 
         });
     } catch (error) {
         console.error('Error in updateOrderStatus:', error);
-        res.json({ 
+        res.status(500).json({
             success: false, 
             message: error.message || "Failed to update order status" 
         });

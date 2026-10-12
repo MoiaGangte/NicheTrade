@@ -49,24 +49,15 @@ const OrderDetails = () => {
             }
 
             try {
-                // First check if user is a seller
-                if (isSeller) {
-                    const { data } = await axios.get(`/api/order/details/${orderId}`);
-                    if (data.success && data.order) {
-                        setOrder(data.order);
-                    } else {
-                        setError(data.message || 'Failed to fetch order details');
-                        toast.error(data.message || 'Failed to fetch order details');
-                        navigate('/seller/orders');
-                    }
+                const { data } = await axios.get(`/api/order/details/${orderId}`);
+                if (data.success && data.order) {
+                    setOrder(data.order);
                 } else {
-                    // For regular users
-                    const { data } = await axios.get(`/api/order/details/${orderId}`);
-                    if (data.success && data.order) {
-                        setOrder(data.order);
+                    setError(data.message || 'Failed to fetch order details');
+                    toast.error(data.message || 'Failed to fetch order details');
+                    if (isSeller) {
+                        navigate('/seller/orders');
                     } else {
-                        setError(data.message || 'Failed to fetch order details');
-                        toast.error(data.message || 'Failed to fetch order details');
                         navigate('/my-orders');
                     }
                 }
@@ -76,12 +67,7 @@ const OrderDetails = () => {
                 setError(errorMessage);
                 toast.error(errorMessage);
                 
-                // Navigate based on user type
-                if (isSeller) {
-                    navigate('/seller/orders');
-                } else {
-                    navigate('/my-orders');
-                }
+                navigate('/my-orders');
             } finally {
                 setLoading(false);
             }
@@ -159,6 +145,7 @@ const OrderDetails = () => {
                     <div className="bg-gray-50 p-4 rounded-md">
                         <p className="text-gray-700">Name: {order.userId?.name || 'N/A'}</p>
                         <p className="text-gray-700">Email: {order.userId?.email || 'N/A'}</p>
+                        <p className="text-gray-700">Mobile Number: {order.userId?.mobileNumber || 'N/A'}</p>
                     </div>
                 </div>
 
@@ -168,8 +155,19 @@ const OrderDetails = () => {
                     <div className="bg-gray-50 p-4 rounded-md">
                         <p className="text-gray-700">Order Date: {formattedDate}</p>
                         <p className="text-gray-700">Order Time: {formattedTime}</p>
-                        <p className="text-gray-700">Payment Type: {order.paymentType}</p>
                         <p className="text-gray-700">Order Status: {order.status}</p>
+                    </div>
+                </div>
+
+                <div className="mb-6">
+                    <h2 className="mb-3 text-lg font-semibold">Delivery Details</h2>
+                    <div className="space-y-2 rounded-md bg-gray-50 p-4">
+                        <p className="text-gray-700">
+                            Place: {order.deliveryLocation === 'Other' ? order.customDeliveryLocation : order.deliveryLocation || 'N/A'}
+                        </p>
+                        <p className="text-gray-700">
+                            Preferred timing: {order.deliveryTime === 'Other' ? order.customDeliveryTime : order.deliveryTime || 'N/A'}
+                        </p>
                     </div>
                 </div>
 
@@ -205,23 +203,9 @@ const OrderDetails = () => {
                 {/* Price Summary */}
                 <div className="mb-6">
                     <h2 className="text-lg font-semibold mb-3">Price Summary</h2>
-                    <div className="bg-gray-50 p-4 rounded-md space-y-2">
-                        <div className="flex justify-between">
-                            <span className="text-gray-700">Subtotal:</span>
-                            <span className="font-medium">{currency}{order.items?.reduce((total, item) => total + (item.product?.offerPrice * item.quantity), 0).toFixed(2)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                            <span className="text-gray-700">Tax (10%):</span>
-                            <span className="font-medium">{currency}{(order.items?.reduce((total, item) => total + (item.product?.offerPrice * item.quantity), 0) * 0.10).toFixed(2)}</span>
-                        </div>
-                        <div className="border-t pt-2 mt-2">
-                            <div className="flex justify-between">
-                                <span className="text-black font-semibold">Total:</span>
-                                <span className="text-[var(--color-primary)] font-bold">
-                                    {currency}{(order.items?.reduce((total, item) => total + (item.product?.offerPrice * item.quantity), 0) * 1.10).toFixed(2)}
-                                </span>
-                            </div>
-                        </div>
+                    <div className="flex justify-between rounded-md bg-gray-50 p-4 text-lg font-semibold">
+                        <span>Amount:</span>
+                        <span className="text-[var(--color-primary)]">{currency}{order.amount || 0}</span>
                     </div>
                 </div>
 

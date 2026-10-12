@@ -21,7 +21,7 @@ const OrderDetails = () => {
             }
 
             try {
-                const { data } = await axios.get(`/api/order/details/${orderId}`);
+                const { data } = await axios.get(`/api/order/seller/details/${orderId}`);
                 
                 if (!data.success) {
                     throw new Error(data.message || 'Failed to fetch order details');
@@ -45,27 +45,6 @@ const OrderDetails = () => {
 
         fetchOrderDetails();
     }, [orderId, navigate, axios]);
-
-    const updateOrderStatus = async (newStatus) => {
-        if (!orderId) {
-            toast.error('Invalid order ID');
-            return;
-        }
-
-        try {
-            const { data } = await axios.put(`/api/order/status/${orderId}`, { status: newStatus });
-            
-            if (!data.success) {
-                throw new Error(data.message || 'Failed to update order status');
-            }
-
-            setOrder(prev => ({ ...prev, status: newStatus }));
-            toast.success('Order status updated successfully');
-        } catch (error) {
-            console.error('Error updating order status:', error);
-            toast.error(error.response?.data?.message || error.message || 'Error updating order status');
-        }
-    };
 
     if (loading) {
         return (
@@ -110,58 +89,6 @@ const OrderDetails = () => {
                         <h1 className="text-2xl font-semibold">Order Details</h1>
                     </div>
 
-                    {/* Order Status Section */}
-                    <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-                        <div className="flex justify-between items-center">
-                            <div>
-                                <h2 className="text-lg font-semibold">Order Status</h2>
-                                <p className={`text-lg font-medium ${
-                                    order.status === 'Delivered' ? 'text-green-600' : 
-                                    order.status === 'Cancelled' ? 'text-red-600' : 
-                                    'text-blue-600'
-                                }`}>
-                                    {order.status || 'Pending'}
-                                </p>
-                            </div>
-                            <div className="flex gap-2">
-                                {order.status !== 'Delivered' && order.status !== 'Cancelled' && (
-                                    <>
-                                        <button
-                                            onClick={() => updateOrderStatus('Processing')}
-                                            className={`px-4 py-2 rounded ${
-                                                order.status === 'Processing' 
-                                                ? 'bg-blue-500 text-white' 
-                                                : 'bg-gray-200 text-gray-700'
-                                            }`}
-                                        >
-                                            Processing
-                                        </button>
-                                        <button
-                                            onClick={() => updateOrderStatus('Shipped')}
-                                            className={`px-4 py-2 rounded ${
-                                                order.status === 'Shipped' 
-                                                ? 'bg-blue-500 text-white' 
-                                                : 'bg-gray-200 text-gray-700'
-                                            }`}
-                                        >
-                                            Shipped
-                                        </button>
-                                        <button
-                                            onClick={() => updateOrderStatus('Delivered')}
-                                            className={`px-4 py-2 rounded ${
-                                                order.status === 'Delivered' 
-                                                ? 'bg-green-500 text-white' 
-                                                : 'bg-gray-200 text-gray-700'
-                                            }`}
-                                        >
-                                            Delivered
-                                        </button>
-                                    </>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-
                     {/* Order Information */}
                     <div className="bg-white rounded-lg shadow-md p-6 mb-6">
                         <h2 className="text-lg font-semibold mb-4">Order Information</h2>
@@ -173,16 +100,6 @@ const OrderDetails = () => {
                             <div>
                                 <p className="text-gray-600">Order Date</p>
                                 <p className="font-medium">{formattedDate} at {formattedTime}</p>
-                            </div>
-                            <div>
-                                <p className="text-gray-600">Payment Method</p>
-                                <p className="font-medium">{order.paymentType || 'N/A'}</p>
-                            </div>
-                            <div>
-                                <p className="text-gray-600">Payment Status</p>
-                                <p className={`font-medium ${order.isPaid ? 'text-green-600' : 'text-red-600'}`}>
-                                    {order.isPaid ? 'Paid' : 'Pending'}
-                                </p>
                             </div>
                         </div>
                     </div>
@@ -199,19 +116,44 @@ const OrderDetails = () => {
                                 <p className="text-gray-600">Email</p>
                                 <p className="font-medium">{order.userId?.email || 'N/A'}</p>
                             </div>
+                            <div>
+                                <p className="text-gray-600">Mobile Number</p>
+                                <p className="font-medium">{order.userId?.mobileNumber || 'N/A'}</p>
+                            </div>
+                            <div>
+                                <p className="text-gray-600">Department</p>
+                                <p className="font-medium">{order.userId?.department || 'N/A'}</p>
+                            </div>
+                            <div>
+                                <p className="text-gray-600">Register Number</p>
+                                <p className="font-medium">{order.userId?.registerNumber || 'N/A'}</p>
+                            </div>
+                            <div>
+                                <p className="text-gray-600">Student Type</p>
+                                <p className="font-medium">{order.userId?.studentType || 'N/A'}</p>
+                            </div>
                         </div>
                     </div>
 
-                    {/* Shipping Address */}
-                    <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-                        <h2 className="text-lg font-semibold mb-4">Shipping Address</h2>
-                        <div className="space-y-2">
-                            <p className="font-medium">{order.address?.street || 'N/A'}</p>
-                            <p>{order.address?.city || 'N/A'}, {order.address?.state || 'N/A'}</p>
-                            <p>{order.address?.country || 'N/A'} - {order.address?.zipcode || 'N/A'}</p>
-                            <p>Phone: {order.address?.phone || 'N/A'}</p>
+                    {order.deliveryLocation ? (
+                        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+                            <h2 className="text-lg font-semibold mb-4">Delivery Details</h2>
+                            <div className="space-y-2">
+                                <p><span className="font-medium">Place:</span> {order.deliveryLocation === 'Other' ? order.customDeliveryLocation : order.deliveryLocation}</p>
+                                <p><span className="font-medium">Preferred timing:</span> {order.deliveryTime === 'Other' ? order.customDeliveryTime : order.deliveryTime}</p>
+                            </div>
                         </div>
-                    </div>
+                    ) : (
+                        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+                            <h2 className="text-lg font-semibold mb-4">Shipping Address</h2>
+                            <div className="space-y-2">
+                                <p className="font-medium">{order.address?.street || 'N/A'}</p>
+                                <p>{order.address?.city || 'N/A'}, {order.address?.state || 'N/A'}</p>
+                                <p>{order.address?.country || 'N/A'} - {order.address?.zipcode || 'N/A'}</p>
+                                <p>Phone: {order.address?.phone || 'N/A'}</p>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Order Items */}
                     <div className="bg-white rounded-lg shadow-md p-6 mb-6">
@@ -249,21 +191,9 @@ const OrderDetails = () => {
                     {/* Price Summary */}
                     <div className="bg-white rounded-lg shadow-md p-6">
                         <h2 className="text-lg font-semibold mb-4">Price Summary</h2>
-                        <div className="space-y-2">
-                            <div className="flex justify-between">
-                                <span className="text-gray-600">Subtotal</span>
-                                <span>{currency}{order.amount || 0}</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span className="text-gray-600">Tax (2%)</span>
-                                <span>{currency}{((order.amount || 0) * 0.02).toFixed(2)}</span>
-                            </div>
-                            <div className="flex justify-between font-semibold text-lg border-t pt-2 mt-2">
-                                <span>Total Amount</span>
-                                <span className="text-[var(--color-primary)]">
-                                    {currency}{((order.amount || 0) + ((order.amount || 0) * 0.02)).toFixed(2)}
-                                </span>
-                            </div>
+                        <div className="flex justify-between font-semibold text-lg">
+                            <span>Amount</span>
+                            <span className="text-[var(--color-primary)]">{currency}{order.amount || 0}</span>
                         </div>
                     </div>
                 </div>

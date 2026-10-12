@@ -13,17 +13,21 @@ const Navbar = () => {
 
     const logout = async () => {
         try {
-            const {data} = await axios.get('/api/user/logout')
+            const {data} = await axios.post('/api/user/logout')
             if (data.success){
-                toast.success(data.message)
-                setUser(null);
-                setCartItems({});
-                navigate('/')
+                toast.success(data.message || "Logged out successfully")
             }else {
-                toast.error(data.message)
+                toast.error(data.message || "Unable to log out")
             }
         } catch (error) {
-            toast.error(error.message)
+            toast.error(error.response?.data?.message || error.message || "Unable to log out")
+        } finally {
+            localStorage.removeItem('token');
+            setUser(null);
+            setCartItems({});
+            setShowUserLogin(false);
+            setOpen(false);
+            navigate('/');
         }
     }
 
@@ -58,11 +62,11 @@ const Navbar = () => {
 
     return (
         <div className="sticky top-0 z-50 bg-white">
-            <div className="px-6 md:px-16 lg:px-24 xl:px-32 py-4 flex items-center justify-between">
+            <div className="px-6 md:px-16 lg:px-24 xl:px-32 h-16 flex items-center justify-between">
                 <NavLink to='/' className="flex items-center gap-2">
                     {/* site logo/favicon image */}
-                    <img src={assets.logo || assets.favicon} alt="EimiCart logo" className="hidden md:block w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10" />
-                    <p className="text-xl font-medium">EimiCart</p>
+                    <img src={assets.logo } alt="EimiCart logo" className="hidden md:block w-20 h-20 sm:w-8 sm:h-8 md:w-10 md:h-10 lg:w-12 lg:h-12" />
+                    <p className="text-xl font-medium">NicheTrade</p>
                 </NavLink>
 
                 {/* Search Box - Visible on small screens */}
@@ -82,7 +86,6 @@ const Navbar = () => {
                 <div className="hidden sm:flex items-center gap-8">
                     <NavLink to='/'>Home</NavLink>
                     <NavLink to='/products'>All Product</NavLink>
-                    <NavLink to='/ai-chat'>AI Chat</NavLink>
 
                     {/* Search Box - Original position for large screens */}
                     <div className="hidden lg:flex items-center text-sm gap-2 border border-gray-300 px-3 rounded-full">
@@ -131,7 +134,7 @@ const Navbar = () => {
                 {open && (
                     <div 
                         ref={dropdownRef}
-                        className={`${open ? 'flex' : 'hidden'} absolute top-[60px] left-0 w-full bg-white shadow-md py-4 flex-col items-start gap-2 px-5 text-sm md:hidden`}
+                        className={`${open ? 'flex' : 'hidden'} absolute top-16 left-0 w-full bg-white shadow-md py-4 flex-col items-start gap-2 px-5 text-sm md:hidden`}
                     >
                         <NavLink to='/' onClick={() => setOpen(false)}>Home</NavLink>
                         <NavLink to='/products' onClick={() => setOpen(false)}>All Product</NavLink>
@@ -141,7 +144,6 @@ const Navbar = () => {
                                 <NavLink to='/profile' onClick={() => setOpen(false)}>Profile</NavLink>
                             </>
                         )}
-                        <NavLink to='/ai-chat' onClick={() => setOpen(false)}>AI Chat</NavLink>
 
                         {!user ? (
                             <button onClick={() => {

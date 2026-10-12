@@ -1,61 +1,70 @@
-import React, { useEffect, useState } from 'react';
-import { useAppContext } from '../context/AppContext';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { useAppContext } from '../context/AppContext';
+
+const emptyStudentDetails = {
+    department: '',
+    registerNumber: '',
+    mobileNumber: '',
+    studentType: '',
+    dateOfBirth: '',
+};
 
 const Profile = () => {
-    const { user, axios } = useAppContext();
+    const { user, setUser, axios, isUserLoading } = useAppContext();
     const navigate = useNavigate();
-    const [loading, setLoading] = useState(true);
-    const [addresses, setAddresses] = useState([]);
+    const [studentDetails, setStudentDetails] = useState(emptyStudentDetails);
+    const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
-        if (!user) {
+        if (!isUserLoading && !user) {
             navigate('/');
-            return;
         }
-        fetchAddresses();
-    }, [user, navigate]);
-///////////////////////////////////////////////////////////
-    const fetchAddresses = async () => {
-        try {
-            // Get token from localStorage, context, or user object
-            const token = user?.token || localStorage.getItem('token');
-            const response = await axios.get('/api/address/get', {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-                withCredentials: true, // if using cookies
+    }, [isUserLoading, user, navigate]);
+
+    useEffect(() => {
+        if (user) {
+            setStudentDetails({
+                department: user.department || '',
+                registerNumber: user.registerNumber || '',
+                mobileNumber: user.mobileNumber || '',
+                studentType: user.studentType || '',
+                dateOfBirth: user.dateOfBirth ? String(user.dateOfBirth).slice(0, 10) : '',
             });
-            if (response.data.success) {
-                setAddresses(response.data.addresses);
+        }
+    }, [user]);
+
+    const handleChange = (event) => {
+        const { name, value } = event.target;
+        setStudentDetails((currentDetails) => ({
+            ...currentDetails,
+            [name]: value,
+        }));
+    };
+
+    const handleSubmit = async (event) => {
+        event.preventDefault();
+        setIsSaving(true);
+
+        try {
+            const { data } = await axios.put('/api/user/profile', studentDetails);
+            if (!data.success) {
+                toast.error(data.message || 'Failed to save profile information');
+                return;
             }
+
+            setUser(data.user);
+            toast.success('Profile information saved');
         } catch (error) {
-            console.error('Error fetching addresses:', error);
-            toast.error('Failed to load addresses');
+            console.error('Error saving profile information:', error);
+            toast.error(error.response?.data?.message || 'Failed to save profile information');
         } finally {
-            setLoading(false);
+            setIsSaving(false);
         }
     };
 
-    const handleDeleteAddress = async (addressId) => {
-        if (window.confirm('Are you sure you want to delete this address?')) {
-            try {
-                const response = await axios.delete(`/api/address/${addressId}`);
-                if (response.data.success) {
-                    toast.success('Address deleted successfully');
-                    fetchAddresses();
-                } else {
-                    toast.error(response.data.message || 'Failed to delete address');
-                }
-            } catch (error) {
-                console.error('Error deleting address:', error);
-                toast.error('Failed to delete address');
-            }
-        }
-    };
-
-    if (loading) {
+    if (isUserLoading || !user) {
         return (
             <div className="mt-16 flex justify-center items-center">
                 <p className="text-xl">Loading...</p>
@@ -69,8 +78,7 @@ const Profile = () => {
                 <h1 className="text-2xl font-semibold text-gray-800 mb-6">Profile Details</h1>
 
                 <div className="space-y-6">
-                    {/* Personal Information */}
-                    <div className="bg-gray-50 p-4 rounded-md">
+                    <section className="bg-gray-50 p-4 rounded-md">
                         <h2 className="text-lg font-semibold mb-3">Personal Information</h2>
                         <div className="space-y-2">
                             <p className="text-gray-700">
@@ -80,97 +88,118 @@ const Profile = () => {
                                 <span className="font-medium">Email:</span> {user.email}
                             </p>
                             <p className="text-gray-700">
-                                <span className="font-medium">Member Since:</span> {new Date(user.createdAt).toLocaleDateString()}
+                                <span className="font-medium">Member Since:</span>{' '}
+                                {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : '—'}
                             </p>
                         </div>
-                    </div>
+                    </section>
 
-                    {/* Account Statistics */}
-                    <div className="bg-gray-50 p-4 rounded-md">
+                    <section className="bg-gray-50 p-4 rounded-md">
+                        <h2 className="text-lg font-semibold mb-3">Student Information</h2>
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            <div className="grid gap-4 sm:grid-cols-2">
+                                <div>
+                                    <label htmlFor="department" className="block text-sm font-medium text-gray-700 mb-1">
+                                        Department
+                                    </label>
+                                    <input
+                                        id="department"
+                                        name="department"
+                                        type="text"
+                                        value={studentDetails.department}
+                                        onChange={handleChange}
+                                        placeholder="Enter your department"
+                                        className="w-full rounded-md border border-gray-300 bg-white px-3 py-2"
+                                    />
+                                </div>
+                                <div>
+                                    <label htmlFor="registerNumber" className="block text-sm font-medium text-gray-700 mb-1">
+                                        Register Number
+                                    </label>
+                                    <input
+                                        id="registerNumber"
+                                        name="registerNumber"
+                                        type="text"
+                                        value={studentDetails.registerNumber}
+                                        onChange={handleChange}
+                                        placeholder="Enter your register number"
+                                        required
+                                        className="w-full rounded-md border border-gray-300 bg-white px-3 py-2"
+                                    />
+                                </div>
+                                <div>
+                                    <label htmlFor="dateOfBirth" className="block text-sm font-medium text-gray-700 mb-1">
+                                        Date of Birth
+                                    </label>
+                                    <input
+                                        id="dateOfBirth"
+                                        name="dateOfBirth"
+                                        type="date"
+                                        value={studentDetails.dateOfBirth}
+                                        onChange={handleChange}
+                                        max={new Date().toISOString().slice(0, 10)}
+                                        required
+                                        className="w-full rounded-md border border-gray-300 bg-white px-3 py-2"
+                                    />
+                                </div>
+                                <div>
+                                    <label htmlFor="mobileNumber" className="block text-sm font-medium text-gray-700 mb-1">
+                                        Mobile Number
+                                    </label>
+                                    <input
+                                        id="mobileNumber"
+                                        name="mobileNumber"
+                                        type="tel"
+                                        value={studentDetails.mobileNumber}
+                                        onChange={handleChange}
+                                        placeholder="Enter your mobile number"
+                                        className="w-full rounded-md border border-gray-300 bg-white px-3 py-2"
+                                    />
+                                </div>
+                                <div>
+                                    <label htmlFor="studentType" className="block text-sm font-medium text-gray-700 mb-1">
+                                        Student Type
+                                    </label>
+                                    <select
+                                        id="studentType"
+                                        name="studentType"
+                                        value={studentDetails.studentType}
+                                        onChange={handleChange}
+                                        required
+                                        className="w-full rounded-md border border-gray-300 bg-white px-3 py-2"
+                                    >
+                                        <option value="">Select student type</option>
+                                        <option value="Hosteller">Hosteller</option>
+                                        <option value="Day Scholar">Day Scholar</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <button
+                                type="submit"
+                                disabled={isSaving}
+                                className="rounded-md bg-indigo-600 px-4 py-2 font-medium text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                                {isSaving ? 'Saving...' : 'Save Information'}
+                            </button>
+                        </form>
+                    </section>
+
+                    <section className="bg-gray-50 p-4 rounded-md">
                         <h2 className="text-lg font-semibold mb-3">Account Statistics</h2>
                         <div className="space-y-2">
                             <p className="text-gray-700">
                                 <span className="font-medium">Total Orders:</span> {user.totalOrders || 0}
                             </p>
                             <p className="text-gray-700">
-                                <span className="font-medium">Last Order:</span> {user.lastOrder ? new Date(user.lastOrder).toLocaleDateString() : 'No orders yet'}
+                                <span className="font-medium">Last Order:</span>{' '}
+                                {user.lastOrder ? new Date(user.lastOrder).toLocaleDateString() : 'No orders yet'}
                             </p>
                         </div>
-                    </div>
-
-                    {/* Shipping Addresses */}
-                    <div className="bg-gray-50 p-4 rounded-md">
-                        <div className="flex justify-between items-center mb-3">
-                            <h2 className="text-lg font-semibold">Shipping Addresses</h2>
-                            <button
-                                onClick={() => navigate('/add-address')}
-                                className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 transition-colors duration-200"
-                            >
-                                Add New Address
-                            </button>
-                        </div>
-
-                        {addresses.length === 0 ? (
-                            <div className="text-center py-4">
-                                <p className="text-gray-500 mb-4">No shipping addresses found</p>
-                                <button
-                                    onClick={() => navigate('/add-address')}
-                                    className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 transition-colors duration-200"
-                                >
-                                    Add Your First Address
-                                </button>
-                            </div>
-                        ) : (
-                            <div className="space-y-4">
-                                {addresses.map((address) => (
-                                    <div key={address._id} className="border rounded-lg p-4 hover:shadow-md transition-shadow duration-200">
-                                        <div className="flex justify-between items-start">
-                                            <div className="space-y-2">
-                                                <div>
-                                                    <span className="text-sm font-medium text-gray-500">Full Name:</span>
-                                                    <p className="text-gray-900">{address.firstname} {address.lastname}</p>
-                                                </div>
-                                                <div>
-                                                    <span className="text-sm font-medium text-gray-500">Phone Number:</span>
-                                                    <p className="text-gray-900">{address.phone}</p>
-                                                </div>
-                                                <div>
-                                                    <span className="text-sm font-medium text-gray-500">Street Address:</span>
-                                                    <p className="text-gray-900">{address.street}</p>
-                                                </div>
-                                                <div>
-                                                    <span className="text-sm font-medium text-gray-500">City, State & ZIP:</span>
-                                                    <p className="text-gray-900">{address.city}, {address.state} {address.zipcode}</p>
-                                                </div>
-                                                <div>
-                                                    <span className="text-sm font-medium text-gray-500">Country:</span>
-                                                    <p className="text-gray-900">{address.country}</p>
-                                                </div>
-                                            </div>
-                                            <div className="flex space-x-2">
-                                                <button
-                                                    onClick={() => navigate(`/add-address/${address._id}`)}
-                                                    className="text-indigo-600 hover:text-indigo-800 transition-colors duration-200"
-                                                >
-                                                    Edit
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDeleteAddress(address._id)}
-                                                    className="text-red-600 hover:text-red-800 transition-colors duration-200"
-                                                >
-                                                    Delete
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
+                    </section>
                 </div>
             </div>
         </div>
     );
 };
 
-export default Profile; 
+export default Profile;
