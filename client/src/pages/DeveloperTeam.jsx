@@ -88,6 +88,9 @@ export default function DeveloperTeam() {
             From front-end wizards to back-end architects, our team
             is dedicated to crafting seamless digital experiences.
           </p>
+          <p>
+            With the introduction of AI Its Make Creative mind and Ideas to reality. We are passionate about pushing the boundaries of what's possible and delivering exceptional results for our clients.
+          </p>
 
           <div className="developer-hero-note">
             <span className="developer-status-dot" />
