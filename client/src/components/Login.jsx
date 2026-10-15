@@ -1,6 +1,7 @@
 import React from 'react'
 import { useAppContext } from '../context/AppContext';
 import toast from 'react-hot-toast';
+import PasswordInput from './PasswordInput';
 
 const Login = () => {
 
@@ -112,8 +113,8 @@ const Login = () => {
                                 <input onChange={(e) => setEmail(e.target.value)} value={email} placeholder="Enter your email" className="border border-gray-200 rounded w-full p-2 mt-1 outline-[var(--color-primary)]" type="email" required />
                             </div>
                             <div className="w-full">
-                                <p>Password</p>
-                                <input onChange={(e) => setPassword(e.target.value)} value={password} placeholder="Enter your password" className="border border-gray-200 rounded w-full p-2 mt-1 outline-[var(--color-primary)]" type="password" required />
+                                <label htmlFor="userPassword">Password</label>
+                                <PasswordInput id="userPassword" onChange={(e) => setPassword(e.target.value)} value={password} placeholder="Enter your password" className="border border-gray-200 rounded w-full p-2 outline-[var(--color-primary)]" required />
                             </div>
                         </>
                     )}

@@ -138,7 +138,7 @@ const ProductDetails = () => {
 
                 <div className="text-sm w-full md:w-1/2">
                     <h1 className="text-3xl font-medium">{product.name}</h1>
-                    <div className="mt-1 text-sm text-gray-600">
+                    <div className="mt-1 text-sm text-black">
                         <p>Seller: {product.sellerId?.name || "NicheTrade Seller"}</p>
                         <p>Department: {product.sellerId?.department || "Not provided"}</p>
                     </div>
@@ -176,7 +176,7 @@ const ProductDetails = () => {
                             {cartItems[product._id] ? "Remove" : "Add to Cart"}
                         </button>
                         <button onClick={() => { addToCart(product._id); navigate("/cart") }} className="w-full py-3.5 cursor-pointer font-medium bg-[var(--color-primary)] text-white hover:bg-primary-dull transition" >
-                            Buy now
+                            Order Now
                         </button>
                     </div>
                 </div>

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useAppContext } from "../../context/AppContext";
+import PasswordInput from "../PasswordInput";
 
 const AdminLogin = () => {
     const { axios, isAdmin, setIsAdmin, navigate } = useAppContext();
@@ -49,17 +50,17 @@ const AdminLogin = () => {
                         className="border border-gray-200 rounded w-full p-2 mt-1 outline-[var(--color-primary)]"
                     />
                 </label>
-                <label className="w-full">
-                    <span>Password</span>
-                    <input
-                        type="password"
+                <div className="w-full">
+                    <label htmlFor="adminPassword">Password</label>
+                    <PasswordInput
+                        id="adminPassword"
                         value={password}
                         onChange={(event) => setPassword(event.target.value)}
                         autoComplete="current-password"
                         required
-                        className="border border-gray-200 rounded w-full p-2 mt-1 outline-[var(--color-primary)]"
+                        className="border border-gray-200 rounded w-full p-2 outline-[var(--color-primary)]"
                     />
-                </label>
+                </div>
                 <button
                     type="submit"
                     disabled={isSubmitting}

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAppContext } from '../context/AppContext';
+import DetailImageGallery from '../components/DetailImageGallery';
 
 const RequestItemDetails = () => {
     const { axios, user, setShowUserLogin, currency } = useAppContext();
@@ -11,6 +12,10 @@ const RequestItemDetails = () => {
     const [relatedRequests, setRelatedRequests] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isConfirming, setIsConfirming] = useState(false);
+
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, [id]);
 
     useEffect(() => {
         const loadRequest = async () => {
@@ -88,60 +93,57 @@ const RequestItemDetails = () => {
     const requester = request.requesterId;
 
     return (
-        <main className="mx-auto w-full max-w-5xl py-8">
+        <main className="mx-auto w-full max-w-6xl py-8">
             <Link to="/" className="text-sm font-medium text-gray-600 hover:text-gray-900">
                 &larr; Back to requests
             </Link>
 
-            <article className="mt-4 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-                <div className="grid gap-6 p-5 sm:p-7 md:grid-cols-2">
-                    <img
-                        src={request.image}
-                        alt={request.itemName}
-                        className="max-h-[420px] w-full rounded-md bg-gray-50 object-contain"
-                    />
-                    <div>
-                        <p className="text-sm font-medium uppercase tracking-wide text-gray-500">Requested item</p>
-                        <h1 className="mt-2 break-words text-2xl font-semibold text-gray-900 sm:text-3xl">{request.itemName}</h1>
-                        <p className="mt-4 whitespace-pre-wrap text-gray-700">{request.description}</p>
-                        <p className="mt-5 text-lg font-semibold text-[var(--color-primary)]">
-                            Extra payment: {currency}{Number(request.promiseAmount).toFixed(2)}
-                        </p>
+            <article className="mt-4 flex flex-col gap-8 md:flex-row">
+                <DetailImageGallery src={request.image} alt={request.itemName} />
+                <div className="w-full text-sm md:w-1/2">
+                    <p className="text-sm font-medium uppercase tracking-wide text-black">Requested item</p>
+                    <h1 className="mt-2 break-words text-3xl font-medium text-gray-900">{request.itemName}</h1>
+                    <div className="mt-4">
+                        <p className="text-base font-medium text-black">About this request</p>
+                        <p className="mt-1 whitespace-pre-wrap text-black">{request.description}</p>
+                    </div>
+                    <p className="mt-5 text-2xl font-medium text-green-600">
+                        Extra payment: {currency}{Number(request.promiseAmount).toFixed(2)}
+                    </p>
 
-                        <div className="mt-6 rounded-md bg-gray-50 p-4">
-                            <h2 className="font-semibold text-gray-900">Requester information</h2>
-                            <p className="mt-2 text-gray-700">Name: {requester?.name || 'NicheTrade user'}</p>
-                            <p className="text-gray-700">Department: {requester?.department || 'Not provided'}</p>
-                            <p className="text-gray-700">Mobile number: {requester?.mobileNumber || 'Not provided'}</p>
-                            {requester?.email ? (
-                                <a className="text-gray-700 underline" href={`mailto:${requester.email}`}>
-                                    Gmail: {requester.email}
-                                </a>
-                            ) : (
-                                <p className="text-gray-700">Gmail: Not provided</p>
-                            )}
-                        </div>
-
-                        <button
-                            type="button"
-                            onClick={handleConfirm}
-                            disabled={isConfirming || hasConfirmed || isRequester}
-                            className="mt-5 w-full rounded-full bg-[var(--color-primary)] px-5 py-3 font-medium text-white transition hover:bg-primary-dull disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                            {isConfirming
-                                ? 'Confirming...'
-                                : hasConfirmed
-                                    ? 'Confirmed'
-                                    : isRequester
-                                        ? 'Your request'
-                                        : 'Confirm — I can provide this'}
-                        </button>
-                        {request.confirmations?.length > 0 && (
-                            <p className="mt-2 text-sm text-gray-600">
-                                {request.confirmations.length} {request.confirmations.length === 1 ? 'person has' : 'people have'} confirmed they can provide this item.
-                            </p>
+                    <div className="mt-6">
+                        <h2 className="font-semibold text-gray-900">Requester information</h2>
+                        <p className="mt-2 text-gray-700">Name: {requester?.name || 'NicheTrade user'}</p>
+                        <p className="text-gray-700">Department: {requester?.department || 'Not provided'}</p>
+                        <p className="text-gray-700">Mobile number: {requester?.mobileNumber || 'Not provided'}</p>
+                        {requester?.email ? (
+                            <a className="text-gray-700 underline" href={`mailto:${requester.email}`}>
+                                Gmail: {requester.email}
+                            </a>
+                        ) : (
+                            <p className="text-gray-700">Gmail: Not provided</p>
                         )}
                     </div>
+
+                    <button
+                        type="button"
+                        onClick={handleConfirm}
+                        disabled={isConfirming || hasConfirmed || isRequester}
+                        className="mt-5 w-full cursor-pointer bg-[var(--color-primary)] px-5 py-3.5 font-medium text-white transition hover:bg-primary-dull disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto sm:min-w-64"
+                    >
+                        {isConfirming
+                            ? 'Confirming...'
+                            : hasConfirmed
+                                ? 'Confirmed'
+                                : isRequester
+                                    ? 'Your request'
+                                    : 'Confirm — I can provide this'}
+                    </button>
+                    {request.confirmations?.length > 0 && (
+                        <p className="mt-2 text-sm text-gray-600">
+                            {request.confirmations.length} {request.confirmations.length === 1 ? 'person has' : 'people have'} confirmed they can provide this item.
+                        </p>
+                    )}
                 </div>
             </article>
 

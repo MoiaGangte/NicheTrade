@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useAppContext } from "../context/AppContext";
+import DetailImageGallery from "../components/DetailImageGallery";
 
 const LostFoundDetails = () => {
     const { axios } = useAppContext();
@@ -13,6 +14,10 @@ const LostFoundDetails = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [isClaimLoading, setIsClaimLoading] = useState(false);
     const [isConfirming, setIsConfirming] = useState(false);
+
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, [id]);
 
     useEffect(() => {
         const loadPost = async () => {
@@ -102,41 +107,35 @@ const LostFoundDetails = () => {
     }
 
     return (
-        <main className="mx-auto w-full max-w-3xl py-8">
+        <main className="mx-auto w-full max-w-6xl py-8">
             <Link to="/" className="text-sm font-medium text-gray-600 hover:text-gray-900">
                 &larr; Back to Lost &amp; Found
             </Link>
-            <article className="mt-4 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-                <div className="p-5 sm:p-7">
-                    <p className="text-sm font-medium uppercase tracking-wide text-gray-500">Lost &amp; Found item</p>
-                    <h1 className="mt-2 break-words text-2xl font-semibold text-gray-900 sm:text-3xl">{post.itemName}</h1>
-                    <p className="mt-2 text-sm font-medium uppercase text-gray-600">
+            <article className="mt-4 flex flex-col gap-8 md:flex-row">
+                <DetailImageGallery src={post.image} alt={post.itemName} />
+                <div className="w-full text-sm md:w-1/2">
+                    <p className="text-sm font-medium uppercase tracking-wide text-black">Lost &amp; Found item</p>
+                    <h1 className="mt-2 break-words text-2xl font-medium text-gray-900">{post.itemName}</h1>
+                    <p className="mt-2 text-base font-medium uppercase text-black-600">
                         {post.postType === "lost" ? "Lost item" : "Found item"}
                     </p>
-                    {post.image && (
-                        <img
-                            src={post.image}
-                            alt={post.itemName}
-                            className="mt-5 max-h-[28rem] w-full rounded-lg bg-gray-100 object-contain"
-                        />
-                    )}
-                    <dl className="mt-6 grid gap-5 sm:grid-cols-2">
+                    <dl className="mt-4 grid gap-4 sm:grid-cols-2">
                         {post.postType !== "lost" && (
                             <div>
                                 <dt className="text-sm font-medium text-gray-500">Place found</dt>
-                                <dd className="mt-1 break-words text-gray-900">{post.placeFound}</dd>
+                                <dd className="mt-1 break-words text-black">{post.placeFound}</dd>
                             </div>
                         )}
                         <div>
                             <dt className="text-sm font-medium text-gray-500">
                                 Date and time {post.postType === "lost" ? "lost" : "found"}
                             </dt>
-                            <dd className="mt-1 text-gray-900">{new Date(post.foundAt || post.foundDate).toLocaleString()}</dd>
+                            <dd className="mt-1 text-black">{new Date(post.foundAt || post.foundDate).toLocaleString()}</dd>
                         </div>
                     </dl>
                     <div className="mt-6">
-                        <h2 className="text-sm font-medium text-gray-500">Description</h2>
-                        <p className="mt-1 whitespace-pre-wrap break-words text-gray-900">{post.description}</p>
+                        <h2 className="text-base font-medium text-black">Description</h2>
+                        <p className="mt-1 whitespace-pre-wrap break-words text-black">{post.description}</p>
                     </div>
 
                     {!founder ? (
@@ -144,14 +143,14 @@ const LostFoundDetails = () => {
                             type="button"
                             onClick={handleClaim}
                             disabled={isClaimLoading}
-                            className="mt-7 w-full rounded-full bg-[var(--color-primary)] px-5 py-3 font-medium text-white transition hover:bg-primary-dull disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+                            className="mt-7 w-full cursor-pointer bg-[var(--color-primary)] px-5 py-3.5 font-medium text-white transition hover:bg-primary-dull disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto sm:min-w-64"
                         >
                             {isClaimLoading ? "Loading founder details..." : "Claim"}
                         </button>
                     ) : (
                         <section className="mt-7 border-t border-gray-200 pt-5">
                             <h2 className="text-lg font-semibold text-gray-900">Founder contact details</h2>
-                                                        <h3 className="text-md font-medium text-gray-700">Please take screenshots before confirming!!</h3>
+                            <h3 className="text-md font-medium text-gray-700">Please take screenshots before confirming!!</h3>
                             <p className="mt-1 text-sm text-gray-500">Inorder to cantact the founder by using mobile phone number</p>
                             <dl className="mt-4 grid gap-4 sm:grid-cols-3">
                                 <div>
@@ -171,7 +170,7 @@ const LostFoundDetails = () => {
                                 type="button"
                                 onClick={handleConfirm}
                                 disabled={isConfirming}
-                                className="mt-6 w-full rounded-full bg-[var(--color-primary)] px-5 py-3 font-medium text-white transition hover:bg-primary-dull disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+                                className="mt-6 w-full cursor-pointer bg-[var(--color-primary)] px-5 py-3.5 font-medium text-white transition hover:bg-primary-dull disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto sm:min-w-64"
                             >
                                 {isConfirming ? "Confirming..." : "Confirm and remove item"}
                             </button>

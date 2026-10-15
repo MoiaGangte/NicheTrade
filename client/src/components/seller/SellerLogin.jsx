@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAppContext } from "../../context/AppContext";
 import toast from "react-hot-toast";
+import PasswordInput from "../PasswordInput";
 
 const SellerLogin = ({ mode = "login" }) => {
     const { isSeller, setIsSeller, setSeller, navigate, axios } = useAppContext();
@@ -121,31 +122,31 @@ const SellerLogin = ({ mode = "login" }) => {
                         />
                     </label>
                 )}
-                <label className="w-full">
-                    <span>Password</span>
-                    <input
-                        type="password"
+                <div className="w-full">
+                    <label htmlFor="sellerPassword">Password</label>
+                    <PasswordInput
+                        id="sellerPassword"
                         value={password}
                         onChange={(event) => setPassword(event.target.value)}
                         autoComplete={isRegistration ? "new-password" : "current-password"}
                         minLength={isRegistration ? 8 : undefined}
                         required
-                        className="border border-gray-200 rounded w-full p-2 mt-1 outline-[var(--color-primary)]"
+                        className="border border-gray-200 rounded w-full p-2 outline-[var(--color-primary)]"
                     />
-                </label>
+                </div>
                 {isRegistration && (
-                    <label className="w-full">
-                        <span>Confirm password</span>
-                        <input
-                            type="password"
+                    <div className="w-full">
+                        <label htmlFor="sellerConfirmPassword">Confirm password</label>
+                        <PasswordInput
+                            id="sellerConfirmPassword"
                             value={confirmPassword}
                             onChange={(event) => setConfirmPassword(event.target.value)}
                             autoComplete="new-password"
                             minLength={8}
                             required
-                            className="border border-gray-200 rounded w-full p-2 mt-1 outline-[var(--color-primary)]"
+                            className="border border-gray-200 rounded w-full p-2 outline-[var(--color-primary)]"
                         />
-                    </label>
+                    </div>
                 )}
 
                 <button

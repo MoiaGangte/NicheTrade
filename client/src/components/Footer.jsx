@@ -22,7 +22,7 @@ const Footer = () => {
 
     return (
         <footer className="bg-[var(--color-primary)]/10 border-t border-gray-300">
-            <div className="px-6 md:px-16 lg:px-24 xl:px-32 mt-24">
+            <div className="px-6 md:px-16 lg:px-24 xl:px-32 mt-6 md:mt-24">
                 <div className="flex flex-col md:flex-row items-start justify-between gap-10 py-10 border-b border-gray-500/30 text-gray-800">
                     <div>
                     <p className="text-xl font-medium">NicheTrade</p>
