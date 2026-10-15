@@ -1,4 +1,4 @@
-# EimiCart - Authentication System
+# NicheTrade - Authentication System
 
 ## Overview
 This project now supports both manual email/password authentication and Google OAuth integration. Users can log in using either method, and the system will automatically link accounts if they use the same email address.
