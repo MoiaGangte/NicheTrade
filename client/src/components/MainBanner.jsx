@@ -98,7 +98,7 @@ const MainBanner = () => {
                     loop
                     muted
                     playsInline
-                    className="absolute top-0 left-0 w-full h-full object-cover block md:hidden z-0"
+                    className="absolute top-0 left-0 w-full h-full object-cover block lg:hidden z-0"
                 />
                 <div>
                     <div className="relative z-10 flex flex-col items-center justify-center text-center" >
@@ -121,7 +121,7 @@ const MainBanner = () => {
                 loop
                 muted
                 playsInline
-                className="absolute top-0 left-0 w-full h-full object-cover block md:hidden z-0"
+                className="absolute top-0 left-0 w-full h-full object-cover block lg:hidden z-0"
             />
             <div className="lg:hidden relative z-10 flex flex-col items-start justify-center text-center h-full">
                 <button
@@ -142,7 +142,7 @@ const MainBanner = () => {
                 loop
                 muted
                 playsInline
-                className="absolute top-0 left-0 w-full h-full object-cover block md:hidden z-0"
+                className="absolute top-0 left-0 w-full h-full object-cover block lg:hidden z-0"
             />
             <div className="lg:hidden relative z-10 flex flex-col items-start justify-center text-center h-full">
                 <button

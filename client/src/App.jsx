@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import Navbar from './components/Navbar'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import Home from './pages/Home'
@@ -38,6 +38,10 @@ import Regulation from './pages/Regulation'
 
 const App = () => {
   const location = useLocation()
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [location.pathname])
+
   const isPortalPath = location.pathname.startsWith('/seller') || location.pathname.startsWith('/admin')
   const { showUserLogin, user, isSeller, isSellerLoading, isAdmin, isAdminLoading } = useAppContext()
   const isHomePage = location.pathname === '/'

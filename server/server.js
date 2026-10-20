@@ -61,7 +61,7 @@ app.use(cors({
         // Fallback defaults when no env var provided
 ///////////////////// provided the origin in vercel and local host for development 
         if (allowedOrigins.length === 0) {
-            allowedOrigins.push('https://eimi-cart.vercel.app', 'http://localhost:5173');
+            allowedOrigins.push('https://nichetrade.vercel.app', 'http://localhost:5173');
         }
 
         if (!origin || allowedOrigins.includes(origin)) {

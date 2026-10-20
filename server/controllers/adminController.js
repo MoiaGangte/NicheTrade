@@ -25,8 +25,8 @@ const constantTimeMatch = (provided, configured) => {
 export const adminLogin = (req, res) => {
   const email = typeof req.body.email === "string" ? req.body.email.trim().toLowerCase() : "";
   const password = typeof req.body.password === "string" ? req.body.password : "";
-  const configuredEmail = (process.env.ADMIN_EMAIL || process.env.SELLER_EMAIL || "").trim().toLowerCase();
-  const configuredPassword = process.env.ADMIN_PASSWORD || process.env.SELLER_PASSWORD || "";
+  const configuredEmail = (process.env.ADMIN_EMAIL || "").trim().toLowerCase();
+  const configuredPassword = process.env.ADMIN_PASSWORD || "";
 
   if (!configuredEmail || !configuredPassword) {
     return res.status(503).json({ success: false, message: "Admin credentials are not configured" });
