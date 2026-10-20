@@ -14,7 +14,7 @@ passport.use(new GoogleStrategy({
     try {
       const studentDetails = req.session?.googleStudentDetails;
       const email = profile.emails?.[0]?.value;
-      if (!studentDetails || !email) {
+      if (!email) {
         return done(new Error('Google sign-in requires complete student information'));
       }
 
@@ -24,6 +24,12 @@ passport.use(new GoogleStrategy({
           { email }
         ]
       });
+
+      const hasCompleteStudentDetails = user && ['department', 'registerNumber', 'mobileNumber', 'studentType', 'dateOfBirth']
+        .every((field) => user[field]);
+      if (!studentDetails && !hasCompleteStudentDetails) {
+        return done(new Error('Google sign-in requires complete student information'));
+      }
 
       if (!user) {
         user = await User.create({

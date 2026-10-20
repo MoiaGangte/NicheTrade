@@ -3,6 +3,7 @@ import { useAppContext } from '../context/AppContext'
 import { useParams } from 'react-router-dom'
 import { categories as defaultCategories } from '../assets/assets'
 import ProductCart from '../components/ProductCart'
+import { getProductCategories } from '../utils/productCategories'
 
 const ProductCategory = () => {
     const {products, axios} = useAppContext()
@@ -42,9 +43,7 @@ const ProductCategory = () => {
 
     // Only show products that are specifically added to this category
     const filteredProducts = products.filter((product)=> 
-        product.category && 
-        product.category.toLowerCase() === category &&
-        product.showInCategory // Only show products that are meant to be shown in category
+        getProductCategories(product).some((item) => item.toLowerCase() === category)
     );
 
     return (

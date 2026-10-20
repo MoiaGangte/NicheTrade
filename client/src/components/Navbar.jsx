@@ -6,7 +6,7 @@ import toast from 'react-hot-toast'
 
 const Navbar = () => {
     const [open, setOpen] = React.useState(false)
-    const { user, setUser, setShowUserLogin, navigate, setSearchQuery, searchQuery, getCartCount, axios, setCartItems } = useAppContext();
+    const { user, setUser, setShowUserLogin, navigate, setSearchQuery, searchQuery, getCartCount, axios, setCartItems, setIsSeller, setSeller } = useAppContext();
     const location = useLocation();
     const isProductDetailPage = location.pathname.includes('/products/') && location.pathname.split('/').length > 3;
     const dropdownRef = useRef(null);
@@ -24,6 +24,8 @@ const Navbar = () => {
         } finally {
             localStorage.removeItem('token');
             setUser(null);
+            setIsSeller(false);
+            setSeller(null);
             setCartItems({});
             setShowUserLogin(false);
             setOpen(false);
@@ -114,6 +116,7 @@ const Navbar = () => {
                                 <ul className='hidden group-hover:block absolute top-10 right-0 bg-white shadow-lg border border-gray-200 py-2 w-40 rounded-md text-sm z-40'>
                                     <li onClick={() => navigate("/profile")} className='px-4 py-2 hover:bg-[var(--color-primary)]/5 hover:border-l-4 hover:border-[var(--color-primary)] cursor-pointer transition-all duration-200'>Profile</li>
                                     <li onClick={() => navigate("/my-orders")} className='px-4 py-2 hover:bg-[var(--color-primary)]/5 hover:border-l-4 hover:border-[var(--color-primary)] cursor-pointer transition-all duration-200'>My Orders</li>
+                                    <li onClick={() => navigate(user.role === 'seller' ? "/seller" : "/seller/register")} className='px-4 py-2 hover:bg-[var(--color-primary)]/5 hover:border-l-4 hover:border-[var(--color-primary)] cursor-pointer transition-all duration-200'>{user.role === 'seller' ? 'Seller Dashboard' : 'Register as Seller'}</li>
                                     <li onClick={logout} className='px-4 py-2 hover:bg-[var(--color-primary)]/5 hover:border-l-4 hover:border-[var(--color-primary)] cursor-pointer transition-all duration-200'>Logout</li>
                                 </ul>
                             </div>
@@ -142,6 +145,9 @@ const Navbar = () => {
                             <>
                                 <NavLink to='/my-orders' onClick={() => setOpen(false)}>My Orders</NavLink>
                                 <NavLink to='/profile' onClick={() => setOpen(false)}>Profile</NavLink>
+                                <NavLink to={user.role === 'seller' ? '/seller' : '/seller/register'} onClick={() => setOpen(false)}>
+                                    {user.role === 'seller' ? 'Seller Dashboard' : 'Register as Seller'}
+                                </NavLink>
                             </>
                         )}
 

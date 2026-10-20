@@ -22,6 +22,7 @@ const AdminLayout = () => {
 
     const links = [
         { name: "Seller Applications", path: "/admin/sellers" },
+        { name: "Free Upload Requests", path: "/admin/upload-requests" },
         { name: "All Products", path: "/admin/products" },
         { name: "Lost & Found", path: "/admin/lost-found" },
         { name: "Item Requests", path: "/admin/request-items" },
@@ -55,7 +56,7 @@ const AdminLayout = () => {
                         >
                             <span className="hidden md:inline">{link.name}</span>
                             <span className="md:hidden" aria-label={link.name}>
-                                {link.name === "All Products" ? "Products" : link.name === "Seller Applications" ? "Sellers" : link.name === "Lost & Found" ? "Lost" : "Requests"}
+                                {link.name === "All Products" ? "Products" : link.name === "Seller Applications" ? "Sellers" : link.name === "Free Upload Requests" ? "Uploads" : link.name === "Lost & Found" ? "Lost" : "Requests"}
                             </span>
                         </NavLink>
                     ))}

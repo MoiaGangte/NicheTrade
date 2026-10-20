@@ -68,9 +68,6 @@ const AdminLogin = () => {
                 >
                     {isSubmitting ? "Please wait..." : "Login"}
                 </button>
-                <p className="w-full text-center text-xs text-gray-500">
-                    Seller? <Link to="/seller/login" className="underline">Seller login</Link>
-                </p>
             </form>
         </main>
     );

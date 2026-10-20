@@ -10,7 +10,9 @@ const AdminDashboard = ({ section }) => {
     const [products, setProducts] = useState([]);
     const [lostFoundPosts, setLostFoundPosts] = useState([]);
     const [requestItems, setRequestItems] = useState([]);
+    const [sellerUploadRequests, setSellerUploadRequests] = useState([]);
     const [sellerStatus, setSellerStatus] = useState("pending");
+    const [grantCounts, setGrantCounts] = useState({});
     const [editingProduct, setEditingProduct] = useState(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -24,6 +26,10 @@ const AdminDashboard = ({ section }) => {
                 const { data } = await axios.get(`/api/admin/sellers?status=${sellerStatus}`);
                 if (!data.success) throw new Error(data.message || "Unable to load seller applications");
                 setSellers(data.sellers);
+            } else if (section === "upload-requests") {
+                const { data } = await axios.get("/api/admin/seller-upload-requests");
+                if (!data.success) throw new Error(data.message || "Unable to load seller upload requests");
+                setSellerUploadRequests(data.requests);
             } else if (section === "products") {
                 const { data } = await axios.get("/api/admin/products");
                 if (!data.success) throw new Error(data.message || "Unable to load products");
@@ -68,6 +74,42 @@ const AdminDashboard = ({ section }) => {
             await fetchData();
         } catch (error) {
             toast.error(error.response?.data?.message || error.message || "Unable to update seller status");
+        } finally {
+            setUpdatingSellerId(null);
+        }
+    };
+
+    const setSellerVipStatus = async (seller, isVip) => {
+        setUpdatingSellerId(seller._id);
+        try {
+            const { data } = await axios.patch(`/api/admin/sellers/${seller._id}/upload-benefits`, { isVip });
+            if (!data.success) throw new Error(data.message || "Unable to update VIP status");
+            toast.success(isVip ? `${seller.name} is now VIP` : `${seller.name}'s VIP status was disabled`);
+            await fetchData();
+        } catch (error) {
+            toast.error(error.response?.data?.message || error.message || "Unable to update VIP status");
+        } finally {
+            setUpdatingSellerId(null);
+        }
+    };
+
+    const decideUploadRequest = async (request, decision) => {
+        const freeUploads = Number(grantCounts[request._id]);
+        if (decision === "credits" && (!Number.isSafeInteger(freeUploads) || freeUploads < 1)) {
+            toast.error("Enter a number of at least one free upload");
+            return;
+        }
+        setUpdatingSellerId(request._id);
+        try {
+            const { data } = await axios.patch(`/api/admin/seller-upload-requests/${request._id}`, {
+                decision,
+                ...(decision === "credits" ? { freeUploads } : {}),
+            });
+            if (!data.success) throw new Error(data.message || "Unable to process upload request");
+            toast.success(data.message);
+            await fetchData();
+        } catch (error) {
+            toast.error(error.response?.data?.message || error.message || "Unable to process upload request");
         } finally {
             setUpdatingSellerId(null);
         }
@@ -205,6 +247,9 @@ const AdminDashboard = ({ section }) => {
                                         <p className="text-sm text-gray-600">{seller.email}</p>
                                         <p className="text-sm text-gray-600">{seller.phone}</p>
                                         <p className="text-sm text-gray-600">Department: {seller.department || "Not provided"}</p>
+                                        <p className="text-sm text-gray-600">Store: {seller.storeName || "Not provided"}</p>
+                                        <p className="text-sm text-gray-600">Address: {seller.address || "Not provided"}</p>
+                                        <p className="text-sm text-gray-600">GST: {seller.gstNumber || "Not provided"}</p>
                                         <p className="mt-2 text-xs text-gray-400">
                                             Registered {new Date(seller.createdAt).toLocaleDateString()}
                                         </p>
@@ -221,6 +266,17 @@ const AdminDashboard = ({ section }) => {
                                     {sellerStatus === "approved" && (
                                         <div className="flex flex-col items-end gap-2">
                                             <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700">Approved</span>
+                                            <span className="text-xs text-gray-600">
+                                                {seller.isVip ? "VIP · unlimited free uploads" : `${seller.freeUploads || 0} free upload(s)`}
+                                            </span>
+                                            <button
+                                                type="button"
+                                                onClick={() => setSellerVipStatus(seller, !seller.isVip)}
+                                                disabled={updatingSellerId === seller._id}
+                                                className={`rounded-md border px-3 py-2 text-sm disabled:opacity-60 ${seller.isVip ? "border-amber-300 text-amber-800 hover:bg-amber-50" : "border-indigo-300 text-indigo-700 hover:bg-indigo-50"}`}
+                                            >
+                                                {updatingSellerId === seller._id ? "Updating..." : seller.isVip ? "Disable VIP" : "Make VIP"}
+                                            </button>
                                             <button
                                                 type="button"
                                                 onClick={() => setSellerActiveStatus(seller, false)}
@@ -234,6 +290,17 @@ const AdminDashboard = ({ section }) => {
                                     {sellerStatus === "disabled" && (
                                         <div className="flex flex-col items-end gap-2">
                                             <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-medium text-red-700">Disabled</span>
+                                            <span className="text-xs text-gray-600">
+                                                {seller.isVip ? "VIP · unlimited free uploads" : `${seller.freeUploads || 0} free upload(s)`}
+                                            </span>
+                                            <button
+                                                type="button"
+                                                onClick={() => setSellerVipStatus(seller, !seller.isVip)}
+                                                disabled={updatingSellerId === seller._id}
+                                                className={`rounded-md border px-3 py-2 text-sm disabled:opacity-60 ${seller.isVip ? "border-amber-300 text-amber-800 hover:bg-amber-50" : "border-indigo-300 text-indigo-700 hover:bg-indigo-50"}`}
+                                            >
+                                                {updatingSellerId === seller._id ? "Updating..." : seller.isVip ? "Disable VIP" : "Make VIP"}
+                                            </button>
                                             <button
                                                 type="button"
                                                 onClick={() => setSellerActiveStatus(seller, true)}
@@ -252,6 +319,70 @@ const AdminDashboard = ({ section }) => {
                                             </button>
                                         </div>
                                     )}
+                                </div>
+                            </article>
+                        ))}
+                    </div>
+                )}
+            </main>
+        );
+    }
+
+    if (section === "upload-requests") {
+        return (
+            <main className="p-4 md:p-8">
+                <div className="mb-6">
+                    <h1 className="text-2xl font-semibold">Free Upload Requests</h1>
+                    <p className="mt-1 text-sm text-gray-500">Review requests and grant free product uploads or VIP access.</p>
+                </div>
+                {sellerUploadRequests.length === 0 ? (
+                    <p className="rounded-lg border border-gray-200 bg-white p-6 text-gray-500">No pending seller upload requests.</p>
+                ) : (
+                    <div className="grid gap-4 lg:grid-cols-2">
+                        {sellerUploadRequests.map((request) => (
+                            <article key={request._id} className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
+                                <h2 className="font-semibold text-gray-900">{request.sellerId?.name || "Seller"}</h2>
+                                <p className="text-sm text-gray-600">{request.sellerId?.email}</p>
+                                <p className="text-sm text-gray-600">Store: {request.sellerId?.storeName || "Not provided"}</p>
+                                <p className="mt-1 text-xs text-gray-500">Current balance: {request.sellerId?.isVip ? "VIP" : `${request.sellerId?.freeUploads || 0} free upload(s)`}</p>
+                                <p className="mt-3 whitespace-pre-wrap text-sm text-gray-700">{request.description}</p>
+                                <p className="mt-2 text-xs text-gray-400">Submitted {new Date(request.createdAt).toLocaleString()}</p>
+                                <div className="mt-4 flex flex-wrap items-end gap-2">
+                                    <label className="text-sm text-gray-700">
+                                        Grant uploads
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            step="1"
+                                            value={grantCounts[request._id] || ""}
+                                            onChange={(event) => setGrantCounts((current) => ({ ...current, [request._id]: event.target.value }))}
+                                            className="mt-1 block w-28 rounded border border-gray-300 p-2"
+                                        />
+                                    </label>
+                                    <button
+                                        type="button"
+                                        onClick={() => decideUploadRequest(request, "credits")}
+                                        disabled={updatingSellerId === request._id}
+                                        className="rounded bg-[var(--color-primary)] px-3 py-2 text-sm text-white disabled:opacity-60"
+                                    >
+                                        Grant uploads
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => decideUploadRequest(request, "vip")}
+                                        disabled={updatingSellerId === request._id}
+                                        className="rounded border border-amber-400 px-3 py-2 text-sm text-amber-800 disabled:opacity-60"
+                                    >
+                                        Make VIP
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => decideUploadRequest(request, "reject")}
+                                        disabled={updatingSellerId === request._id}
+                                        className="rounded border border-red-300 px-3 py-2 text-sm text-red-700 disabled:opacity-60"
+                                    >
+                                        Reject
+                                    </button>
                                 </div>
                             </article>
                         ))}

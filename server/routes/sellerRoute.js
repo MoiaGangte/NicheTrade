@@ -1,20 +1,14 @@
 import express from 'express';
-import { isSellerAuth, sellerLogin, sellerLogout, sellerRegister } from '../controllers/sellerController.js';
-import {
-    createSellerSubscriptionOrder,
-    getSellerSubscriptionStatus,
-    verifySellerSubscriptionPayment,
-} from '../controllers/sellerSubscriptionController.js';
+import { isSellerAuth, sellerRegister } from '../controllers/sellerController.js';
 import authSeller from '../middleware/authSeller.js';
+import { authUser } from '../middleware/authMiddleware.js';
+import { createSellerUploadRequest, getSellerUploadStatus } from '../controllers/sellerUploadRequestController.js';
 
 const sellerRouter = express.Router();
 
-sellerRouter.post('/register', sellerRegister);
-sellerRouter.post('/login', sellerLogin);
-sellerRouter.get('/is-auth', authSeller, isSellerAuth);
-sellerRouter.get('/logout', authSeller, sellerLogout);
-sellerRouter.get('/subscription/status', authSeller, getSellerSubscriptionStatus);
-sellerRouter.post('/subscription/create-order', authSeller, createSellerSubscriptionOrder);
-sellerRouter.post('/subscription/verify', authSeller, verifySellerSubscriptionPayment);
+sellerRouter.post('/register', authUser, sellerRegister);
+sellerRouter.get('/is-auth', authUser, isSellerAuth);
+sellerRouter.get('/upload-status', authSeller, getSellerUploadStatus);
+sellerRouter.post('/upload-requests', authSeller, createSellerUploadRequest);
 
 export default sellerRouter;

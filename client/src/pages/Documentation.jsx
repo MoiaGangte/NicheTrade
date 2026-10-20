@@ -35,7 +35,8 @@ const pageGroups = [
     title: "Account and seller tools",
     pages: [
       ["/profile", "Profile", "View your account and update student details."],
-      ["/seller/login", "Seller portal", "Sign in to manage product listings and seller orders."],
+      ["/seller/register", "Seller registration", "Sign in to your user account, then register from the profile menu to create a seller profile."],
+      ["/seller", "Seller dashboard", "Manage listings and seller orders after your seller profile is approved."],
       ["/admin/login", "Admin portal", "Administrative access for authorized site staff."],
     ],
   },
@@ -126,8 +127,8 @@ export default function Documentation() {
                 <div>
                   <h3>Choose what you want to do</h3>
                   <p>
-                    Browse and shop, manage your own listings through the
-                    separate seller portal, or take part in campus Lost &amp;
+                    Browse and shop, manage your own listings after seller
+                    registration, or take part in campus Lost &amp;
                     Found and item requests.
                   </p>
                 </div>
@@ -179,9 +180,10 @@ export default function Documentation() {
 
           <DocumentationSection id="selling" number="04" title="Sell on NicheTrade">
             <p>
-              Seller accounts use a separate seller sign-in and dashboard.
-              Open the account login panel and choose Seller Login or Seller
-              Sign Up, then use the seller portal to manage your shop.
+              Sign in to your user account, then choose Register as Seller
+              from the profile menu. Provide store and contact details; new
+              seller profiles require administrator approval before you can
+              use the dashboard.
             </p>
             <ol className="documentation-steps">
               <li>
@@ -189,10 +191,15 @@ export default function Documentation() {
                 <div>
                   <h3>Create a listing</h3>
                   <p>
-                    Provide the product name, description, category, price,
+                    Provide the product name, description, one or more
+                    categories, price,
                     available stock, and at least one product image. You can
                     also set an offer price and mark a product as a best
-                    seller. A new category can be entered when needed.
+                    seller. A new category can be entered when needed. Pay
+                    ₹3 per unit of the product's stock quantity through
+                    Razorpay before each listing is published; categories
+                    do not affect the fee. Payments use Razorpay test mode,
+                    with the seller's mobile number prefilled at checkout.
                   </p>
                 </div>
               </li>
@@ -205,19 +212,6 @@ export default function Documentation() {
                     Orders to inspect orders containing your products. Keep
                     stock information accurate so buyers can make informed
                     choices.
-                  </p>
-                </div>
-              </li>
-              <li>
-                <span>3</span>
-                <div>
-                  <h3>Check listing access</h3>
-                  <p>
-                    New sellers receive a limited free listing trial. When
-                    those free listings are used, an active seller
-                    subscription is required to create additional listings.
-                    The Subscription page displays available monthly and
-                    yearly plans and subscription status.
                   </p>
                 </div>
               </li>

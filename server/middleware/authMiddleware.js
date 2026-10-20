@@ -21,6 +21,7 @@ export const authUser = async (req, res, next) => {
         }
 
         req.userId = user._id;
+        req.user = user;
         req.isSeller = false;
         next();
     } catch (error) {

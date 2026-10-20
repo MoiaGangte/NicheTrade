@@ -8,11 +8,14 @@ import {
   deleteAdminProduct,
   deleteAdminRequestItem,
   deleteDisabledSeller,
+  decideSellerUploadRequest,
   listAdminLostFoundPosts,
   listAdminProducts,
   listAdminRequestItems,
   listSellers,
+  listSellerUploadRequests,
   setSellerActiveStatus,
+  setSellerUploadBenefits,
   updateAdminProduct,
 } from "../controllers/adminController.js";
 import authAdmin from "../middleware/authAdmin.js";
@@ -25,7 +28,10 @@ router.get("/logout", authAdmin, adminLogout);
 router.get("/sellers", authAdmin, listSellers);
 router.patch("/sellers/:sellerId/approve", authAdmin, approveSeller);
 router.patch("/sellers/:sellerId/status", authAdmin, setSellerActiveStatus);
+router.patch("/sellers/:sellerId/upload-benefits", authAdmin, setSellerUploadBenefits);
 router.delete("/sellers/:sellerId", authAdmin, deleteDisabledSeller);
+router.get("/seller-upload-requests", authAdmin, listSellerUploadRequests);
+router.patch("/seller-upload-requests/:requestId", authAdmin, decideSellerUploadRequest);
 router.get("/products", authAdmin, listAdminProducts);
 router.patch("/products/:productId", authAdmin, updateAdminProduct);
 router.delete("/products/:productId", authAdmin, deleteAdminProduct);

@@ -1,6 +1,12 @@
 import { v2 as cloudinary } from "cloudinary";
 import Product from "../models/Product.js";
-import { releaseSellerProductUpload } from "../utils/sellerFreeListingTrial.js";
+import Seller from "../models/Seller.js";
+import {
+    beginSellerListingPayment,
+    completeSellerListingPayment,
+    releaseSellerListingPayment,
+} from "./sellerListingPaymentController.js";
+import { normalizeListingQuantity, normalizeProductCategories } from "../utils/productCategories.js";
 
 // Configure Cloudinary
 cloudinary.config({
@@ -12,16 +18,47 @@ cloudinary.config({
 //add product : /api/product/add
 export const addProduct = async (req, res) => {
     let productCreated = false;
+    let listingPayment;
+    let freeUploadReservation;
+    let quantity;
     try {
         let productData = JSON.parse(req.body.productData);
         const images = req.files;
+        const categories = normalizeProductCategories(productData.categories ?? productData.category);
+        quantity = normalizeListingQuantity(productData.stockQuantity);
+        productData.stockQuantity = quantity;
 
         if (!images || images.length === 0) {
-            if (req.productUploadReserved) {
-                await releaseSellerProductUpload(req.sellerId);
-                req.productUploadReserved = false;
+            return res.status(400).json({ success: false, message: "Please upload at least one image" });
+        }
+
+        if (!req.seller.isVip) {
+            if (req.body.freeListing === "true") {
+                freeUploadReservation = await Seller.findOneAndUpdate(
+                    { _id: req.sellerId, isVip: { $ne: true }, freeUploads: { $gte: 1 } },
+                    { $inc: { freeUploads: -1 } },
+                    { new: true },
+                );
+                if (!freeUploadReservation) {
+                    return res.status(409).json({
+                        success: false,
+                        message: "There are not enough free upload credits. Refresh your balance and pay the listing fee.",
+                    });
+                }
+            } else {
+                listingPayment = await beginSellerListingPayment(req.sellerId, quantity, {
+                    razorpay_order_id: req.body.razorpay_order_id,
+                    razorpay_payment_id: req.body.razorpay_payment_id,
+                    razorpay_signature: req.body.razorpay_signature,
+                });
+                if (listingPayment.alreadyCompleted) {
+                    return res.json({
+                        success: true,
+                        message: "Product listing was already added",
+                        product: listingPayment.product,
+                    });
+                }
             }
-            return res.json({ success: false, message: "Please upload at least one image" });
         }
 
         let imagesUrl = await Promise.all(
@@ -38,6 +75,8 @@ export const addProduct = async (req, res) => {
 
         const newProduct = await Product.create({
             ...productData,
+            category: categories[0],
+            categories,
             image: imagesUrl,
             sellerId: req.sellerId,
             inStock: true,
@@ -45,24 +84,36 @@ export const addProduct = async (req, res) => {
             isBestSeller: productData.isBestSeller || false // Ensure isBestSeller is set
         });
         productCreated = true;
+        if (listingPayment) {
+            await completeSellerListingPayment(listingPayment, newProduct._id);
+        }
 
-        res.json({
+        return res.json({
             success: true,
-            message: "Product Added Successfully",
+            message: "Product added successfully",
             product: newProduct
         });
 
     } catch (error) {
-        if (req.productUploadReserved && !productCreated) {
+        if (listingPayment && !productCreated) {
             try {
-                await releaseSellerProductUpload(req.sellerId);
-                req.productUploadReserved = false;
+                await releaseSellerListingPayment(listingPayment);
             } catch (releaseError) {
-                console.error("Unable to release failed free listing reservation:", releaseError);
+                console.error("Unable to release failed seller listing payment reservation:", releaseError);
+            }
+        }
+        if (freeUploadReservation && !productCreated) {
+            try {
+                await Seller.updateOne(
+                    { _id: req.sellerId },
+                    { $inc: { freeUploads: 1 } },
+                );
+            } catch (refundError) {
+                console.error("Unable to restore free upload credits after listing failed:", refundError);
             }
         }
         console.error('Error in addProduct:', error);
-        res.json({
+        return res.status(error.status || 500).json({
             success: false,
             message: error.message || "Failed to add product"
         });
@@ -90,7 +141,7 @@ export const productList = async (_req, res) => {
 export const sellerProductList = async (req, res) => {
     try {
         const products = await Product.find({ sellerId: req.sellerId })
-            .select('_id name price offerPrice image inStock stockQuantity category')
+            .select('_id name price offerPrice image inStock stockQuantity category categories')
             .lean();
 
         if (!products || products.length === 0) {
@@ -110,7 +161,10 @@ export const sellerProductList = async (req, res) => {
             image: Array.isArray(product.image) ? product.image : [],
             inStock: Boolean(product.inStock),
             stockQuantity: Number(product.stockQuantity) || 0,
-            category: product.category || ''
+            category: product.category || '',
+            categories: Array.isArray(product.categories) && product.categories.length
+                ? product.categories
+                : [product.category || '']
         }));
 
         res.json({
@@ -181,7 +235,11 @@ export const changeStock = async (req, res) => {
 //delete product : /api/product/delete/:id
 export const getCategories = async (req, res) => {
     try {
-        const categories = await Product.distinct('category', { isVisible: true });
+        const [primaryCategories, additionalCategories] = await Promise.all([
+            Product.distinct('category', { isVisible: true }),
+            Product.distinct('categories', { isVisible: true }),
+        ]);
+        const categories = [...new Set([...primaryCategories, ...additionalCategories].filter(Boolean))];
         res.json({ success: true, categories });
     } catch (error) {
         console.log(error.message);
@@ -199,7 +257,11 @@ export const deleteCategory = async (req, res) => {
 
         await Product.updateMany(
             { category, sellerId: req.sellerId },
-            { $set: { category: "uncategorized" } }
+            { $set: { category: "uncategorized" }, $pull: { categories: category } }
+        );
+        await Product.updateMany(
+            { category: { $ne: category }, categories: category, sellerId: req.sellerId },
+            { $pull: { categories: category } }
         );
 
         res.json({ success: true, message: `Category "${category}" deleted successfully. All products in this category have been uncategorized.` });

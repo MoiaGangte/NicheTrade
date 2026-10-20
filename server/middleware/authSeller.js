@@ -1,19 +1,14 @@
-import jwt from "jsonwebtoken";
+import { authUser } from "./authMiddleware.js";
 import Seller from "../models/Seller.js";
 
-const authSeller = async (req, res, next) => {
+const requireSeller = async (req, res, next) => {
     try {
-        const token = req.cookies.sellerToken;
-        if (!token) {
-            return res.status(401).json({ success: false, message: "Not authorized as seller" });
+        if (req.user.role !== "seller") {
+            return res.status(403).json({ success: false, message: "Seller access required" });
         }
 
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        if (decoded.role !== "seller" || !decoded.id) {
-            return res.status(401).json({ success: false, message: "Not authorized as seller" });
-        }
-
-        const seller = await Seller.findById(decoded.id).select("_id name email department isApproved isActive");
+        const seller = await Seller.findOne({ userId: req.userId })
+            .select("_id userId name email phone department storeName address gstNumber storeDescription freeUploads isVip isApproved isActive");
         if (!seller || !seller.isApproved || seller.isActive === false) {
             return res.status(403).json({ success: false, message: "Seller account is not approved or has been disabled" });
         }
@@ -24,8 +19,13 @@ const authSeller = async (req, res, next) => {
         next();
     } catch (error) {
         console.error("Seller auth middleware error:", error);
-        res.status(401).json({ success: false, message: "Not authorized as seller" });
+        res.status(500).json({ success: false, message: "Unable to verify seller access" });
     }
 };
+
+const authSeller = (req, res, next) => authUser(req, res, (error) => {
+    if (error) return next(error);
+    return requireSeller(req, res, next);
+});
 
 export default authSeller;

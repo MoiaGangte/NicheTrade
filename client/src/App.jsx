@@ -13,9 +13,10 @@ import Cart from './pages/Cart'
 import DeliveryDetails from './pages/DeliveryDetails'
 import AddAddress from './pages/AddAddress'
 import MyOrders from './pages/MyOrders'
-import SellerLogin from './components/seller/SellerLogin'
 import SellerLayout from './pages/seller/SellerLayout'
+import SellerRegistration from './pages/seller/SellerRegistration'
 import AddProduct from './pages/seller/AddProduct'
+import UploadRequests from './pages/seller/UploadRequests'
 import ProductList from './pages/seller/ProductList'
 import Orders from './pages/seller/Orders'
 import OrderDetails from './pages/OrderDetails'
@@ -30,7 +31,6 @@ import AdminDashboard from './pages/admin/AdminDashboard'
 import LostFoundDetails from './pages/LostFoundDetails'
 import RequestItemPage from './pages/RequestItemPage'
 import RequestItemDetails from './pages/RequestItemDetails'
-import SellerSubscription from './pages/seller/SellerSubscription'
 import DeveloperTeam from './pages/DeveloperTeam'
 import Objective from './pages/Objective'
 import Documentation from './pages/Documentation'
@@ -39,7 +39,7 @@ import Regulation from './pages/Regulation'
 const App = () => {
   const location = useLocation()
   const isPortalPath = location.pathname.startsWith('/seller') || location.pathname.startsWith('/admin')
-  const { showUserLogin, isSeller, isSellerLoading, isAdmin, isAdminLoading } = useAppContext()
+  const { showUserLogin, user, isSeller, isSellerLoading, isAdmin, isAdminLoading } = useAppContext()
   const isHomePage = location.pathname === '/'
 
   return (
@@ -74,16 +74,16 @@ const App = () => {
           <Route path='/order-details/:orderId' element={<OrderDetails />} />
           <Route path='/profile' element={<Profile />} />
           <Route path='/google-auth-success' element={<GoogleAuthSuccess />} />
-          <Route path='/seller/login' element={isSeller ? <Navigate to='/seller' replace /> : <SellerLogin mode='login' />} />
-          <Route path='/seller/register' element={isSeller ? <Navigate to='/seller' replace /> : <SellerLogin mode='register' />} />
+          <Route path='/seller/login' element={<Navigate to='/' replace />} />
+          <Route path='/seller/register' element={isSeller ? <Navigate to='/seller' replace /> : <SellerRegistration />} />
           <Route path='/seller' element={
             isSellerLoading ? <div className='min-h-screen grid place-items-center'>Loading seller account...</div>
-              : isSeller ? <SellerLayout /> : <Navigate to='/seller/login' replace />
+              : isSeller && user ? <SellerLayout /> : <Navigate to='/' replace />
           }>
             <Route index element={<AddProduct />} />
             <Route path='product-list' element={<ProductList />} />
             <Route path='orders' element={<Orders />} />
-            <Route path='subscription' element={<SellerSubscription />} />
+            <Route path='upload-requests' element={<UploadRequests />} />
             <Route path='order-details/:orderId' element={<SellerOrderDetails />} />
           </Route>
           <Route path='/admin/login' element={isAdmin ? <Navigate to='/admin/sellers' replace /> : <AdminLogin />} />
@@ -93,6 +93,7 @@ const App = () => {
           }>
             <Route index element={<Navigate to='/admin/sellers' replace />} />
             <Route path='sellers' element={<AdminDashboard section='sellers' />} />
+            <Route path='upload-requests' element={<AdminDashboard section='upload-requests' />} />
             <Route path='products' element={<AdminDashboard section='products' />} />
             <Route path='lost-found' element={<AdminDashboard section='lost-found' />} />
             <Route path='request-items' element={<AdminDashboard section='request-items' />} />

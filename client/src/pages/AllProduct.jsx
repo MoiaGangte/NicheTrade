@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useAppContext } from '../context/AppContext'
 import ProductCart from '../components/ProductCart'
 import { useLocation } from 'react-router-dom'
+import { getProductCategories } from '../utils/productCategories'
 
 const AllProduct = () => {
 
@@ -35,7 +36,7 @@ const AllProduct = () => {
         }
         if (categoryFilter) {
             filtered = filtered.filter(
-                product => product.category && product.category.toLowerCase() === categoryFilter.toLowerCase()
+                product => getProductCategories(product).some((category) => category.toLowerCase() === categoryFilter.toLowerCase())
             );
         }
         setFilteredProducts(filtered);
@@ -71,7 +72,7 @@ const AllProduct = () => {
                     <div className='mt-10'>
                         <p className='text-2xl font-semibold mb-2'>Other Products</p>
                         <div className='grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 gap-3 md:gap-6 lg:grid-cols-5 w-full'>
-                            {products.filter(product => product.inStock && product.category && product.category.toLowerCase() !== categoryFilter.toLowerCase()).map((product, index) => (
+                            {products.filter(product => product.inStock && !getProductCategories(product).some((category) => category.toLowerCase() === categoryFilter.toLowerCase())).map((product, index) => (
                                 <div key={index} className="w-full">
                                     <ProductCart product={product} {...(isMobile ? { smaller: true } : {})} />
                                 </div>

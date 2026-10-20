@@ -4,6 +4,7 @@ import { Link, useParams } from "react-router-dom";
 import { assets } from "../assets/assets";
 import ProductCart from "../components/ProductCart";
 import toast from "react-hot-toast";
+import { getProductCategories } from "../utils/productCategories";
 
 const ProductDetails = () => {
 
@@ -37,7 +38,9 @@ const ProductDetails = () => {
     useEffect(() => {
         if (products.length > 0) {
             let productsCopy = products.slice();
-            productsCopy = productsCopy.filter((item) => product.category === item.category);
+            const productCategories = getProductCategories(product).map((category) => category.toLowerCase());
+            productsCopy = productsCopy.filter((item) => getProductCategories(item)
+                .some((category) => productCategories.includes(category.toLowerCase())));
             setRelatedProducts(productsCopy.slice(0, 5));
         }
     }, [products]);

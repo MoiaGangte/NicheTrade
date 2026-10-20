@@ -2,13 +2,15 @@ import React from "react";
 import { assets } from "../assets/assets";
 import { useAppContext } from "../context/AppContext";
 import { useLocation } from "react-router-dom";
+import { getProductCategories } from "../utils/productCategories";
 
 const ProductCart = ({ product, small, smaller }) => {
     const { currency, addToCart, removeFromCart, cartItems, navigate } = useAppContext()
     const location = useLocation();
     const isHomePage = location.pathname === '/';
+    const productCategories = getProductCategories(product);
     const handleProductClick = () => {
-        navigate(`/products/${product.category.toLowerCase()}/${product._id}`);
+        navigate(`/products/${(productCategories[0] || "uncategorized").toLowerCase()}/${product._id}`);
         window.scrollTo(0, 0);
     };
 
@@ -57,7 +59,7 @@ const ProductCart = ({ product, small, smaller }) => {
                 <img className={`group-hover:scale-105 transition w-full object-contain ${imgClass}`} src={product.image[0]} alt={product.name} onError={(e) => e.target.src = assets.upload_area} />
             </div>
             <div className={`text-black text-sm ${mtClass}`}>
-                <p className={`${isHomePage ? 'text-black' : 'text-black'} ${catTextClass}`}>{product.category}</p>
+                <p className={`${isHomePage ? 'text-black' : 'text-black'} ${catTextClass}`}>{productCategories.join(", ")}</p>
                 <p className={`${isHomePage ? 'text-black ' : 'text-black'} font-medium truncate w-full ${nameTextClass}`}>{product.name}</p>
                 <p className="truncate text-xs text-gray-500">
                     Seller: {product.sellerId?.name || "NicheTrade Seller"}

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useAppContext } from "../context/AppContext";
 import { assets } from "../assets/assets";
 import toast from "react-hot-toast";
+import { getProductCategories } from "../utils/productCategories";
 
 const Cart = () => {
     const {
@@ -79,7 +80,7 @@ const Cart = () => {
                             <button
                                 type="button"
                                 onClick={() => {
-                                    navigate(`/products/${product.category.toLowerCase()}/${product._id}`);
+                                    navigate(`/products/${(getProductCategories(product)[0] || "uncategorized").toLowerCase()}/${product._id}`);
                                     scrollTo(0, 0);
                                 }}
                                 className="flex h-24 w-24 items-center justify-center overflow-hidden rounded border border-gray-300 bg-white"

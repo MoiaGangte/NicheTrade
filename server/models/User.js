@@ -5,6 +5,7 @@ const userSchema = new mongoose.Schema({
     email: {type: String, required: true, unique: true},
     password: {type: String, required: false }, // Made optional for Google OAuth users
     googleId: {type: String, required: false, unique: true, sparse: true}, // Added for Google OAuth
+    role: { type: String, enum: ['user', 'seller'], default: 'user' },
     department: {type: String, default: ''},
     registerNumber: {type: String},
     mobileNumber: {type: String, default: ''},

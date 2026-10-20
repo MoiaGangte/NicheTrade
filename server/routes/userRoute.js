@@ -1,7 +1,6 @@
 import express from 'express';
 import { isAuth, login, loginWithRegisterNumber, logout, register, updateFavorites, updateProfile } from '../controllers/userController.js';
 import { authUser } from '../middleware/authMiddleware.js';
-import passport from 'passport';
 import { getStudentDetails } from '../utils/studentDetails.js';
 
 const userRouter = express.Router();
@@ -22,7 +21,7 @@ userRouter.post('/google', (req, res, next) => {
         if (error) {
             return next(error);
         }
-        passport.authenticate('google', { scope: ['profile', 'email'] })(req, res, next);
+        res.json({ success: true });
     });
 })
 userRouter.get('/is-auth', authUser, isAuth)

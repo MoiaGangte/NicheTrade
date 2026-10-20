@@ -16,6 +16,7 @@ const Profile = () => {
     const navigate = useNavigate();
     const [studentDetails, setStudentDetails] = useState(emptyStudentDetails);
     const [isSaving, setIsSaving] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
 
     useEffect(() => {
         if (!isUserLoading && !user) {
@@ -43,8 +44,20 @@ const Profile = () => {
         }));
     };
 
+    const handleCancelEdit = () => {
+        setStudentDetails({
+            department: user.department || '',
+            registerNumber: user.registerNumber || '',
+            mobileNumber: user.mobileNumber || '',
+            studentType: user.studentType || '',
+            dateOfBirth: user.dateOfBirth ? String(user.dateOfBirth).slice(0, 10) : '',
+        });
+        setIsEditing(false);
+    };
+
     const handleSubmit = async (event) => {
         event.preventDefault();
+        if (!isEditing) return;
         setIsSaving(true);
 
         try {
@@ -55,6 +68,7 @@ const Profile = () => {
             }
 
             setUser(data.user);
+            setIsEditing(false);
             toast.success('Profile information saved');
         } catch (error) {
             console.error('Error saving profile information:', error);
@@ -108,8 +122,9 @@ const Profile = () => {
                                         type="text"
                                         value={studentDetails.department}
                                         onChange={handleChange}
+                                        disabled={!isEditing}
                                         placeholder="Enter your department"
-                                        className="w-full rounded-md border border-gray-300 bg-white px-3 py-2"
+                                        className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 disabled:bg-gray-100 disabled:text-gray-600"
                                     />
                                 </div>
                                 <div>
@@ -122,9 +137,10 @@ const Profile = () => {
                                         type="text"
                                         value={studentDetails.registerNumber}
                                         onChange={handleChange}
+                                        disabled={!isEditing}
                                         placeholder="Enter your register number"
                                         required
-                                        className="w-full rounded-md border border-gray-300 bg-white px-3 py-2"
+                                        className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 disabled:bg-gray-100 disabled:text-gray-600"
                                     />
                                 </div>
                                 <div>
@@ -137,9 +153,10 @@ const Profile = () => {
                                         type="date"
                                         value={studentDetails.dateOfBirth}
                                         onChange={handleChange}
+                                        disabled={!isEditing}
                                         max={new Date().toISOString().slice(0, 10)}
                                         required
-                                        className="w-full rounded-md border border-gray-300 bg-white px-3 py-2"
+                                        className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 disabled:bg-gray-100 disabled:text-gray-600"
                                     />
                                 </div>
                                 <div>
@@ -152,8 +169,9 @@ const Profile = () => {
                                         type="tel"
                                         value={studentDetails.mobileNumber}
                                         onChange={handleChange}
+                                        disabled={!isEditing}
                                         placeholder="Enter your mobile number"
-                                        className="w-full rounded-md border border-gray-300 bg-white px-3 py-2"
+                                        className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 disabled:bg-gray-100 disabled:text-gray-600"
                                     />
                                 </div>
                                 <div>
@@ -165,8 +183,9 @@ const Profile = () => {
                                         name="studentType"
                                         value={studentDetails.studentType}
                                         onChange={handleChange}
+                                        disabled={!isEditing}
                                         required
-                                        className="w-full rounded-md border border-gray-300 bg-white px-3 py-2"
+                                        className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 disabled:bg-gray-100 disabled:text-gray-600"
                                     >
                                         <option value="">Select student type</option>
                                         <option value="Hosteller">Hosteller</option>
@@ -174,13 +193,33 @@ const Profile = () => {
                                     </select>
                                 </div>
                             </div>
-                            <button
-                                type="submit"
-                                disabled={isSaving}
-                                className="rounded-md bg-indigo-600 px-4 py-2 font-medium text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
-                            >
-                                {isSaving ? 'Saving...' : 'Save Information'}
-                            </button>
+                            {isEditing ? (
+                                <div className="flex gap-3">
+                                    <button
+                                        type="submit"
+                                        disabled={isSaving}
+                                        className="rounded-md bg-indigo-600 px-4 py-2 font-medium text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+                                    >
+                                        {isSaving ? 'Updating...' : 'Update Information'}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={handleCancelEdit}
+                                        disabled={isSaving}
+                                        className="rounded-md border border-gray-300 px-4 py-2 font-medium text-gray-700 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            ) : (
+                                <button
+                                    type="button"
+                                    onClick={() => setIsEditing(true)}
+                                    className="rounded-md bg-indigo-600 px-4 py-2 font-medium text-white transition-colors hover:bg-indigo-700"
+                                >
+                                    Edit Information
+                                </button>
+                            )}
                         </form>
                     </section>
 

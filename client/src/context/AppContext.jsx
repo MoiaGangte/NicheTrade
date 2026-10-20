@@ -56,14 +56,12 @@ export const AppContextProvider = ({ children }) => {
     const fetchSeller = async () => {
         try {
             const { data } = await axiosInstance.get('/api/seller/is-auth');
-            setIsSeller(Boolean(data.success))
             setSeller(data.seller || null)
         } catch (error) {
             // Don't show error for 401 as it's expected for non-sellers
-            if (error.response?.status !== 401) {
+            if (![401, 404].includes(error.response?.status)) {
                 console.error('Error checking seller status:', error);
             }
-            setIsSeller(false)
             setSeller(null)
         } finally {
             setIsSellerLoading(false)
@@ -90,10 +88,12 @@ export const AppContextProvider = ({ children }) => {
             const { data } = await axiosInstance.get('/api/user/is-auth');
             if (data.success) {
                 setUser(data.user)
+                setIsSeller(data.user.role === 'seller')
                 // Set cart items from user data
                 setCartItems(data.user.cartItems || {})
             } else {
                 setUser(null);
+                setIsSeller(false);
                 setCartItems({}) // Clear cart items when no user
             }
         } catch (error) {
@@ -101,6 +101,7 @@ export const AppContextProvider = ({ children }) => {
                 localStorage.removeItem('token');
             }
             setUser(null)
+            setIsSeller(false)
             setCartItems({}) // Clear cart items on error
         } finally {
             setIsUserLoading(false)
@@ -224,6 +225,7 @@ export const AppContextProvider = ({ children }) => {
             }
 
             setUser(data.user);
+            setIsSeller(data.user.role === 'seller');
             setCartItems(data.user.cartItems || {});
             setShowUserLogin(false);
             toast.success('Logged in successfully');
@@ -231,6 +233,7 @@ export const AppContextProvider = ({ children }) => {
         } catch (error) {
             localStorage.removeItem('token');
             setUser(null);
+            setIsSeller(false);
             setCartItems({});
             setShowUserLogin(false);
             console.error('Error loading Google-authenticated account:', error);
@@ -248,6 +251,7 @@ export const AppContextProvider = ({ children }) => {
         addToCart, updateCartItem, removeFromCart, cartItems, 
         setCartItems, searchQuery, setSearchQuery, getCartAmount, 
         getCartCount, axios: axiosInstance, fetchProducts, favorites,
+        fetchSeller,
         handleGoogleAuthSuccess,
     }
 

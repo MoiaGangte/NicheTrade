@@ -5,7 +5,7 @@ import PasswordInput from './PasswordInput';
 
 const Login = () => {
 
-    const { setShowUserLogin, setUser, axios, navigate } = useAppContext()
+    const { setShowUserLogin, setUser, setIsSeller, fetchSeller, axios, navigate } = useAppContext()
 
     const [state, setState] = React.useState("login");
     const [name, setName] = React.useState("");
@@ -17,6 +17,30 @@ const Login = () => {
     const [department, setDepartment] = React.useState("");
     const [mobileNumber, setMobileNumber] = React.useState("");
     const [studentType, setStudentType] = React.useState("");
+
+    const handleGoogleSignIn = async () => {
+        if (state === "register") {
+            try {
+                const { data } = await axios.post('/api/user/google', {
+                    name,
+                    department,
+                    registerNumber,
+                    mobileNumber,
+                    studentType,
+                    dateOfBirth,
+                });
+                if (!data.success) {
+                    toast.error(data.message || "Unable to start Google sign-in");
+                    return;
+                }
+            } catch (error) {
+                toast.error(error.response?.data?.message || error.message);
+                return;
+            }
+        }
+
+        window.location.href = `${import.meta.env.VITE_BACKEND_URL}/api/user/google`;
+    };
 
     const onSubmitHandler = async (event) => {
 
@@ -38,6 +62,10 @@ const Login = () => {
                 }
                 navigate('/')
                 setUser(data.user)
+                setIsSeller(data.user.role === 'seller')
+                if (data.user.role === 'seller') {
+                    await fetchSeller()
+                }
                 setShowUserLogin(false)
             } else {
                 toast.error(data.message)
@@ -51,8 +79,8 @@ const Login = () => {
 
     return (
         <div onClick={() => setShowUserLogin(false)} className='fixed inset-0 z-[60] flex items-center justify-center overflow-y-auto bg-black/50 p-4 text-sm text-gray-600'>
-            <div onClick={(event) => event.stopPropagation()} className="m-auto flex w-full max-w-[640px] flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-xl sm:flex-row">
-                <form onSubmit={onSubmitHandler} className="flex flex-col gap-4 items-start p-8 py-12 w-full sm:w-[352px] sm:shrink-0">
+            <div onClick={(event) => event.stopPropagation()} className="m-auto flex w-full max-w-[400px] flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-xl">
+                <form onSubmit={onSubmitHandler} className="flex flex-col gap-4 items-start p-8 py-12 w-full">
                     <p className="text-2xl font-medium m-auto">
                         <span className="text-[var(--color-primary)]">User</span> {state === "login" ? "Login" : "Sign Up"}
                     </p>
@@ -133,7 +161,7 @@ const Login = () => {
 
                     <button
                         type="button"
-                        onClick={() => window.location.href = `${import.meta.env.VITE_BACKEND_URL}/api/user/google`}
+                        onClick={handleGoogleSignIn}
                         style={{
                             background: '#fff',
                             color: '#444',
@@ -169,43 +197,17 @@ const Login = () => {
                     <button type="submit" className="bg-[var(--color-primary)] hover:bg-primary-dull transition-all text-white w-full py-2 rounded-md cursor-pointer">
                         {state === "register" ? "Create Account" : "Login"}
                     </button>
-                </form>
-                <aside className="flex w-full flex-col justify-center gap-4 border-t border-gray-200 bg-gray-50 p-6 text-center sm:w-[288px] sm:border-l sm:border-t-0">
-                    <div>
-                        <h2 className="text-xl font-medium text-gray-800">Seller Account</h2>
-                        <p className="mt-2 text-sm text-gray-500">Manage your own listings on NicheTrade.</p>
-                    </div>
-                    <button
-                        type="button"
-                        onClick={() => {
-                            setShowUserLogin(false)
-                            navigate('/seller/login')
-                        }}
-                        className="w-full rounded-md border border-[var(--color-primary)] bg-white px-3 py-2 text-[var(--color-primary)] hover:bg-[var(--color-primary)]/5"
-                    >
-                        Seller Login
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => {
-                            setShowUserLogin(false)
-                            navigate('/seller/register')
-                        }}
-                        className="w-full rounded-md bg-[var(--color-primary)] px-3 py-2 text-white hover:bg-primary-dull"
-                    >
-                        Seller Sign Up
-                    </button>
                     <button
                         type="button"
                         onClick={() => {
                             setShowUserLogin(false)
                             navigate('/admin/login')
                         }}
-                        className="mt-2 text-xs text-gray-500 underline hover:text-gray-800"
+                        className="w-full text-center text-xs text-gray-500 underline hover:text-gray-800"
                     >
                         Admin login
                     </button>
-                </aside>
+                </form>
             </div>
         </div>
     )

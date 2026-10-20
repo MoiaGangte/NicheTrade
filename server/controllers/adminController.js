@@ -2,6 +2,8 @@ import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import Product from "../models/Product.js";
 import Seller from "../models/Seller.js";
+import SellerUploadRequest from "../models/SellerUploadRequest.js";
+import User from "../models/User.js";
 import LostFoundPost from "../models/LostFoundPost.js";
 import RequestItem from "../models/RequestItem.js";
 
@@ -55,7 +57,7 @@ export const listSellers = async (req, res) => {
           ? { isApproved: false }
           : {};
     const sellers = await Seller.find(filter)
-      .select("_id name email phone department isApproved isActive createdAt")
+      .select("_id userId name email phone department storeName address gstNumber storeDescription freeUploads isVip isApproved isActive createdAt")
       .sort({ createdAt: -1 })
       .lean();
     return res.json({ success: true, sellers });
@@ -71,7 +73,7 @@ export const approveSeller = async (req, res) => {
       req.params.sellerId,
       { isApproved: true },
       { new: true, runValidators: true }
-    ).select("_id name email phone department isApproved isActive createdAt");
+    ).select("_id name email phone department freeUploads isVip isApproved isActive createdAt");
     if (!seller) {
       return res.status(404).json({ success: false, message: "Seller account not found" });
     }
@@ -91,7 +93,7 @@ export const setSellerActiveStatus = async (req, res) => {
       { _id: req.params.sellerId, isApproved: true },
       { isActive: req.body.isActive },
       { new: true, runValidators: true }
-    ).select("_id name email phone department isApproved isActive createdAt");
+    ).select("_id name email phone department freeUploads isVip isApproved isActive createdAt");
     if (!seller) {
       return res.status(404).json({ success: false, message: "Approved seller account not found" });
     }
@@ -106,13 +108,106 @@ export const setSellerActiveStatus = async (req, res) => {
   }
 };
 
+export const setSellerUploadBenefits = async (req, res) => {
+  try {
+    const updates = {};
+    if (typeof req.body.isVip === "boolean") updates.isVip = req.body.isVip;
+    if (req.body.freeUploads !== undefined) {
+      if (!Number.isSafeInteger(req.body.freeUploads) || req.body.freeUploads < 0) {
+        return res.status(400).json({ success: false, message: "Free uploads must be a non-negative whole number" });
+      }
+      updates.freeUploads = req.body.freeUploads;
+    }
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({ success: false, message: "Provide VIP status or a free upload balance" });
+    }
+
+    const seller = await Seller.findByIdAndUpdate(
+      req.params.sellerId,
+      { $set: updates },
+      { new: true, runValidators: true }
+    ).select("_id name email freeUploads isVip isApproved isActive");
+    if (!seller) {
+      return res.status(404).json({ success: false, message: "Seller account not found" });
+    }
+    return res.json({ success: true, message: "Seller upload benefits updated", seller });
+  } catch (error) {
+    console.error("Admin seller upload benefit update error:", error);
+    return res.status(500).json({ success: false, message: "Unable to update seller upload benefits" });
+  }
+};
+
+export const listSellerUploadRequests = async (_req, res) => {
+  try {
+    const requests = await SellerUploadRequest.find({ status: "pending" })
+      .populate("sellerId", "name email storeName freeUploads isVip")
+      .sort({ createdAt: 1 })
+      .lean();
+    return res.json({ success: true, requests });
+  } catch (error) {
+    console.error("Admin seller upload request list error:", error);
+    return res.status(500).json({ success: false, message: "Unable to load seller upload requests" });
+  }
+};
+
+export const decideSellerUploadRequest = async (req, res) => {
+  const { decision, freeUploads } = req.body;
+  if (!["credits", "vip", "reject"].includes(decision)) {
+    return res.status(400).json({ success: false, message: "Choose a valid request decision" });
+  }
+  if (decision === "credits" && (!Number.isSafeInteger(freeUploads) || freeUploads < 1)) {
+    return res.status(400).json({ success: false, message: "Grant at least one free upload" });
+  }
+
+  try {
+    const request = await SellerUploadRequest.findOneAndUpdate(
+      { _id: req.params.requestId, status: "pending" },
+      { $set: { status: "processing" } },
+      { new: true },
+    );
+    if (!request) {
+      return res.status(404).json({ success: false, message: "Pending upload request not found" });
+    }
+
+    let benefitsApplied = false;
+    try {
+      if (decision !== "reject") {
+        const sellerUpdate = decision === "vip"
+          ? { $set: { isVip: true } }
+          : { $inc: { freeUploads } };
+        const seller = await Seller.findByIdAndUpdate(request.sellerId, sellerUpdate, { new: true });
+        if (!seller) throw new Error("Seller account not found");
+        benefitsApplied = true;
+      }
+
+      request.status = decision === "reject" ? "rejected" : "approved";
+      request.decisionType = decision === "reject" ? undefined : decision;
+      request.grantedUploads = decision === "credits" ? freeUploads : 0;
+      request.decidedAt = new Date();
+      await request.save();
+      return res.json({ success: true, message: decision === "reject" ? "Request rejected" : "Seller upload request approved" });
+    } catch (error) {
+      if (!benefitsApplied) {
+        await SellerUploadRequest.updateOne(
+          { _id: request._id, status: "processing" },
+          { $set: { status: "pending" }, $unset: { decisionType: 1, decidedAt: 1 } },
+        );
+      }
+      throw error;
+    }
+  } catch (error) {
+    console.error("Admin seller upload request decision error:", error);
+    return res.status(500).json({ success: false, message: "Unable to process seller upload request" });
+  }
+};
+
 export const deleteDisabledSeller = async (req, res) => {
   try {
     const seller = await Seller.findOne({
       _id: req.params.sellerId,
       isApproved: true,
       isActive: false,
-    }).select("_id");
+    }).select("_id userId");
 
     if (!seller) {
       return res.status(409).json({
@@ -122,6 +217,7 @@ export const deleteDisabledSeller = async (req, res) => {
     }
 
     await Product.deleteMany({ sellerId: seller._id });
+    await SellerUploadRequest.deleteMany({ sellerId: seller._id });
 
     const deletedSeller = await Seller.findOneAndDelete({
       _id: seller._id,
@@ -133,6 +229,13 @@ export const deleteDisabledSeller = async (req, res) => {
         success: false,
         message: "Seller status changed before deletion. No seller account was deleted; try again.",
       });
+    }
+
+    if (deletedSeller.userId) {
+      await User.updateOne(
+        { _id: deletedSeller.userId, role: "seller" },
+        { $set: { role: "user" } }
+      );
     }
 
     return res.json({
@@ -259,6 +362,14 @@ export const updateAdminProduct = async (req, res) => {
       isVisible,
       isBestSeller,
     });
+
+    const existingProduct = await Product.findById(req.params.productId).select("category categories");
+    if (!existingProduct) {
+      return res.status(404).json({ success: false, message: "Product not found" });
+    }
+    updates.categories = existingProduct.category === category.trim()
+      ? (existingProduct.categories?.length ? existingProduct.categories : [category.trim()])
+      : [category.trim()];
 
     const product = await Product.findByIdAndUpdate(req.params.productId, updates, {
       new: true,
