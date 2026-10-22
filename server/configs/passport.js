@@ -7,8 +7,8 @@ passport.use(new GoogleStrategy({
   clientSecret: process.env.GOOGLE_CLIENT_SECRET,
   passReqToCallback: true,
   callbackURL: process.env.NODE_ENV === 'development'
-    ? process.env.GOOGLE_CLIENT_ID_LOCAL
-    : process.env.GOOGLE_CLIENT_ID
+    ? 'http://localhost:5000/api/user/google/callback'
+    : 'https://eimi-cart-backend.vercel.app/api/user/google/callback'
 },
   async (req, accessToken, refreshToken, profile, done) => {
     try {
