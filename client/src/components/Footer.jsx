@@ -27,6 +27,7 @@ const Footer = () => {
                     <div>
                     <p className="text-xl font-medium">NicheTrade</p>
                         <p className="max-w-[410px] mt-6">Niche Trade is a student-to-student marketplace created by a team of 2nd-year AI & DS students at Noorul Islam Centre for Higher Education, Kanyakumari, to make campus buying and selling easy and to earn extra pocket money for students</p>
+                        <Link to="/donate" className="mt-4 inline-block font-medium hover:underline">Support NicheTrade</Link>
                     </div>
                     <div className="flex flex-wrap justify-between w-full md:w-[45%] gap-5">
                         {footerLinks.map((section, index) => (

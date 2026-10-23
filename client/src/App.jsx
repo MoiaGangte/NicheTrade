@@ -16,7 +16,6 @@ import MyOrders from './pages/MyOrders'
 import SellerLayout from './pages/seller/SellerLayout'
 import SellerRegistration from './pages/seller/SellerRegistration'
 import AddProduct from './pages/seller/AddProduct'
-import UploadRequests from './pages/seller/UploadRequests'
 import ProductList from './pages/seller/ProductList'
 import Orders from './pages/seller/Orders'
 import OrderDetails from './pages/OrderDetails'
@@ -35,6 +34,7 @@ import DeveloperTeam from './pages/DeveloperTeam'
 import Objective from './pages/Objective'
 import Documentation from './pages/Documentation'
 import Regulation from './pages/Regulation'
+import Donate from './pages/Donate'
 
 const App = () => {
   const location = useLocation()
@@ -63,6 +63,7 @@ const App = () => {
           <Route path='/developer-team' element={<DeveloperTeam />} />
           <Route path='/objective' element={<Objective />} />
           <Route path='/documentation' element={<Documentation />} />
+          <Route path='/donate' element={<Donate />} />
           <Route path='/lost-found/:id' element={<LostFoundDetails />} />
           <Route path='/request-item/add' element={<RequestItemPage />} />
           <Route path='/request-item/:id' element={<RequestItemDetails />} />
@@ -87,7 +88,6 @@ const App = () => {
             <Route index element={<AddProduct />} />
             <Route path='product-list' element={<ProductList />} />
             <Route path='orders' element={<Orders />} />
-            <Route path='upload-requests' element={<UploadRequests />} />
             <Route path='order-details/:orderId' element={<SellerOrderDetails />} />
           </Route>
           <Route path='/admin/login' element={isAdmin ? <Navigate to='/admin/sellers' replace /> : <AdminLogin />} />

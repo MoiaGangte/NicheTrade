@@ -1,5 +1,5 @@
 import express from 'express';
-import { placedOrderCOD, placeOrder, getUserOrders, getAllOrders, getOrderDetails, deleteOrder, placeOrderOnline, verifyPayment, updateOrderStatus } from '../controllers/orderController.js';
+import { placedOrderCOD, placeOrder, getUserOrders, getAllOrders, getOrderDetails, deleteOrder, updateOrderStatus } from '../controllers/orderController.js';
 import { authUser } from '../middleware/authMiddleware.js';
 import authSeller from '../middleware/authSeller.js';
 
@@ -9,9 +9,6 @@ const router = express.Router();
 router.post('/cod', authUser, placedOrderCOD);
 router.post('/place', authUser, placeOrder);
 
-
-// Verify payment : /api/order/verify
-router.post('/verify', authUser, verifyPayment);
 
 // Get user orders
 router.get('/user', authUser, getUserOrders);

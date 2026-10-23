@@ -22,7 +22,7 @@ const constantTimeMatch = (provided, configured) => {
     && crypto.timingSafeEqual(providedBuffer, configuredBuffer);
 };
 
-export const adminLogin = (req, res) => {
+const loginAdmin = (req, res, includeToken) => {
   const email = typeof req.body.email === "string" ? req.body.email.trim().toLowerCase() : "";
   const password = typeof req.body.password === "string" ? req.body.password : "";
   const configuredEmail = (process.env.ADMIN_EMAIL || "").trim().toLowerCase();
@@ -37,7 +37,28 @@ export const adminLogin = (req, res) => {
 
   const token = jwt.sign({ id: "admin", role: "admin" }, process.env.JWT_SECRET, { expiresIn: "7d" });
   res.cookie("adminToken", token, adminCookieOptions);
-  return res.json({ success: true, message: "Logged in successfully" });
+  return res.json({
+    success: true,
+    message: "Logged in successfully",
+    ...(includeToken ? { token } : {}),
+  });
+};
+
+export const adminLogin = (req, res) => loginAdmin(req, res, false);
+export const adminAccessStatus = (req, res) => {
+  const configuredEmail = (process.env.ADMIN_EMAIL || "").trim().toLowerCase();
+  const userEmail = typeof req.user?.email === "string" ? req.user.email.trim().toLowerCase() : "";
+  return res.json({ success: true, eligible: Boolean(configuredEmail && userEmail === configuredEmail) });
+};
+
+export const adminMobileLogin = (req, res) => {
+  const configuredEmail = (process.env.ADMIN_EMAIL || "").trim().toLowerCase();
+  const userEmail = typeof req.user?.email === "string" ? req.user.email.trim().toLowerCase() : "";
+  if (!configuredEmail || userEmail !== configuredEmail) {
+    return res.status(403).json({ success: false, message: "This account is not authorized for admin access" });
+  }
+  req.body.email = userEmail;
+  return loginAdmin(req, res, true);
 };
 
 export const adminLogout = (_req, res) => {

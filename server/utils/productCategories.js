@@ -1,5 +1,3 @@
-export const SELLER_LISTING_PRICE_PER_UNIT_PAISE = 300;
-
 export const normalizeProductCategories = (value) => {
     const input = Array.isArray(value) ? value : [value];
     const categories = [];
@@ -34,14 +32,4 @@ export const normalizeListingQuantity = (value) => {
         throw error;
     }
     return quantity;
-};
-
-export const getSellerListingAmountInPaise = (quantity) => {
-    const amount = normalizeListingQuantity(quantity) * SELLER_LISTING_PRICE_PER_UNIT_PAISE;
-    if (!Number.isSafeInteger(amount)) {
-        const error = new Error("Listing quantity is too large");
-        error.status = 400;
-        throw error;
-    }
-    return amount;
 };

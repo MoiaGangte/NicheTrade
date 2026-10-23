@@ -11,7 +11,7 @@ import cartRouter from './routes/cartRoute.js';
 import orderRouter from './routes/orderRoutes.js';
 import addressRouter from './routes/addressRoute.js';
 import reviewRouter from './routes/reviewRoutes.js';
-import paymentRouter from './routes/paymentRoute.js';
+import donationRouter from './routes/donationRoute.js';
 import adminRouter from './routes/adminRoute.js';
 import lostFoundRouter from './routes/lostFoundRoute.js';
 import requestItemRouter from './routes/requestItemRoute.js';
@@ -20,7 +20,6 @@ import passport from 'passport';
 import './configs/passport.js';
 import jwt from 'jsonwebtoken';
 import queryString from 'query-string';
-import Razorpay from 'razorpay';
 
 
 const app = express();
@@ -57,6 +56,7 @@ app.use(cors({
             .split(',')
             .map(s => s.trim())
             .filter(Boolean);
+        allowedOrigins.push('http://localhost:8081', 'http://127.0.0.1:8081');
 
         // Fallback defaults when no env var provided
 ///////////////////// provided the origin in vercel and local host for development 
@@ -98,16 +98,12 @@ app.use('/api/cart', cartRouter);
 app.use('/api/address', addressRouter);
 app.use('/api/review', reviewRouter);
 app.use('/api/order', orderRouter);
-app.use('/api/payment', paymentRouter);
+app.use('/api/donation', donationRouter);
 app.use('/api/admin', adminRouter);
 app.use('/api/lost-found', lostFoundRouter);
 app.use('/api/request-items', requestItemRouter);
 
 //////////////////////////
-app.get('/api/user/google', (req, res, next) => {
-  console.log('Google OAuth route hit');
-  next();
-}, passport.authenticate('google', { scope: ['profile', 'email'] }));
 /////////////////////
 
 app.get('/api/user/google/callback',
@@ -116,6 +112,17 @@ app.get('/api/user/google/callback',
     // Issue JWT
     const user = req.user;
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+
+    if (req.session.mobileAuthRedirect === 'nichetrade://auth') {
+        const mobileCode = jwt.sign({ id: user._id, mobileAuth: true }, process.env.JWT_SECRET, { expiresIn: '60s' });
+        const mobileState = req.session.mobileAuthState;
+        delete req.session.mobileAuthRedirect;
+        delete req.session.mobileAuthState;
+        return req.session.save((error) => {
+            if (error) return res.status(500).json({ success: false, message: 'Unable to complete mobile sign-in' });
+            res.redirect(`nichetrade://auth?${queryString.stringify({ code: mobileCode, state: mobileState })}`);
+        });
+    }
 
     // Redirect to frontend with token and user info as query params//
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5174';
@@ -152,26 +159,4 @@ server.on('error', (error) => {
         console.error('Server error:', error);
     }
     process.exit(1);
-});
-
-/////be me not validate the code/////////////////////////////////
-
-app.post("/order", async (req, res) => {
-    try {
-        const razorpayInstance = new Razorpay({
-            key_id: process.env.RAZORPAY_KEY_ID,
-            key_secret: process.env.RAZORPAY_KEY_SECRET
-        });
-
-        const options = req.body;
-        const order = await razorpayInstance.orders.create(options);
-
-        if (!order) {
-            return res.status(500).json({ error: 'Failed to create order' });
-        }
-
-        res.json(order);
-    } catch (error) {
-        res.status(500).send("Error");
-    }
 });

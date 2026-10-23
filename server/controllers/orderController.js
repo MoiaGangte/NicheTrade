@@ -3,23 +3,6 @@ import Product from "../models/Product.js";
 import User from "../models/User.js";
 import Address from "../models/Address.js";
 import mongoose from "mongoose";
-import Razorpay from 'razorpay';
-import crypto from 'crypto';
-
-// Initialize Razorpay with error handling
-let razorpay;
-try {
-    if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
-        console.warn('Razorpay credentials not found in environment variables');
-    } else {
-        razorpay = new Razorpay({
-            key_id: process.env.RAZORPAY_KEY_ID,
-            key_secret: process.env.RAZORPAY_KEY_SECRET
-        });
-    }
-} catch (error) {
-    console.error('Error initializing Razorpay:', error);
-}
 
 const deliveryLocationOptions = ['AFC', 'Near Department Store', 'MBA Canteen', 'Cafe Canteen', 'Other'];
 const deliveryTimeOptions = ['During lunch break', 'After college', 'Other'];
@@ -203,85 +186,6 @@ export const placedOrderCOD = async (req, res) => {
         });
     }
 }
-
-// Place order with online payment : /api/order/online
-export const placeOrderOnline = async (req, res) => {
-    try {
-        if (!razorpay) {
-            return res.json({ 
-                success: false, 
-                message: "Payment service is not configured. Please contact support." 
-            });
-        }
-
-        const { items, address } = req.body;
-        const userId = req.userId;
-        
-        if (!address || !items || items.length === 0) {
-            return res.json({ success: false, message: "Invalid data" });
-        }
-
-        // Convert userId to ObjectId
-        const userObjectId = new mongoose.Types.ObjectId(userId);
-
-        // Calculate amount using items
-        let amount = 0;
-        for (const item of items) {
-            const product = await Product.findById(item.product);
-            if (!product) {
-                return res.json({ success: false, message: `Product not found: ${item.product}` });
-            }
-            if (!product.inStock || product.stockQuantity < item.quantity) {
-                return res.json({ 
-                    success: false, 
-                    message: `Insufficient stock for ${product.name}. Available: ${product.stockQuantity}` 
-                });
-            }
-            amount += product.offerPrice * item.quantity;
-        }
-
-        // Add Tax Charge (2%)
-        amount += Math.floor(amount * 0.10);
-
-        // Create Razorpay order
-        const razorpayOrder = await razorpay.orders.create({
-            amount: amount * 100, // Razorpay expects amount in paise
-            currency: "INR",
-            receipt: `order_${Date.now()}`,
-            notes: {
-                userId: userId.toString()
-            }
-        });
-
-        // Create order in database
-        const order = await Order.create({
-            userId: userObjectId,
-            items: items.map(item => ({
-                product: new mongoose.Types.ObjectId(item.product),
-                quantity: item.quantity
-            })),
-            amount,
-            address: new mongoose.Types.ObjectId(address),
-            paymentType: "ONLINE",
-            status: "pending",
-            razorpayOrderId: razorpayOrder.id
-        });
-
-        res.json({ 
-            success: true, 
-            message: "Order created successfully",
-            order,
-            razorpayOrder
-        });
-
-    } catch (error) {
-        console.error('Error in placeOrderOnline:', error);
-        res.json({ 
-            success: false, 
-            message: error.message || "Failed to place order" 
-        });
-    }
-};
 
 // get order by user id : /api/order/user
 export const getUserOrders = async (req, res) => {
@@ -566,68 +470,6 @@ export const updateOrderStatus = async (req, res) => {
         res.status(500).json({
             success: false, 
             message: error.message || "Failed to update order status" 
-        });
-    }
-};
-
-// Verify payment : /api/order/verify
-export const verifyPayment = async (req, res) => {
-    try {
-        const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
-
-        // Verify signature
-        const body = razorpay_order_id + "|" + razorpay_payment_id;
-        const expectedSignature = crypto
-            .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
-            .update(body.toString())
-            .digest("hex");
-
-        const isAuthentic = expectedSignature === razorpay_signature;
-
-        if (!isAuthentic) {
-            return res.json({ 
-                success: false, 
-                message: "Invalid payment signature" 
-            });
-        }
-
-        // Find and update order
-        const order = await Order.findOne({ razorpayOrderId: razorpay_order_id });
-        if (!order) {
-            return res.json({ 
-                success: false, 
-                message: "Order not found" 
-            });
-        }
-
-        // Update order status
-        order.status = "confirmed";
-        order.paymentId = razorpay_payment_id;
-        await order.save();
-
-        // Update product stock
-        for (const item of order.items) {
-            const product = await Product.findById(item.product);
-            if (product) {
-                product.stockQuantity -= item.quantity;
-                if (product.stockQuantity === 0) {
-                    product.inStock = false;
-                }
-                await product.save();
-            }
-        }
-
-        res.json({ 
-            success: true, 
-            message: "Payment verified successfully",
-            order 
-        });
-
-    } catch (error) {
-        console.error('Error in verifyPayment:', error);
-        res.json({ 
-            success: false, 
-            message: error.message || "Failed to verify payment" 
         });
     }
 };

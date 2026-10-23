@@ -2,7 +2,11 @@ import jwt from "jsonwebtoken";
 
 const authAdmin = (req, res, next) => {
     try {
-        const token = req.cookies.adminToken;
+        const headerAuth = req.headers.authorization || req.headers.Authorization;
+        const bearerToken = headerAuth && headerAuth.startsWith('Bearer ')
+            ? headerAuth.substring(7)
+            : null;
+        const token = bearerToken || req.cookies.adminToken;
         if (!token) {
             return res.status(401).json({ success: false, message: "Not authorized as admin" });
         }

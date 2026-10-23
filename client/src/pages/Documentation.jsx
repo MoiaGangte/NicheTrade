@@ -20,6 +20,7 @@ const pageGroups = [
       ["/cart", "Cart", "Review items and quantities before ordering."],
       ["/my-orders", "My orders", "Review orders placed by your account."],
       ["/favorites", "Favorites", "Find products you have saved."],
+      ["/donate", "Support NicheTrade", "Make an optional donation using Razorpay."],
     ],
   },
   {
@@ -195,11 +196,10 @@ export default function Documentation() {
                     categories, price,
                     available stock, and at least one product image. You can
                     also set an offer price and mark a product as a best
-                    seller. A new category can be entered when needed. Pay
-                    ₹3 per unit of the product's stock quantity through
-                    Razorpay before each listing is published; categories
-                    do not affect the fee. Payments use Razorpay test mode,
-                    with the seller's mobile number prefilled at checkout.
+                    seller. A new category can be entered when needed.
+                    Publishing listings is free. Arrange any sale payment
+                    directly with the buyer. Donations to support NicheTrade
+                    are optional and separate from purchases and listings.
                   </p>
                 </div>
               </li>

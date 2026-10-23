@@ -18,13 +18,8 @@ const AddProduct = () => {
     const [selectedCategories, setSelectedCategories] = useState([]);
     const [newCategory, setNewCategory] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [pendingPayment, setPendingPayment] = useState(null);
     const [customCategories, setCustomCategories] = useState([]);
     const [availableCategories, setAvailableCategories] = useState([]);
-    const quantityValue = Number(stockQuantity);
-    const listingFee = Number.isSafeInteger(quantityValue) && quantityValue > 0
-        ? quantityValue * 3
-        : 0;
 
     // Fetch categories on component mount
     useEffect(() => {
@@ -115,16 +110,9 @@ const AddProduct = () => {
         setSelectedCategories((current) => current.filter((category) => category.toLocaleLowerCase() !== catValue.toLocaleLowerCase()));
     };
 
-    const submitListing = async (payment, productData, listingFiles) => {
+    const submitListing = async (productData, listingFiles) => {
         const formData = new FormData();
         formData.append('productData', JSON.stringify(productData));
-        if (payment.freeListing) {
-            formData.append('freeListing', 'true');
-        } else {
-            formData.append('razorpay_order_id', payment.razorpay_order_id);
-            formData.append('razorpay_payment_id', payment.razorpay_payment_id);
-            formData.append('razorpay_signature', payment.razorpay_signature);
-        }
         listingFiles.forEach((file) => formData.append('images', file));
 
         const { data } = await axios.post('/api/product/add', formData, {
@@ -134,7 +122,6 @@ const AddProduct = () => {
             throw new Error(data.message || "Failed to add product");
         }
 
-        setPendingPayment(null);
         toast.success('Product added successfully! Redirecting to product list...', {
             duration: 3000,
             position: 'top-center',
@@ -180,55 +167,10 @@ const AddProduct = () => {
             };
             const listingFiles = files.filter(Boolean);
 
-            const { data } = await axios.post('/api/product/create-listing-order', {
-                quantity,
-            });
-            if (!data.success) {
-                throw new Error(data.message || "Unable to start listing payment");
-            }
-
-            if (data.freeListing) {
-                await submitListing({ freeListing: true }, productData, listingFiles);
-                return;
-            }
-            if (!window.Razorpay) {
-                throw new Error("Razorpay Checkout could not be loaded. Refresh the page and try again.");
-            }
-
-            const checkout = new window.Razorpay({
-                key: data.key,
-                amount: data.order.amount,
-                currency: data.order.currency,
-                order_id: data.order.id,
-                name: "NicheTrade Seller",
-                description: `Listing fee · ${quantity} units`,
-                prefill: {
-                    name: data.seller.name,
-                    email: data.seller.email,
-                    contact: data.seller.contact,
-                },
-                theme: { color: "#4f46e5" },
-                handler: async (payment) => {
-                    try {
-                        await submitListing(payment, productData, listingFiles);
-                    } catch (error) {
-                        console.error('Error adding paid listing:', error);
-                        setPendingPayment({ payment, productData, files: listingFiles });
-                        toast.error(error.response?.data?.message || error.message || "Payment received, but the listing could not be completed. Retry without paying again.");
-                    } finally {
-                        setIsSubmitting(false);
-                    }
-                },
-                modal: { ondismiss: () => setIsSubmitting(false) },
-            });
-            checkout.on("payment.failed", (response) => {
-                setIsSubmitting(false);
-                toast.error(response.error?.description || "Payment failed. Please try again.");
-            });
-            checkout.open();
+            await submitListing(productData, listingFiles);
         } catch (error) {
             setIsSubmitting(false);
-            toast.error(error.response?.data?.message || error.message || "Unable to start listing payment");
+            toast.error(error.response?.data?.message || error.message || "Unable to publish listing");
         }
     };
 
@@ -236,34 +178,8 @@ const AddProduct = () => {
         <div className="no-scrollbar flex-1 h-[95vh] overflow-y-scroll flex flex-col justify-between">
             <h1 className="text-3xl font-semibold mb-2">Add New Product</h1>
             <p className="px-4 text-sm text-gray-600">
-                Listings cost ₹3 per stock unit in test mode. Free upload credits and VIP accounts can list products without a fee.
+                Publishing a listing is free. Arrange any sale payment directly with the buyer.
             </p>
-            {pendingPayment && (
-                <div className="mx-4 mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-950">
-                    <p>Payment was received but the listing could not be confirmed. Retry the listing without paying again.</p>
-                    <button
-                        type="button"
-                        disabled={isSubmitting}
-                        onClick={async () => {
-                            setIsSubmitting(true);
-                            try {
-                                await submitListing(
-                                    pendingPayment.payment,
-                                    pendingPayment.productData,
-                                    pendingPayment.files,
-                                );
-                            } catch (error) {
-                                toast.error(error.response?.data?.message || error.message || "Unable to retry the paid listing");
-                            } finally {
-                                setIsSubmitting(false);
-                            }
-                        }}
-                        className="rounded-lg bg-amber-700 px-4 py-2 font-semibold text-white disabled:opacity-60"
-                    >
-                        Retry listing
-                    </button>
-                </div>
-            )}
             <form onSubmit={handleSubmit} className="md:p-10 p-4 space-y-5 max-w-lg">
                 <div>
                     <p className="text-base font-medium">Product Image <span className="text-red-500">*</span></p>
@@ -354,9 +270,6 @@ const AddProduct = () => {
                         className="outline-none md:py-2.5 py-2 px-3 rounded border border-gray-500/40" 
                         required 
                     />
-                    <p className="text-sm text-gray-600">
-                        Listing fee: ₹3 × {Number.isSafeInteger(quantityValue) && quantityValue > 0 ? quantityValue : 0} units = ₹{listingFee}
-                    </p>
                 </div>
                 <div className="flex items-center gap-2">
                     <input 
@@ -416,7 +329,7 @@ const AddProduct = () => {
                     </button>
                     </div>
                     <p className="text-sm text-gray-600">
-                        {selectedCategories.length} {selectedCategories.length === 1 ? "category" : "categories"} selected · Categories do not change the listing fee
+                        {selectedCategories.length} {selectedCategories.length === 1 ? "category" : "categories"} selected
                     </p>
                     {selectedCategories.length > 0 && (
                         <p className="text-xs text-gray-500">Selected: {selectedCategories.join(", ")}</p>
@@ -424,10 +337,10 @@ const AddProduct = () => {
                 </div>
                 <button 
                     type="submit"
-                    disabled={isSubmitting || Boolean(pendingPayment)}
+                    disabled={isSubmitting}
                     className={`px-8 py-2.5 bg-indigo-500 text-white font-medium rounded ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:bg-indigo-600'}`}
                 >
-                    {isSubmitting ? 'Processing...' : `Pay ₹${listingFee} and add product`}
+                    {isSubmitting ? 'Publishing...' : 'Publish listing'}
                 </button>
             </form>
         </div>

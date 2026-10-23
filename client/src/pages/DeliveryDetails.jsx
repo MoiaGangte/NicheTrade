@@ -149,6 +149,9 @@ const DeliveryDetails = () => {
                         <span>Amount</span>
                         <span>{currency}{getCartAmount()}</span>
                     </div>
+                    <p className="text-sm text-gray-600">
+                        Product purchases are paid directly to the seller. Donations to NicheTrade are separate and optional.
+                    </p>
                     <button
                         type="submit"
                         disabled={isSubmitting}
