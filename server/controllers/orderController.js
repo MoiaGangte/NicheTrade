@@ -3,9 +3,20 @@ import Product from "../models/Product.js";
 import User from "../models/User.js";
 import Address from "../models/Address.js";
 import mongoose from "mongoose";
+import { createOrderChatMessages } from "../services/chatService.js";
 
 const deliveryLocationOptions = ['AFC', 'Near Department Store', 'MBA Canteen', 'Cafe Canteen', 'Other'];
 const deliveryTimeOptions = ['During lunch break', 'After college', 'Other'];
+
+const notifySellersOfOrder = async (order) => {
+    try {
+        await createOrderChatMessages(order);
+        return null;
+    } catch (error) {
+        console.error(`Order ${order._id} was saved, but its seller chat notification failed:`, error);
+        return 'Order placed, but one or more seller chat notifications could not be created.';
+    }
+};
 
 export const placeOrder = async (req, res) => {
     try {
@@ -97,11 +108,13 @@ export const placeOrder = async (req, res) => {
         }
 
         await User.findByIdAndUpdate(req.userId, { cartItems: {} });
+        const notificationWarning = await notifySellersOfOrder(order);
 
         return res.status(201).json({
             success: true,
             message: 'Order placed successfully',
             order,
+            notificationWarning,
         });
     } catch (error) {
         console.error('Error placing order:', error);
@@ -171,11 +184,13 @@ export const placedOrderCOD = async (req, res) => {
 
         // Clear user's cart
         await User.findByIdAndUpdate(userId, { cartItems: {} });
+        const notificationWarning = await notifySellersOfOrder(order);
 
         res.json({ 
             success: true, 
             message: "Order placed successfully",
-            order 
+            order,
+            notificationWarning,
         });
 
     } catch (error) {

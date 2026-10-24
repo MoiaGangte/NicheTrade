@@ -8,7 +8,7 @@ import { getProductCategories } from "../utils/productCategories";
 
 const ProductDetails = () => {
 
-    const { products, navigate, currency, addToCart, user, axios, removeFromCart, cartItems } = useAppContext()
+    const { products, navigate, currency, addToCart, user, axios, removeFromCart, cartItems, setShowUserLogin } = useAppContext()
     const { id } = useParams()
 
     const [relatedProducts, setRelatedProducts] = useState([]);
@@ -19,6 +19,7 @@ const ProductDetails = () => {
     const [comment, setComment] = useState("");
     const [hoveredRating, setHoveredRating] = useState(0);
     const [ratingError, setRatingError] = useState("");
+    const [startingChat, setStartingChat] = useState(false);
 
     const product = products.find((item) => item._id === id);
 
@@ -79,6 +80,25 @@ const ProductDetails = () => {
             }
         } catch (error) {
             console.error('Error fetching reviews:', error);
+        }
+    };
+
+    const chatWithSeller = async () => {
+        if (!user) {
+            setShowUserLogin(true);
+            return;
+        }
+        setStartingChat(true);
+        try {
+            const { data } = await axios.post('/api/messages/conversations', { productId: id });
+            if (!data.success || !data.conversation?._id) {
+                throw new Error(data.message || 'Unable to open a chat with this seller');
+            }
+            navigate(`/messages/${data.conversation._id}`);
+        } catch (error) {
+            toast.error(error.response?.data?.message || error.message || 'Unable to open chat');
+        } finally {
+            setStartingChat(false);
         }
     };
 
@@ -182,6 +202,14 @@ const ProductDetails = () => {
                             Order Now
                         </button>
                     </div>
+                    <button
+                        type="button"
+                        onClick={chatWithSeller}
+                        disabled={startingChat}
+                        className="mt-3 w-full rounded-md border border-green-700 py-3 font-medium text-green-800 transition hover:bg-green-50 disabled:cursor-wait disabled:opacity-60"
+                    >
+                        {startingChat ? 'Opening chat…' : 'Chat with Seller'}
+                    </button>
                 </div>
             </div>
 

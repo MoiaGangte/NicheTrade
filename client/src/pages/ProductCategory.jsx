@@ -3,7 +3,7 @@ import { useAppContext } from '../context/AppContext'
 import { useParams } from 'react-router-dom'
 import { categories as defaultCategories } from '../assets/assets'
 import ProductCart from '../components/ProductCart'
-import { getProductCategories } from '../utils/productCategories'
+import { filterVisibleProductCategories, getProductCategories } from '../utils/productCategories'
 
 const ProductCategory = () => {
     const {products, axios} = useAppContext()
@@ -15,7 +15,7 @@ const ProductCategory = () => {
             try {
                 const { data } = await axios.get('/api/product/categories');
                 if (data.success) {
-                    const apiCategories = data.categories.map(cat => {
+                    const apiCategories = filterVisibleProductCategories(data.categories).map(cat => {
                         const defaultCat = defaultCategories.find(dc => dc.path === cat);
                         if (defaultCat) {
                             return defaultCat;

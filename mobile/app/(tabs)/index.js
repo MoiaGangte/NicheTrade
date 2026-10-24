@@ -1,19 +1,23 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Image, Pressable, ScrollView, Text, TextInput, useWindowDimensions, View } from 'react-native';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Animated, Image, Pressable, ScrollView, Text, TextInput, useWindowDimensions, View } from 'react-native';
 import { router } from 'expo-router';
 import { useApp } from '../../context/AppContext';
-import { EmptyState, ProductCard, Screen } from '../../components/UI';
+import { CartIcon, EmptyState, ProductCard, Screen } from '../../components/UI';
 import { colors, shadow } from '../../theme';
 
 export default function HomeScreen() {
   const { width: screenWidth } = useWindowDimensions();
-  const { api, products, categories, favorites, toggleFavorite, addToCart, user, loading } = useApp();
+  const { api, products, categories, cartItems, favorites, toggleFavorite, addToCart, user, loading } = useApp();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
   const [lostFoundPosts, setLostFoundPosts] = useState([]);
   const [itemRequests, setItemRequests] = useState([]);
   const [communitySearchLoading, setCommunitySearchLoading] = useState(false);
+  const lastScrollY = useRef(0);
+  const searchBarVisible = useRef(true);
+  const searchBarHeight = useRef(new Animated.Value(62)).current;
   const bannerCircleSize = Math.min(170, Math.max(112, screenWidth * 0.4));
+  const cartCount = Object.values(cartItems).reduce((total, quantity) => total + quantity, 0);
   const featured = useMemo(() => products.slice(0, 4), [products]);
   const normalizedQuery = searchQuery.trim().toLocaleLowerCase();
   const queryTerms = normalizedQuery.split(/\s+/).filter(Boolean);
@@ -44,6 +48,30 @@ export default function HomeScreen() {
   const matchingRequests = rankMatches(itemRequests, (request) => (
     [request.itemName, request.description].join(' ')
   ));
+  const setSearchBarVisibility = useCallback((visible) => {
+    if (searchBarVisible.current === visible) return;
+    searchBarVisible.current = visible;
+    Animated.timing(searchBarHeight, {
+      toValue: visible ? 62 : 0,
+      duration: 180,
+      useNativeDriver: false,
+    }).start();
+  }, [searchBarHeight]);
+  const handleScroll = useCallback(({ nativeEvent }) => {
+    const currentY = Math.max(0, nativeEvent.contentOffset.y);
+    const scrollDelta = currentY - lastScrollY.current;
+    lastScrollY.current = currentY;
+
+    if (currentY < 8 || searchQuery.length > 0 || scrollDelta < -5) {
+      setSearchBarVisibility(true);
+    } else if (scrollDelta > 5) {
+      setSearchBarVisibility(false);
+    }
+  }, [searchQuery, setSearchBarVisibility]);
+
+  useEffect(() => {
+    if (searchQuery.length > 0) setSearchBarVisibility(true);
+  }, [searchQuery, setSearchBarVisibility]);
 
   useEffect(() => {
     if (!searchOpen) return undefined;
@@ -73,8 +101,8 @@ export default function HomeScreen() {
 
   return (
     <Screen>
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 18, paddingTop: 12, paddingBottom: 24 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+      <View style={{ paddingHorizontal: 18, paddingTop: 12, backgroundColor: colors.canvas, zIndex: 1 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
           <View>
             <Text style={{ color: colors.navy, fontSize: 25, fontWeight: '900', letterSpacing: -0.7 }}>
               Niche<Text style={{ color: colors.blue }}>Trade</Text>
@@ -82,60 +110,56 @@ export default function HomeScreen() {
             <Text style={{ color: colors.muted, fontSize: 11, marginTop: 1 }}>Buy · Sell · Earn · Connect</Text>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <Pressable onPress={() => router.push('/(tabs)/orders')} style={{ paddingHorizontal: 12, height: 44, borderRadius: 15, backgroundColor: colors.white, justifyContent: 'center', ...shadow }}>
-              <Text style={{ color: colors.blue, fontSize: 12, fontWeight: '700' }}>Orders</Text>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`Cart, ${cartCount} items`}
+              onPress={() => router.push('/cart')}
+              style={{ width: 44, height: 44, borderRadius: 15, backgroundColor: colors.white, justifyContent: 'center', alignItems: 'center', ...shadow }}
+            >
+              <CartIcon />
+              <View style={{ position: 'absolute', top: -3, right: -3, width: 18, height: 18, borderRadius: 9, backgroundColor: colors.blue, alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={{ color: colors.white, fontSize: 10, lineHeight: 12, fontWeight: '700' }}>{cartCount}</Text>
+              </View>
             </Pressable>
-            <Pressable onPress={() => router.push('/cart')} style={{ width: 44, height: 44, borderRadius: 15, backgroundColor: colors.white, justifyContent: 'center', alignItems: 'center', ...shadow }}>
-              <Text style={{ color: colors.navy, fontSize: 21 }}>▱</Text>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Profile"
+              onPress={() => router.push(user ? '/profile' : '/auth')}
+              style={{ paddingHorizontal: 12, height: 44, borderRadius: 15, backgroundColor: colors.white, justifyContent: 'center', ...shadow }}
+            >
+              <Text style={{ color: colors.blue, fontSize: 12, fontWeight: '700' }}>Profile</Text>
             </Pressable>
           </View>
         </View>
 
-        <Pressable onPress={() => router.push({ pathname: '/(tabs)/explore', params: { category: '' } })} style={{
-          minHeight: 132, borderRadius: 20, padding: 20, overflow: 'hidden',
-          backgroundColor: '#DBEAFE', justifyContent: 'center', ...shadow,
-        }}>
+        <Animated.View style={{ height: searchBarHeight, overflow: 'hidden' }}>
           <View style={{
-            position: 'absolute',
-            right: -bannerCircleSize * 0.15,
-            top: -bannerCircleSize * 0.16,
-            width: bannerCircleSize,
-            height: bannerCircleSize,
-            borderRadius: bannerCircleSize / 2,
-            backgroundColor: '#C2D8FF',
-            overflow: 'hidden',
+            flexDirection: 'row', alignItems: 'center', backgroundColor: colors.white,
+            borderRadius: 15, paddingHorizontal: 14, height: 48, marginBottom: 14,
+            borderWidth: 1, borderColor: colors.border,
           }}>
-            <Image
-              source={require('../../assets/campus.png')}
-              resizeMode="cover"
-              style={{ width: '100%', height: '100%' }}
+            <Text style={{ color: colors.navy, fontSize: 18, marginRight: 9 }}>⌕</Text>
+            <TextInput
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              onFocus={() => setSearchOpen(true)}
+              placeholder="Search products, Lost & Found, requests..."
+              placeholderTextColor={colors.muted}
+              returnKeyType="search"
+              style={{ flex: 1, color: colors.ink, fontSize: 16, paddingVertical: 0 }}
             />
+            {searchQuery ? (
+              <Text onPress={() => setSearchQuery('')} style={{ color: colors.muted, fontSize: 18, paddingHorizontal: 4 }}>×</Text>
+            ) : null}
           </View>
-          <Text style={{ color: colors.navy, fontSize: 22, fontWeight: '800', width: '60%', lineHeight: 27 }}>Niche Campus Marketplace</Text>
-          <Text style={{ color: '#355679', marginTop: 6, fontSize: 13 }}>Buy, sell, Earn, find — all in one place.</Text>
-          <Text style={{ color: colors.blue, fontSize: 12, marginTop: 14, fontWeight: '700' }}>Explore listings →</Text>
-        </Pressable>
+        </Animated.View>
+      </View>
 
-        <View style={{
-          flexDirection: 'row', alignItems: 'center', backgroundColor: colors.white,
-          borderRadius: 15, paddingHorizontal: 14, height: 48, marginTop: 14,
-          borderWidth: 1, borderColor: colors.border,
-        }}>
-          <Text style={{ color: colors.muted, fontSize: 18, marginRight: 9 }}>⌕</Text>
-          <TextInput
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            onFocus={() => setSearchOpen(true)}
-            placeholder="Search products, Lost & Found, requests..."
-            placeholderTextColor={colors.muted}
-            returnKeyType="search"
-            style={{ flex: 1, color: colors.ink, fontSize: 13, paddingVertical: 0 }}
-          />
-          {searchQuery ? (
-            <Text onPress={() => setSearchQuery('')} style={{ color: colors.muted, fontSize: 18, paddingHorizontal: 4 }}>×</Text>
-          ) : null}
-        </View>
-
+      <ScrollView
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
+        contentContainerStyle={{ paddingHorizontal: 18, paddingTop: 12, paddingBottom: 24 }}
+      >
         {searchOpen && normalizedQuery ? (
           <View style={{ marginTop: 10, padding: 12, borderRadius: 15, backgroundColor: colors.white, borderWidth: 1, borderColor: colors.border }}>
             <SearchSection
@@ -185,6 +209,31 @@ export default function HomeScreen() {
             </Pressable>
           </View>
         ) : null}
+
+        <Pressable onPress={() => router.push({ pathname: '/(tabs)/explore', params: { category: '' } })} style={{
+          minHeight: 132, borderRadius: 20, padding: 20, overflow: 'hidden',
+          backgroundColor: '#DBEAFE', justifyContent: 'center', ...shadow,
+        }}>
+          <View style={{
+            position: 'absolute',
+            right: -bannerCircleSize * 0.15,
+            top: -bannerCircleSize * 0.16,
+            width: bannerCircleSize,
+            height: bannerCircleSize,
+            borderRadius: bannerCircleSize / 2,
+            backgroundColor: '#C2D8FF',
+            overflow: 'hidden',
+          }}>
+            <Image
+              source={require('../../assets/campus.png')}
+              resizeMode="cover"
+              style={{ width: '100%', height: '100%' }}
+            />
+          </View>
+          <Text style={{ color: colors.navy, fontSize: 22, fontWeight: '800', width: '60%', lineHeight: 27 }}>Niche Campus Marketplace</Text>
+          <Text style={{ color: '#355679', marginTop: 6, fontSize: 13 }}>Buy, sell, Earn, find — all in one place.</Text>
+          <Text style={{ color: colors.blue, fontSize: 12, marginTop: 14, fontWeight: '700' }}>Explore listings →</Text>
+        </Pressable>
 
         {categories.length > 0 ? (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingVertical: 17, gap: 10 }}>

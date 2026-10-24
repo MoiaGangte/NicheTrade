@@ -37,6 +37,12 @@ NODE_ENV=development
 VITE_BACKEND_URL=http://localhost:5000
 ```
 
+## Real-time buyer and seller messaging
+
+The website uses the authenticated Express/MongoDB messaging API and a JWT-authenticated Socket.IO connection. Conversations are created from trusted product and seller records; message history, unread counts, and order notices are persisted in MongoDB.
+
+The production Express API must run on a persistent Node.js host that supports long-lived Socket.IO connections. The existing Vercel serverless deployment can continue serving the website, but it cannot host the Socket.IO server reliably. Deploy `server/Dockerfile` (or the Express server on another persistent Node host), configure its existing environment variables plus `FRONTEND_URL` with the website origin, and set the website's `VITE_BACKEND_URL` to that API origin. Use the same API origin for the native app's `EXPO_PUBLIC_API_URL`.
+
 ## How It Works
 
 ### Manual Login Flow

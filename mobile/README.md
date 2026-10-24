@@ -15,8 +15,8 @@ Razorpay seller-listing checkout is a native module, so use an Expo development/
 
 ## API environments
 
-- `.env.development` targets the existing local API through the Android emulator host (`10.0.2.2:5000`). Use your computer's LAN IP for a physical phone and `localhost:5000` for the iOS simulator.
-- `.env.production` targets the verified deployed Express API at `https://eimi-cart-backend.vercel.app`.
+- `.env` targets the local API through the Android emulator host (`10.0.2.2:5000`). Use your computer's LAN IP for a physical phone and `localhost:5000` for the iOS simulator.
+- `.env.production` targets the configured deployed API at `https://niche-trade-21x2.vercel.app/`.
 - Override `EXPO_PUBLIC_API_URL` in the build environment for other deployments. Only public API URLs belong in `EXPO_PUBLIC_*`; never put server secrets or privileged keys there.
 
 The production endpoint was verified to return the existing API health check and live `/api/product/categories` response. It is the backend URL already documented in `client/.env` (commented out) and `server/configs/passport.js`.
@@ -28,6 +28,7 @@ The production endpoint was verified to return the existing API health check and
 | Marketplace homepage, live listings, category browsing and search | Home and Explore tabs | `/api/product/list`, `/api/product/categories`; existing Product/Seller records and image URLs |
 | Product detail, seller information, favorites, and cart | Product detail, Saved listings, Cart | `/api/product/id`, `/api/user/favorites/update`, `/api/cart/update` |
 | Email and register-number login, student registration, Google OAuth | Account screen | `/api/user/login`, `/register`, `/login-register-number`; existing Google Passport flow |
+| Buyer/seller messaging, order notices, unread conversations | Messages tab, product chat action | `/api/messages/*`; MongoDB conversations/messages and authenticated Socket.IO |
 | User profile and address book | Edit profile and Saved addresses | `/api/user/profile`, `/api/address/*` |
 | Checkout, campus pickup, order history/cancellation | Cart and Orders tabs | `/api/order/place`, `/api/order/user`, `/api/order/:orderId` |
 | Seller registration, inventory, images, listing credits/payments, orders | Sell tab | `/api/seller/*`, `/api/product/*`, `/api/order/seller*`; existing Cloudinary and Razorpay-backed services |
@@ -37,6 +38,12 @@ The production endpoint was verified to return the existing API health check and
 
 No duplicate database, mock marketplace records, or fixed category list is introduced. Categories and listing content are fetched from the shared API.
 
+Real-time messaging requires the Express API to run on a persistent Node.js host with Socket.IO support. The existing Vercel serverless API cannot provide reliable persistent Socket.IO connections. Set `EXPO_PUBLIC_API_URL` to the persistent API origin used by the website.
+
 ## Mobile authentication transport
 
-User login and registration reuse the existing endpoints and store the existing JWT in Expo SecureStore. Google OAuth returns a state-checked, 60-second mobile code to the `nichetrade://auth` app link; the app exchanges that code for the same account's normal JWT. For mobile Google registration, student details are encrypted server-side and expire after five minutes so they can cross from the app to the browser-based Passport session without exposing personal details in the OAuth URL. Admin bearer-token support is additive; the existing web admin cookie and website login continue working. Register the existing production callback URL with the Google OAuth client as before.
+User login and registration reuse the existing endpoints and store the existing JWT in Expo SecureStore. Google OAuth returns a state-checked, 60-second mobile code to the `nichetrade://auth` app link; the app exchanges that code for the same account's normal JWT. Mobile OAuth state is signed by the backend and returned by Google, so the app return target does not depend on an in-memory Express session surviving between OAuth requests. For mobile Google registration, student details remain encrypted server-side and expire after five minutes. Admin bearer-token support is additive; the existing web admin cookie and website login continue working. Register the backend callback URL with the Google OAuth client; do not register `nichetrade://auth` as a Google redirect URI.
+
+For local Android-emulator OAuth, the app API uses `http://10.0.2.2:5000`; run `adb reverse tcp:5000 tcp:5000` so Google's local callback at `http://localhost:5000/api/user/google/callback` reaches the computer's backend. A physical phone cannot use the emulator alias or its own `localhost`: use the computer's LAN address for the API and an HTTPS tunnel for the Google callback, and register that exact callback URL in Google Cloud Console.
+
+When testing through Expo Web, Google sign-in returns to the same browser at `/auth` instead of using the native app link. Allow the Expo Web origin in the API environment variable `MOBILE_WEB_ORIGINS` (comma-separated); local development automatically allows `http://localhost:8081` and `http://127.0.0.1:8081`. Production Expo Web origins must be explicitly configured as HTTPS origins. The Google OAuth authorized redirect URI remains the backend callback URL; do not add the Expo Web URL or `nichetrade://auth` there.

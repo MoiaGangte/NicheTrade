@@ -35,6 +35,7 @@ import Objective from './pages/Objective'
 import Documentation from './pages/Documentation'
 import Regulation from './pages/Regulation'
 import Donate from './pages/Donate'
+import Messages from './pages/Messages'
 
 const App = () => {
   const location = useLocation()
@@ -78,6 +79,8 @@ const App = () => {
           <Route path='/my-orders' element={<MyOrders />} />
           <Route path='/order-details/:orderId' element={<OrderDetails />} />
           <Route path='/profile' element={<Profile />} />
+          <Route path='/messages' element={<Messages />} />
+          <Route path='/messages/:conversationId' element={<Messages />} />
           <Route path='/google-auth-success' element={<GoogleAuthSuccess />} />
           <Route path='/seller/login' element={<Navigate to='/' replace />} />
           <Route path='/seller/register' element={isSeller ? <Navigate to='/seller' replace /> : <SellerRegistration />} />

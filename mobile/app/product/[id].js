@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Image, Pressable, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, Pressable, ScrollView, Text, View } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useApp } from '../../context/AppContext';
 import api, { getErrorMessage } from '../../api';
@@ -8,10 +8,11 @@ import { colors, shadow } from '../../theme';
 
 export default function ProductScreen() {
   const { id } = useLocalSearchParams();
-  const { products, currency, addToCart, favorites, toggleFavorite } = useApp();
+  const { products, currency, addToCart, favorites, toggleFavorite, api, user } = useApp();
   const [product, setProduct] = useState(products.find((item) => item._id === id) || null);
   const [imageIndex, setImageIndex] = useState(0);
   const [error, setError] = useState('');
+  const [startingChat, setStartingChat] = useState(false);
 
   useEffect(() => {
     if (product) return;
@@ -37,6 +38,23 @@ export default function ProductScreen() {
     .filter(({ sharedCategories }) => sharedCategories > 0)
     .sort((left, right) => right.sharedCategories - left.sharedCategories)
     .slice(0, 6);
+
+  const chatWithSeller = async () => {
+    if (!user) {
+      router.push('/auth');
+      return;
+    }
+    setStartingChat(true);
+    try {
+      const { data } = await api.post('/api/messages/conversations', { productId: product._id });
+      if (!data.success || !data.conversation?._id) throw new Error(data.message || 'Unable to open chat');
+      router.push(`/messages/${data.conversation._id}`);
+    } catch (requestError) {
+      Alert.alert('Chat with seller', requestError.response?.data?.message || requestError.message);
+    } finally {
+      setStartingChat(false);
+    }
+  };
 
   return (
     <Screen>
@@ -90,6 +108,7 @@ export default function ProductScreen() {
       </ScrollView>
       <View style={{ padding: 15, borderTopColor: colors.border, borderTopWidth: 1, backgroundColor: colors.white }}>
         <Button title={product.inStock ? 'Add to Cart' : 'Out of stock'} disabled={!product.inStock} onPress={() => addToCart(product._id)} />
+        <Button title={startingChat ? 'Opening chat…' : 'Chat with Seller'} secondary disabled={startingChat} onPress={chatWithSeller} style={{ marginTop: 9 }} />
         <Text onPress={() => router.push('/cart')} style={{ color: colors.blue, textAlign: 'center', marginTop: 11, fontWeight: '700' }}>View cart</Text>
       </View>
     </Screen>

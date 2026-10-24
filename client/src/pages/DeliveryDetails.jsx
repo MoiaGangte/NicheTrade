@@ -54,6 +54,7 @@ const DeliveryDetails = () => {
 
             setCartItems({});
             toast.success('Order placed successfully');
+            if (data.notificationWarning) toast.error(data.notificationWarning);
             navigate('/my-orders');
         } catch (error) {
             if (error.response?.status === 401) {

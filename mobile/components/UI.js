@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { ActivityIndicator, Image, Pressable, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, shadow } from '../theme';
@@ -18,7 +19,7 @@ export function PageTitle({ title, subtitle, right }) {
   );
 }
 
-export function Button({ title, onPress, secondary, disabled, style }) {
+export function Button({ title, onPress, secondary, disabled, style, icon }) {
   return (
     <Pressable
       accessibilityRole="button"
@@ -32,32 +33,70 @@ export function Button({ title, onPress, secondary, disabled, style }) {
         opacity: disabled ? 0.5 : pressed ? 0.82 : 1,
       }, style]}
     >
-      {disabled ? <ActivityIndicator color={secondary ? colors.blue : colors.white} /> :
-        <Text style={{ color: secondary ? colors.navy : colors.white, fontSize: 15, fontWeight: '700' }}>{title}</Text>}
+      {disabled ? <ActivityIndicator color={secondary ? colors.blue : colors.white} /> : (
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9 }}>
+          {icon ? <Image source={icon} style={{ width: 20, height: 20 }} resizeMode="contain" /> : null}
+          <Text style={{ color: secondary ? colors.navy : colors.white, fontSize: 15, fontWeight: '700' }}>{title}</Text>
+        </View>
+      )}
     </Pressable>
   );
 }
 
+export function CartIcon() {
+  const stroke = { position: 'absolute', height: 1.7, borderRadius: 1, backgroundColor: '#364153' };
+  return (
+    <View accessibilityElementsHidden style={{ width: 22, height: 21 }}>
+      <View style={[stroke, { width: 6, left: 0, top: 2, transform: [{ rotate: '18deg' }] }]} />
+      <View style={[stroke, { width: 12, left: 4, top: 8, transform: [{ rotate: '79deg' }] }]} />
+      <View style={[stroke, { width: 14, left: 7, top: 6 }]} />
+      <View style={[stroke, { width: 9, left: 12, top: 11, transform: [{ rotate: '104deg' }] }]} />
+      <View style={[stroke, { width: 10, left: 8, top: 15 }]} />
+      <View style={{ position: 'absolute', left: 7, top: 18, width: 4, height: 4, borderWidth: 1.5, borderColor: '#364153', borderRadius: 2 }} />
+      <View style={{ position: 'absolute', left: 16, top: 18, width: 4, height: 4, borderWidth: 1.5, borderColor: '#364153', borderRadius: 2 }} />
+    </View>
+  );
+}
+
 export function Field({ label, value, onChangeText, placeholder, multiline, keyboardType, secureTextEntry, autoCapitalize }) {
+  const [passwordVisible, setPasswordVisible] = useState(false);
   return (
     <View style={{ marginBottom: 14 }}>
       {label ? <Text style={{ color: colors.ink, fontWeight: '700', marginBottom: 7 }}>{label}</Text> : null}
-      <TextInput
-        value={value}
-        onChangeText={onChangeText}
-        placeholder={placeholder}
-        placeholderTextColor="#93A0B1"
-        multiline={multiline}
-        keyboardType={keyboardType}
-        secureTextEntry={secureTextEntry}
-        autoCapitalize={autoCapitalize || 'sentences'}
-        textAlignVertical={multiline ? 'top' : 'center'}
-        style={{
-          minHeight: multiline ? 104 : 48, borderRadius: 12, borderWidth: 1,
-          borderColor: colors.border, backgroundColor: colors.white,
-          color: colors.ink, paddingHorizontal: 14, paddingVertical: 12,
-        }}
-      />
+      <View style={{
+        minHeight: multiline ? 104 : 48, flexDirection: 'row', alignItems: multiline ? 'flex-start' : 'center',
+        borderRadius: 12, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.white,
+      }}>
+        <TextInput
+          value={value}
+          onChangeText={onChangeText}
+          placeholder={placeholder}
+          placeholderTextColor="#93A0B1"
+          multiline={multiline}
+          keyboardType={keyboardType}
+          secureTextEntry={secureTextEntry && !passwordVisible}
+          autoCapitalize={autoCapitalize || 'sentences'}
+          textAlignVertical={multiline ? 'top' : 'center'}
+          style={{
+            flex: 1, minHeight: multiline ? 104 : 48, color: colors.ink,
+            paddingHorizontal: 14, paddingVertical: 12,
+          }}
+        />
+        {secureTextEntry ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={passwordVisible ? 'Hide password' : 'Show password'}
+            accessibilityState={{ selected: passwordVisible }}
+            onPress={() => setPasswordVisible((visible) => !visible)}
+            hitSlop={8}
+            style={{ paddingHorizontal: 14, paddingVertical: 12 }}
+          >
+            <Text style={{ color: colors.blue, fontSize: 13, fontWeight: '700' }}>
+              {passwordVisible ? 'Hide' : 'Show'}
+            </Text>
+          </Pressable>
+        ) : null}
+      </View>
     </View>
   );
 }

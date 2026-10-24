@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { categories as defaultCategories } from '../assets/assets';
 import { NavLink } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
+import { filterVisibleProductCategories } from '../utils/productCategories';
 
 const CategoryNav = () => {
   const { axios } = useAppContext();
@@ -13,7 +14,7 @@ const CategoryNav = () => {
         const { data } = await axios.get('/api/product/categories');
         if (data.success) {
           // Merge API categories with default categories
-          const apiCategories = data.categories.map(cat => {
+          const apiCategories = filterVisibleProductCategories(data.categories).map(cat => {
             const defaultCat = defaultCategories.find(dc => dc.path === cat);
             if (defaultCat) {
               return defaultCat;

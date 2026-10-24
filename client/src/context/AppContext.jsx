@@ -26,10 +26,6 @@ axiosInstance.interceptors.request.use(
 axiosInstance.interceptors.response.use(
     (response) => response,
     (error) => {
-        if (error.response?.status === 401) {
-            // Handle unauthorized error
-            console.log('Unauthorized access');
-        }
         return Promise.reject(error);
     }
 );

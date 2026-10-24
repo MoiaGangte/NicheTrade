@@ -4,7 +4,7 @@ import * as SecureStore from 'expo-secure-store';
 
 export const TOKEN_KEY = 'nichetrade.token';
 export const ADMIN_TOKEN_KEY = 'nichetrade.admin-token';
-export const API_URL = (process.env.EXPO_PUBLIC_API_URL || 'https://eimi-cart-backend.vercel.app').replace(/\/+$/, '');
+export const API_URL = (process.env.EXPO_PUBLIC_API_URL || 'https://niche-trade.vercel.app').replace(/\/+$/, '');
 
 export const getStoredToken = (key) => (
   Platform.OS === 'web' ? Promise.resolve(globalThis.localStorage.getItem(key)) : SecureStore.getItemAsync(key)

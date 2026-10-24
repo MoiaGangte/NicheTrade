@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { categories as defaultCategories, assets } from '../assets/assets'
 import { useAppContext } from '../context/AppContext'
 import { Link } from 'react-router-dom'
+import { filterVisibleProductCategories } from '../utils/productCategories'
 
 const Categories = () => {
     const { navigate, axios } = useAppContext()
@@ -13,7 +14,7 @@ const Categories = () => {
                 const { data } = await axios.get('/api/product/categories');
                 if (data.success) {
                     // Merge API categories with default categories
-                    const apiCategories = data.categories.map(cat => {
+                    const apiCategories = filterVisibleProductCategories(data.categories).map(cat => {
                         const defaultCat = defaultCategories.find(dc => dc.path === cat);
                         if (defaultCat) {
                             return defaultCat;

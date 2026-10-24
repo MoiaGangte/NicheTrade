@@ -4,6 +4,7 @@ import { adminAccessStatus, adminMobileLogin } from '../controllers/adminControl
 import { createMobileGoogleRegistration, exchangeMobileAuthCode, isAuth, login, loginWithRegisterNumber, logout, readMobileGoogleRegistration, register, updateFavorites, updateProfile } from '../controllers/userController.js';
 import { authUser } from '../middleware/authMiddleware.js';
 import { getStudentDetails } from '../utils/studentDetails.js';
+import { createMobileGoogleOAuthState, isAllowedMobileWebRedirect } from '../utils/mobileGoogleOAuth.js';
 
 const userRouter = express.Router();
 
@@ -37,22 +38,29 @@ userRouter.get('/google', (req, res, next) => {
         req.session.googleStudentDetails = registration;
     }
     if (req.query.mobileRedirect !== undefined) {
-        if (req.query.mobileRedirect !== 'nichetrade://auth'
+        const isMobileRedirect = req.query.mobileRedirect === 'nichetrade://auth';
+        const isWebRedirect = typeof req.query.mobileRedirect === 'string'
+            && isAllowedMobileWebRedirect(req.query.mobileRedirect);
+        if ((!isMobileRedirect && !isWebRedirect)
             || typeof req.query.mobileState !== 'string'
             || req.query.mobileState.length < 32
             || req.query.mobileState.length > 128
             || (req.query.mobileRegistration !== undefined && typeof req.query.mobileRegistration !== 'string')) {
             return res.status(400).json({ success: false, message: 'Invalid mobile sign-in redirect' });
         }
-        req.session.mobileAuthRedirect = req.query.mobileRedirect;
-        req.session.mobileAuthState = req.query.mobileState;
-        return req.session.save((error) => {
-            if (error) return next(error);
-            next();
+        req.mobileGoogleOAuthState = createMobileGoogleOAuthState({
+            mobileRedirect: req.query.mobileRedirect,
+            mobileState: req.query.mobileState,
+            mobileRegistration: req.query.mobileRegistration,
         });
+        return next();
     }
     next();
-}, passport.authenticate('google', { scope: ['profile', 'email'] }))
+}, (req, res, next) => {
+    const options = { scope: ['profile', 'email'] };
+    if (req.mobileGoogleOAuthState) options.state = req.mobileGoogleOAuthState;
+    passport.authenticate('google', options)(req, res, next);
+})
 userRouter.get('/is-auth', authUser, isAuth)
 userRouter.get('/logout', logout)
 userRouter.post('/logout', logout)

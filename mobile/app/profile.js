@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Alert, Platform, ScrollView, Text, View } from 'react-native';
 import { router } from 'expo-router';
-import { useApp } from '../../context/AppContext';
-import { Button, EmptyState, Screen } from '../../components/UI';
-import { colors, shadow } from '../../theme';
+import { useApp } from '../context/AppContext';
+import { Button, EmptyState, Screen } from '../components/UI';
+import { colors, shadow } from '../theme';
 
 export default function ProfileScreen() {
   const { api, user, seller, signOut } = useApp();
@@ -87,7 +87,7 @@ export default function ProfileScreen() {
               <MenuRow title="Saved listings" detail="Your favorite products" onPress={() => router.push('/favorites')} />
               <MenuRow title="Saved addresses" detail="Manage delivery addresses" onPress={() => router.push('/addresses')} />
               <MenuRow title="My listings" detail="Manage your products" onPress={() => router.push('/(tabs)/sell')} />
-              <MenuRow title="My orders" detail={orderCount === null ? 'View your purchases' : `${orderCount} orders`} onPress={() => router.push('/(tabs)/orders')} />
+              <MenuRow title="My orders" detail={orderCount === null ? 'View your purchases' : `${orderCount} orders`} onPress={() => router.push('/orders')} />
               <MenuRow title="Lost & Found" detail="Campus lost items" onPress={() => router.push('/lost-found')} />
               <MenuRow title="Item requests" detail="Requests from students" onPress={() => router.push('/requests')} last />
             </View>

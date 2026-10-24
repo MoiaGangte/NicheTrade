@@ -4,6 +4,7 @@ import { categories as defaultCategories } from "../../assets/assets";
 import { useAppContext } from "../../context/AppContext";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import { filterVisibleProductCategories } from "../../utils/productCategories";
 
 const AddProduct = () => {
     const { axios } = useAppContext();
@@ -14,7 +15,6 @@ const AddProduct = () => {
     const [price, setPrice] = useState("");
     const [offerPrice, setOfferPrice] = useState("");
     const [stockQuantity, setStockQuantity] = useState("");
-    const [isBestSeller, setIsBestSeller] = useState(false);
     const [selectedCategories, setSelectedCategories] = useState([]);
     const [newCategory, setNewCategory] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -27,7 +27,7 @@ const AddProduct = () => {
             try {
                 const { data } = await axios.get('/api/product/categories');
                 if (data.success) {
-                    setAvailableCategories(data.categories);
+                    setAvailableCategories(filterVisibleProductCategories(data.categories));
                 }
             } catch (error) {
                 console.error('Error fetching categories:', error);
@@ -40,7 +40,7 @@ const AddProduct = () => {
         try {
             const { data } = await axios.get('/api/product/categories');
             if (data.success) {
-                setAvailableCategories(data.categories);
+                setAvailableCategories(filterVisibleProductCategories(data.categories));
             }
         } catch (error) {
             console.error('Error fetching categories:', error);
@@ -162,8 +162,7 @@ const AddProduct = () => {
                 categories: selectedCategories,
                 price: Number(price),
                 offerPrice: Number(offerPrice) || 0,
-                stockQuantity: quantity,
-                isBestSeller
+                stockQuantity: quantity
             };
             const listingFiles = files.filter(Boolean);
 
@@ -270,18 +269,6 @@ const AddProduct = () => {
                         className="outline-none md:py-2.5 py-2 px-3 rounded border border-gray-500/40" 
                         required 
                     />
-                </div>
-                <div className="flex items-center gap-2">
-                    <input 
-                        type="checkbox" 
-                        id="isBestSeller" 
-                        checked={isBestSeller}
-                        onChange={(e) => setIsBestSeller(e.target.checked)}
-                        className="w-4 h-4"
-                    />
-                    <label htmlFor="isBestSeller" className="text-base font-medium">
-                        Best Seller
-                    </label>
                 </div>
                 <div className="flex flex-col gap-1 max-w-md">
                     <label className="text-base font-medium" htmlFor="product-category">Category <span className="text-red-500">*</span></label>

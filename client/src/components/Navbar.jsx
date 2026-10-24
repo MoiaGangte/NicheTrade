@@ -3,10 +3,12 @@ import { NavLink, useLocation } from 'react-router-dom'
 import { assets } from '../assets/assets'
 import { useAppContext } from '../context/AppContext'
 import toast from 'react-hot-toast'
+import { useChat } from '../context/ChatContext'
 
 const Navbar = () => {
     const [open, setOpen] = React.useState(false)
     const { user, setUser, setShowUserLogin, navigate, setSearchQuery, searchQuery, getCartCount, axios, setCartItems, setIsSeller, setSeller } = useAppContext();
+    const { unreadCount } = useChat();
     const location = useLocation();
     const isProductDetailPage = location.pathname.includes('/products/') && location.pathname.split('/').length > 3;
     const dropdownRef = useRef(null);
@@ -116,6 +118,9 @@ const Navbar = () => {
                                 <ul className='hidden group-hover:block absolute top-10 right-0 bg-white shadow-lg border border-gray-200 py-2 w-40 rounded-md text-sm z-40'>
                                     <li onClick={() => navigate("/profile")} className='px-4 py-2 hover:bg-[var(--color-primary)]/5 hover:border-l-4 hover:border-[var(--color-primary)] cursor-pointer transition-all duration-200'>Profile</li>
                                     <li onClick={() => navigate("/my-orders")} className='px-4 py-2 hover:bg-[var(--color-primary)]/5 hover:border-l-4 hover:border-[var(--color-primary)] cursor-pointer transition-all duration-200'>My Orders</li>
+                                    <li onClick={() => navigate("/messages")} className='px-4 py-2 hover:bg-[var(--color-primary)]/5 hover:border-l-4 hover:border-[var(--color-primary)] cursor-pointer transition-all duration-200 flex items-center justify-between'>
+                                        Messages {unreadCount > 0 ? <span className="rounded-full bg-green-600 px-2 py-0.5 text-xs text-white">{unreadCount > 99 ? '99+' : unreadCount}</span> : null}
+                                    </li>
                                     <li onClick={() => navigate(user.role === 'seller' ? "/seller" : "/seller/register")} className='px-4 py-2 hover:bg-[var(--color-primary)]/5 hover:border-l-4 hover:border-[var(--color-primary)] cursor-pointer transition-all duration-200'>{user.role === 'seller' ? 'Seller Dashboard' : 'Register as Seller'}</li>
                                     <li onClick={logout} className='px-4 py-2 hover:bg-[var(--color-primary)]/5 hover:border-l-4 hover:border-[var(--color-primary)] cursor-pointer transition-all duration-200'>Logout</li>
                                 </ul>
@@ -141,6 +146,13 @@ const Navbar = () => {
                     >
                         <NavLink to='/' onClick={() => setOpen(false)}>Home</NavLink>
                         <NavLink to='/products' onClick={() => setOpen(false)}>All Product</NavLink>
+                        {user ? (
+                            <NavLink to='/messages' onClick={() => setOpen(false)} className="flex items-center gap-2">
+                                Messages {unreadCount > 0 ? <span className="rounded-full bg-green-600 px-2 py-0.5 text-xs text-white">{unreadCount > 99 ? '99+' : unreadCount}</span> : null}
+                            </NavLink>
+                        ) : (
+                            <button onClick={() => { setOpen(false); setShowUserLogin(true); }}>Messages</button>
+                        )}
                         {user && (
                             <>
                                 <NavLink to='/my-orders' onClick={() => setOpen(false)}>My Orders</NavLink>

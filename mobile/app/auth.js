@@ -1,12 +1,14 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useApp } from '../context/AppContext';
 import { Button, Field, Screen } from '../components/UI';
 import { colors } from '../theme';
 
 export default function AuthScreen() {
-  const { signIn, googleSignIn } = useApp();
+  const { signIn, googleSignIn, completeGoogleSignIn } = useApp();
+  const params = useLocalSearchParams();
+  const handledGoogleCallback = useRef(false);
   const [mode, setMode] = useState('login');
   const [loginMethod, setLoginMethod] = useState('email');
   const [busy, setBusy] = useState(false);
@@ -16,6 +18,27 @@ export default function AuthScreen() {
   });
   const update = (key) => (value) => setForm((current) => ({ ...current, [key]: value }));
 
+  useEffect(() => {
+    if (Platform.OS !== 'web' || handledGoogleCallback.current || typeof params.code !== 'string') return;
+    handledGoogleCallback.current = true;
+    const expectedState = window.sessionStorage.getItem('nichetrade.google-auth-state');
+    window.sessionStorage.removeItem('nichetrade.google-auth-state');
+    if (!expectedState || params.state !== expectedState) {
+      router.replace('/auth');
+      Alert.alert('Google sign-in', 'Could not verify the sign-in session. Please try again.');
+      return;
+    }
+
+    setBusy(true);
+    completeGoogleSignIn(params.code)
+      .then(() => router.replace('/profile'))
+      .catch((error) => {
+        router.replace('/auth');
+        Alert.alert('Google sign-in', error.response?.data?.message || error.message);
+      })
+      .finally(() => setBusy(false));
+  }, [completeGoogleSignIn, params.code, params.state]);
+
   const submit = async () => {
     setBusy(true);
     try {
@@ -24,7 +47,7 @@ export default function AuthScreen() {
       } else {
         await signIn(mode === 'register' ? form : { email: form.email, password: form.password }, `/api/user/${mode}`);
       }
-      router.replace('/(tabs)/profile');
+      router.replace('/profile');
     } catch (error) {
       Alert.alert('Account', error.response?.data?.message || error.message);
     } finally {
@@ -37,7 +60,7 @@ export default function AuthScreen() {
     try {
       const studentDetails = mode === 'register' ? form : null;
       const success = await googleSignIn(studentDetails);
-      if (success) router.replace('/(tabs)/profile');
+      if (success) router.replace('/profile');
     } catch (error) {
       Alert.alert('Google sign-in', error.response?.data?.message || error.message);
     } finally {
@@ -91,7 +114,13 @@ export default function AuthScreen() {
 
           <Button title={mode === 'login' ? 'Login' : 'Create account'} disabled={busy} onPress={submit} style={{ marginTop: 4 }} />
           <Text style={{ color: colors.muted, textAlign: 'center', paddingVertical: 13 }}>or</Text>
-          <Button title="Continue with Google" secondary disabled={busy} onPress={google} />
+          <Button
+            title={mode === 'register' ? 'Sign in with Google' : 'Login with Google'}
+            secondary
+            disabled={busy}
+            onPress={google}
+            icon={{ uri: 'https://developers.google.com/identity/images/g-logo.png' }}
+          />
           <Text onPress={() => { setMode(mode === 'login' ? 'register' : 'login'); setLoginMethod('email'); }} style={{ color: colors.blue, textAlign: 'center', marginTop: 20, fontWeight: '700' }}>
             {mode === 'login' ? 'New to NicheTrade?  Create an account' : 'Already have an account?  Login'}
           </Text>

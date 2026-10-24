@@ -40,8 +40,10 @@ export default function CartScreen() {
       if (!data.success) throw new Error(data.message || 'Unable to place order');
       items.forEach((item) => updateCartQuantity(item.id, 0));
       await refreshProducts();
-      Alert.alert('Order placed', 'Your order is confirmed. Payment is arranged directly with the seller on collection.', [
-        { text: 'View orders', onPress: () => router.replace('/(tabs)/orders') },
+      Alert.alert('Order placed', data.notificationWarning
+        ? `${data.notificationWarning} Your order is confirmed.`
+        : 'Your order is confirmed. Payment is arranged directly with the seller on collection.', [
+        { text: 'View orders', onPress: () => router.replace('/orders') },
       ]);
     } catch (error) {
       Alert.alert('Order could not be placed', error.response?.data?.message || error.message);

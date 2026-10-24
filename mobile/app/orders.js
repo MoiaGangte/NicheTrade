@@ -1,9 +1,9 @@
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, Alert, Image, Pressable, ScrollView, Text, View, RefreshControl } from 'react-native';
 import { useFocusEffect, router } from 'expo-router';
-import { useApp } from '../../context/AppContext';
-import { Button, EmptyState, PageTitle, Screen } from '../../components/UI';
-import { colors, shadow } from '../../theme';
+import { useApp } from '../context/AppContext';
+import { Button, EmptyState, PageTitle, Screen } from '../components/UI';
+import { colors, shadow } from '../theme';
 
 export default function OrdersScreen() {
   const { api, user, currency } = useApp();

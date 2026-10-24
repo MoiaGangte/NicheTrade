@@ -1,11 +1,11 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { Alert, Linking } from 'react-native';
+import { Alert, Linking, Platform } from 'react-native';
 import * as Crypto from 'expo-crypto';
 import * as WebBrowser from 'expo-web-browser';
 import * as AuthSession from 'expo-auth-session';
 import api, { API_URL, getErrorMessage, removeStoredToken, setStoredToken, TOKEN_KEY } from '../api';
 
-WebBrowser.maybeCompleteAuthSession();
+if (Platform.OS !== 'web') WebBrowser.maybeCompleteAuthSession();
 
 const AppContext = createContext(null);
 
@@ -120,6 +120,12 @@ export function AppProvider({ children }) {
     return data.user;
   }, [acceptToken]);
 
+  const completeGoogleSignIn = useCallback(async (code) => {
+    const { data } = await api.post('/api/user/mobile-auth/exchange', { code });
+    if (!data.success || !data.token) throw new Error(data.message || 'Unable to complete Google sign-in');
+    await acceptToken(data.token, data.user);
+  }, [acceptToken]);
+
   const googleSignIn = useCallback(async (studentDetails) => {
     let registrationPayload = '';
     if (studentDetails) {
@@ -128,6 +134,14 @@ export function AppProvider({ children }) {
       registrationPayload = `&mobileRegistration=${encodeURIComponent(data.mobileRegistration)}`;
     }
     const state = Crypto.randomUUID();
+    if (Platform.OS === 'web') {
+      const returnUrl = `${window.location.origin}/auth`;
+      window.sessionStorage.setItem('nichetrade.google-auth-state', state);
+      const authUrl = `${API_URL}/api/user/google?mobileRedirect=${encodeURIComponent(returnUrl)}&mobileState=${encodeURIComponent(state)}${registrationPayload}`;
+      window.location.assign(authUrl);
+      return false;
+    }
+
     const returnUrl = AuthSession.makeRedirectUri({ scheme: 'nichetrade', path: 'auth' });
     const authUrl = `${API_URL}/api/user/google?mobileRedirect=${encodeURIComponent('nichetrade://auth')}&mobileState=${encodeURIComponent(state)}${registrationPayload}`;
     try {
@@ -140,15 +154,13 @@ export function AppProvider({ children }) {
         throw new Error('Google sign-in could not verify the authentication session');
       }
       if (typeof code !== 'string') throw new Error('Google sign-in did not return a valid mobile code');
-      const { data } = await api.post('/api/user/mobile-auth/exchange', { code });
-      if (!data.success || !data.token) throw new Error(data.message || 'Unable to complete Google sign-in');
-      await acceptToken(data.token, data.user);
+      await completeGoogleSignIn(code);
       return true;
     } catch (error) {
       if (error.response) throw new Error(getErrorMessage(error));
       throw error;
     }
-  }, [acceptToken]);
+  }, [completeGoogleSignIn]);
 
   const signOut = useCallback(async () => {
     let tokenRemovalError;
@@ -206,11 +218,11 @@ export function AppProvider({ children }) {
   const value = useMemo(() => ({
     api, user, setUser, seller, setSeller, products, categories, cartItems, favorites,
     loading, currency: process.env.EXPO_PUBLIC_CURRENCY || '₹',
-    refreshProducts, refreshMarketplace, loadAccount, signIn, googleSignIn, signOut,
+    refreshProducts, refreshMarketplace, loadAccount, signIn, googleSignIn, completeGoogleSignIn, signOut,
     addToCart, updateCartQuantity, toggleFavorite,
   }), [
     user, seller, products, categories, cartItems, favorites, loading,
-    refreshProducts, refreshMarketplace, loadAccount, signIn, googleSignIn, signOut,
+    refreshProducts, refreshMarketplace, loadAccount, signIn, googleSignIn, completeGoogleSignIn, signOut,
     addToCart, updateCartQuantity, toggleFavorite,
   ]);
 
