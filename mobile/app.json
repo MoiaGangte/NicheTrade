@@ -37,7 +37,18 @@
           "microphonePermission": false
         }
       ],
-      "expo-status-bar"
-    ]
+      "expo-status-bar",
+      "@react-native-community/datetimepicker"
+    ],
+    "extra": {
+      "router": {
+        "asyncRoutes": {
+          "web": true
+        }
+      },
+      "eas": {
+        "projectId": "30e019e0-3b50-4efd-9436-973a3534470a"
+      }
+    }
   }
 }

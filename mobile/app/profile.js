@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Alert, Platform, ScrollView, Text, View } from 'react-native';
+import { Alert, Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { useApp } from '../context/AppContext';
 import { Button, EmptyState, Screen } from '../components/UI';
@@ -65,6 +65,15 @@ export default function ProfileScreen() {
   return (
     <Screen>
       <ScrollView contentContainerStyle={{ padding: 18, paddingTop: 22, paddingBottom: 28 }}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Return to home"
+          onPress={() => router.replace('/(tabs)')}
+          style={{ alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', paddingVertical: 8, paddingRight: 12, marginBottom: 10 }}
+        >
+          <Text style={{ color: colors.blue, fontSize: 20, fontWeight: '800', marginRight: 7 }}>←</Text>
+          <Text style={{ color: colors.blue, fontWeight: '700' }}>Home</Text>
+        </Pressable>
         <Text style={{ color: colors.navy, fontSize: 24, fontWeight: '800', marginBottom: 16 }}>Profile</Text>
         {user ? (
           <>

@@ -2,13 +2,16 @@ import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import User from '../models/User.js';
 
+const isVercelDeployment = process.env.VERCEL === '1' || Boolean(process.env.VERCEL_ENV);
+const callbackURL = process.env.NODE_ENV === 'development' && !isVercelDeployment
+  ? process.env.GOOGLE_CLIENT_URL_LOCAL
+  : process.env.GOOGLE_CLIENT_URL;
+
 passport.use(new GoogleStrategy({
   clientID: process.env.GOOGLE_CLIENT_ID,
   clientSecret: process.env.GOOGLE_CLIENT_SECRET,
   passReqToCallback: true,
-  callbackURL: process.env.NODE_ENV === 'development'
-    ? process.env.GOOGLE_CLIENT_URL_LOCAL
-    : process.env.GOOGLE_CLIENT_URL
+  callbackURL
 },
   async (req, accessToken, refreshToken, profile, done) => {
     try {

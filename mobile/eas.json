@@ -1,0 +1,14 @@
+{
+  "build": {
+    "preview": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://niche-trade-21x2.vercel.app",
+        "EXPO_PUBLIC_CURRENCY": "₹"
+      }
+    }
+  }
+}

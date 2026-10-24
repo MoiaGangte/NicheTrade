@@ -3,6 +3,7 @@ import { Alert, KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'r
 import { router, useLocalSearchParams } from 'expo-router';
 import { useApp } from '../context/AppContext';
 import { Button, Field, Screen } from '../components/UI';
+import DateOfBirthField from '../components/DateOfBirthField';
 import { colors } from '../theme';
 
 export default function AuthScreen() {
@@ -17,6 +18,7 @@ export default function AuthScreen() {
     mobileNumber: '', studentType: '', dateOfBirth: '',
   });
   const update = (key) => (value) => setForm((current) => ({ ...current, [key]: value }));
+  const updateRegisterNumber = (value) => update('registerNumber')(value.replace(/\D/g, ''));
 
   useEffect(() => {
     if (Platform.OS !== 'web' || handledGoogleCallback.current || typeof params.code !== 'string') return;
@@ -84,8 +86,8 @@ export default function AuthScreen() {
             <>
               <Field label="Full name" value={form.name} onChangeText={update('name')} placeholder="Enter your name" />
               <Field label="Department" value={form.department} onChangeText={update('department')} placeholder="Enter your department" />
-              <Field label="Register number" value={form.registerNumber} onChangeText={update('registerNumber')} placeholder="Enter your register number" autoCapitalize="characters" />
-              <Field label="Date of birth" value={form.dateOfBirth} onChangeText={update('dateOfBirth')} placeholder="YYYY-MM-DD" />
+              <Field label="Register number" value={form.registerNumber} onChangeText={updateRegisterNumber} placeholder="Enter your register number" keyboardType="number-pad" />
+              <DateOfBirthField value={form.dateOfBirth} onChange={update('dateOfBirth')} />
               <Field label="Mobile number" value={form.mobileNumber} onChangeText={update('mobileNumber')} placeholder="Enter your mobile number" keyboardType="phone-pad" />
               <Text style={{ color: colors.ink, fontWeight: '700', marginBottom: 8 }}>Student type</Text>
               <View style={{ flexDirection: 'row', gap: 9, marginBottom: 14 }}>
@@ -107,8 +109,8 @@ export default function AuthScreen() {
             </>
           ) : (
             <>
-              <Field label="Register number" value={form.registerNumber} onChangeText={update('registerNumber')} placeholder="Enter your register number" autoCapitalize="characters" />
-              <Field label="Date of birth" value={form.dateOfBirth} onChangeText={update('dateOfBirth')} placeholder="YYYY-MM-DD" />
+              <Field label="Register number" value={form.registerNumber} onChangeText={updateRegisterNumber} placeholder="Enter your register number" keyboardType="number-pad" />
+              <DateOfBirthField value={form.dateOfBirth} onChange={update('dateOfBirth')} />
             </>
           )}
 

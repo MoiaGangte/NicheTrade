@@ -1,0 +1,18 @@
+# The EAS project is the mobile app; exclude unrelated monorepo projects.
+client/
+server/
+.venv/
+.idea/
+NicheTrade/
+NicheTradeApp/
+
+# Keep credentials, local configuration, and generated files out of the build archive.
+.git/
+**/node_modules/
+**/.expo/
+**/dist/
+**/android/
+**/ios/
+**/.env
+**/.env.*
+mobile/.claude/

@@ -21,6 +21,20 @@ Razorpay seller-listing checkout is a native module, so use an Expo development/
 
 The production endpoint was verified to return the existing API health check and live `/api/product/categories` response. It is the backend URL already documented in `client/.env` (commented out) and `server/configs/passport.js`.
 
+## Build an installable Android APK with EAS
+
+The `preview` EAS profile builds an internally distributable APK and embeds the HTTPS production API origin. From this directory:
+
+```powershell
+npx eas-cli@latest login
+npx eas-cli@latest build:configure
+npx eas-cli@latest build --platform android --profile preview
+```
+
+The first EAS setup requires an Expo account and may prompt to create/link the EAS project. Keep the generated `extra.eas.projectId` in `app.json`. Download the completed APK from the build link shown by EAS or from the project's EAS Build page. Transfer it to the Android phone, open the file, allow installation from that source if Android asks, and install. This internal APK is for direct testing/sharing, not Play Store publishing.
+
+Confirm the production API origin in `eas.json` is reachable and has the required production callback configuration before building. The Vercel API may not reliably support long-lived Socket.IO connections; messaging requires the API to run on a persistent Node.js host.
+
 ## Existing feature to mobile screen/API map
 
 | Existing website/backend capability | Native surface | Existing API/data reused |
@@ -42,7 +56,7 @@ Real-time messaging requires the Express API to run on a persistent Node.js host
 
 ## Mobile authentication transport
 
-User login and registration reuse the existing endpoints and store the existing JWT in Expo SecureStore. Google OAuth returns a state-checked, 60-second mobile code to the `nichetrade://auth` app link; the app exchanges that code for the same account's normal JWT. Mobile OAuth state is signed by the backend and returned by Google, so the app return target does not depend on an in-memory Express session surviving between OAuth requests. For mobile Google registration, student details remain encrypted server-side and expire after five minutes. Admin bearer-token support is additive; the existing web admin cookie and website login continue working. Register the backend callback URL with the Google OAuth client; do not register `nichetrade://auth` as a Google redirect URI.
+User login and registration reuse the existing endpoints and store the existing JWT in Expo SecureStore. Google OAuth returns a state-checked, 60-second mobile code to the `nichetrade://auth` app link; the app exchanges that code for the same account's normal JWT. Mobile OAuth state is signed by the backend and returned by Google, so the app return target does not depend on an in-memory Express session surviving between OAuth requests. For mobile Google registration, student details remain encrypted server-side and expire after five minutes. Admin bearer-token support is additive; the existing web admin cookie and website login continue working. On Vercel, set `GOOGLE_CLIENT_URL` to the deployed HTTPS backend callback, even if `NODE_ENV` is accidentally set to `development`; the backend selects `GOOGLE_CLIENT_URL` for Vercel deployments. Register this exact callback URL with the Google OAuth client; do not register `nichetrade://auth` as a Google redirect URI.
 
 For local Android-emulator OAuth, the app API uses `http://10.0.2.2:5000`; run `adb reverse tcp:5000 tcp:5000` so Google's local callback at `http://localhost:5000/api/user/google/callback` reaches the computer's backend. A physical phone cannot use the emulator alias or its own `localhost`: use the computer's LAN address for the API and an HTTPS tunnel for the Google callback, and register that exact callback URL in Google Cloud Console.
 
