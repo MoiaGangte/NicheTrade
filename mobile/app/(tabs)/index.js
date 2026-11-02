@@ -2,12 +2,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Image, Pressable, ScrollView, Text, TextInput, useWindowDimensions, View } from 'react-native';
 import { router } from 'expo-router';
 import { useApp } from '../../context/AppContext';
-import { CartIcon, EmptyState, ProductCard, Screen } from '../../components/UI';
+import { EmptyState, ProductCard, Screen } from '../../components/UI';
 import { colors, shadow } from '../../theme';
 
 export default function HomeScreen() {
   const { width: screenWidth } = useWindowDimensions();
-  const { api, products, categories, cartItems, favorites, toggleFavorite, addToCart, user, loading } = useApp();
+  const { api, products, categories, favorites, toggleFavorite, user, loading } = useApp();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
   const [lostFoundPosts, setLostFoundPosts] = useState([]);
@@ -17,7 +17,10 @@ export default function HomeScreen() {
   const searchBarVisible = useRef(true);
   const searchBarHeight = useRef(new Animated.Value(62)).current;
   const bannerCircleSize = Math.min(170, Math.max(112, screenWidth * 0.4));
-  const cartCount = Object.values(cartItems).reduce((total, quantity) => total + quantity, 0);
+  const openAllProducts = () => router.push({
+    pathname: '/products',
+    params: { all: String(Date.now()) },
+  });
   const featured = useMemo(() => products.slice(0, 4), [products]);
   const normalizedQuery = searchQuery.trim().toLocaleLowerCase();
   const queryTerms = normalizedQuery.split(/\s+/).filter(Boolean);
@@ -73,65 +76,32 @@ export default function HomeScreen() {
     if (searchQuery.length > 0) setSearchBarVisibility(true);
   }, [searchQuery, setSearchBarVisibility]);
 
+  const loadCommunityData = useCallback(async () => {
+    setCommunitySearchLoading(true);
+    const results = await Promise.allSettled([
+      api.get('/api/lost-found'),
+      api.get('/api/request-items'),
+    ]);
+    if (results[0].status === 'fulfilled' && results[0].value.data.success) {
+      setLostFoundPosts(results[0].value.data.posts || []);
+    } else if (results[0].status === 'rejected') {
+      console.warn('Lost & Found load failed:', results[0].reason?.message);
+    }
+    if (results[1].status === 'fulfilled' && results[1].value.data.success) {
+      setItemRequests(results[1].value.data.requests || []);
+    } else if (results[1].status === 'rejected') {
+      console.warn('Item request load failed:', results[1].reason?.message);
+    }
+    setCommunitySearchLoading(false);
+  }, [api]);
+
   useEffect(() => {
-    if (!searchOpen) return undefined;
-    let active = true;
-    const loadCommunityResults = async () => {
-      setCommunitySearchLoading(true);
-      const results = await Promise.allSettled([
-        api.get('/api/lost-found'),
-        api.get('/api/request-items'),
-      ]);
-      if (!active) return;
-      if (results[0].status === 'fulfilled' && results[0].value.data.success) {
-        setLostFoundPosts(results[0].value.data.posts || []);
-      } else if (results[0].status === 'rejected') {
-        console.warn('Lost & Found search failed:', results[0].reason.message);
-      }
-      if (results[1].status === 'fulfilled' && results[1].value.data.success) {
-        setItemRequests(results[1].value.data.requests || []);
-      } else if (results[1].status === 'rejected') {
-        console.warn('Item request search failed:', results[1].reason.message);
-      }
-      setCommunitySearchLoading(false);
-    };
-    loadCommunityResults();
-    return () => { active = false; };
-  }, [api, searchOpen]);
+    loadCommunityData();
+  }, [loadCommunityData]);
 
   return (
     <Screen>
       <View style={{ paddingHorizontal: 18, paddingTop: 12, backgroundColor: colors.canvas, zIndex: 1 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-          <View>
-            <Text style={{ color: colors.navy, fontSize: 25, fontWeight: '900', letterSpacing: -0.7 }}>
-              Niche<Text style={{ color: colors.blue }}>Trade</Text>
-            </Text>
-            <Text style={{ color: colors.muted, fontSize: 11, marginTop: 1 }}>Buy · Sell · Earn · Connect</Text>
-          </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={`Cart, ${cartCount} items`}
-              onPress={() => router.push('/cart')}
-              style={{ width: 44, height: 44, borderRadius: 15, backgroundColor: colors.white, justifyContent: 'center', alignItems: 'center', ...shadow }}
-            >
-              <CartIcon />
-              <View style={{ position: 'absolute', top: -3, right: -3, width: 18, height: 18, borderRadius: 9, backgroundColor: colors.blue, alignItems: 'center', justifyContent: 'center' }}>
-                <Text style={{ color: colors.white, fontSize: 10, lineHeight: 12, fontWeight: '700' }}>{cartCount}</Text>
-              </View>
-            </Pressable>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Profile"
-              onPress={() => router.push(user ? '/profile' : '/auth')}
-              style={{ paddingHorizontal: 12, height: 44, borderRadius: 15, backgroundColor: colors.white, justifyContent: 'center', ...shadow }}
-            >
-              <Text style={{ color: colors.blue, fontSize: 12, fontWeight: '700' }}>Profile</Text>
-            </Pressable>
-          </View>
-        </View>
-
         <Animated.View style={{ height: searchBarHeight, overflow: 'hidden' }}>
           <View style={{
             flexDirection: 'row', alignItems: 'center', backgroundColor: colors.white,
@@ -210,7 +180,7 @@ export default function HomeScreen() {
           </View>
         ) : null}
 
-        <Pressable onPress={() => router.push({ pathname: '/(tabs)/explore', params: { category: '' } })} style={{
+        <Pressable accessibilityRole="button" accessibilityLabel="Explore all marketplace listings" onPress={openAllProducts} style={{
           minHeight: 132, borderRadius: 20, padding: 20, overflow: 'hidden',
           backgroundColor: '#DBEAFE', justifyContent: 'center', ...shadow,
         }}>
@@ -238,7 +208,7 @@ export default function HomeScreen() {
         {categories.length > 0 ? (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingVertical: 17, gap: 10 }}>
             {categories.map((category, index) => (
-              <Pressable key={category} onPress={() => router.push({ pathname: '/(tabs)/explore', params: { category } })} style={{
+              <Pressable key={category} onPress={() => router.push({ pathname: '/products', params: { category } })} style={{
                 minWidth: 85, paddingVertical: 10, paddingHorizontal: 13, borderRadius: 20,
                 backgroundColor: index % 2 ? colors.white : colors.paleBlue, alignItems: 'center',
                 borderColor: colors.border, borderWidth: 1,
@@ -254,45 +224,214 @@ export default function HomeScreen() {
           <ActionTile icon="◇" title="Request an item" subtitle="Ask the community" onPress={() => router.push('/requests')} tint="#E4F8F1" />
         </View>
 
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 7 }}>
+        {/* Marketplace listings horizontal row */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
           <Text style={{ color: colors.navy, fontSize: 18, fontWeight: '800' }}>Marketplace listings</Text>
+          <Pressable accessibilityRole="button" accessibilityLabel="See all marketplace listings" onPress={openAllProducts}>
+            <Text style={{ color: colors.blue, fontWeight: '700', fontSize: 13 }}>See more →</Text>
+          </Pressable>
         </View>
-        {featured.length ? (
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -5 }}>
-            {featured.map((product) => (
-              <View key={product._id} style={{ width: '50%' }}>
+        {products.length ? (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingVertical: 4, gap: 10 }}>
+            {products.slice(0, 10).map((product) => (
+              <View key={product._id} style={{ width: 165 }}>
                 <ProductCard
                   product={product}
                   onPress={() => router.push(`/product/${product._id}`)}
                   onFavorite={() => toggleFavorite(product._id)}
                   favorite={Boolean(favorites[product._id])}
-                  onAdd={() => addToCart(product._id)}
+                  onAdd={() => toggleFavorite(product._id)}
+                  favorite={Boolean(favorites[product._id])}
                 />
               </View>
             ))}
-          </View>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="See all marketplace listings"
+              onPress={openAllProducts}
+              style={({ pressed }) => [{
+                width: 135,
+                margin: 5,
+                padding: 14,
+                backgroundColor: colors.paleBlue,
+                borderRadius: 17,
+                borderWidth: 1,
+                borderColor: colors.border,
+                alignItems: 'center',
+                justifyContent: 'center',
+                opacity: pressed ? 0.8 : 1,
+                ...shadow,
+              }]}
+            >
+              <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: colors.white, alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
+                <Text style={{ color: colors.blue, fontSize: 20 }}>→</Text>
+              </View>
+              <Text style={{ color: colors.navy, fontWeight: '700', fontSize: 13, textAlign: 'center' }}>See all</Text>
+              <Text style={{ color: colors.muted, fontSize: 11, textAlign: 'center', marginTop: 2 }}>{products.length} items</Text>
+            </Pressable>
+          </ScrollView>
         ) : (
           <EmptyState title={loading ? 'Loading marketplace…' : 'No listings available right now'} detail="New campus listings will appear here when sellers post them." />
         )}
-        {products.length > featured.length ? (
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => router.push('/(tabs)/explore')}
-            style={({ pressed }) => ({
-              minHeight: 46,
-              marginTop: 8,
-              marginBottom: 18,
-              borderRadius: 13,
-              borderWidth: 1,
-              borderColor: colors.blue,
-              backgroundColor: pressed ? colors.paleBlue : colors.white,
-              alignItems: 'center',
-              justifyContent: 'center',
-            })}
-          >
-            <Text style={{ color: colors.blue, fontWeight: '700', fontSize: 14 }}>See more listings  →</Text>
+
+        {/* Lost & Found horizontal row */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 20, marginBottom: 10 }}>
+          <Text style={{ color: colors.navy, fontSize: 18, fontWeight: '800' }}>Lost & Found</Text>
+          <Pressable onPress={() => router.push('/lost-found')}>
+            <Text style={{ color: colors.blue, fontWeight: '700', fontSize: 13 }}>See more →</Text>
           </Pressable>
-        ) : null}
+        </View>
+        {lostFoundPosts.length ? (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingVertical: 4, gap: 10 }}>
+            {lostFoundPosts.slice(0, 10).map((post) => (
+              <Pressable
+                key={post._id}
+                onPress={() => router.push(`/lost-found-detail?id=${post._id}`)}
+                style={({ pressed }) => [{
+                  width: 165,
+                  padding: 9,
+                  backgroundColor: colors.white,
+                  borderRadius: 17,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  opacity: pressed ? 0.9 : 1,
+                  ...shadow,
+                }]}
+              >
+                <View style={{ height: 120, borderRadius: 12, overflow: 'hidden', backgroundColor: colors.paleBlue }}>
+                  {post.image ? (
+                    <Image source={{ uri: post.image }} resizeMode="cover" style={{ width: '100%', height: '100%' }} />
+                  ) : (
+                    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+                      <Text style={{ fontSize: 28, color: colors.muted }}>⌕</Text>
+                    </View>
+                  )}
+                  <View style={{
+                    position: 'absolute', top: 7, left: 7,
+                    backgroundColor: post.postType === 'lost' ? '#DC2626' : '#2563EB',
+                    paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8,
+                  }}>
+                    <Text style={{ color: colors.white, fontSize: 10, fontWeight: '800', textTransform: 'uppercase' }}>
+                      {post.postType === 'lost' ? 'Lost' : 'Found'}
+                    </Text>
+                  </View>
+                </View>
+                <Text numberOfLines={1} style={{ marginTop: 8, color: colors.navy, fontWeight: '700', fontSize: 14 }}>
+                  {post.itemName}
+                </Text>
+                <Text numberOfLines={1} style={{ color: colors.muted, fontSize: 11, marginTop: 3 }}>
+                  {post.placeFound ? `Found: ${post.placeFound}` : post.description}
+                </Text>
+              </Pressable>
+            ))}
+            <Pressable
+              onPress={() => router.push('/lost-found')}
+              style={({ pressed }) => [{
+                width: 135,
+                margin: 5,
+                padding: 14,
+                backgroundColor: '#E8EEFF',
+                borderRadius: 17,
+                borderWidth: 1,
+                borderColor: colors.border,
+                alignItems: 'center',
+                justifyContent: 'center',
+                opacity: pressed ? 0.8 : 1,
+                ...shadow,
+              }]}
+            >
+              <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: colors.white, alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
+                <Text style={{ color: colors.blue, fontSize: 20 }}>⌕</Text>
+              </View>
+              <Text style={{ color: colors.navy, fontWeight: '700', fontSize: 13, textAlign: 'center' }}>All Posts</Text>
+              <Text style={{ color: colors.muted, fontSize: 11, textAlign: 'center', marginTop: 2 }}>Browse hub</Text>
+            </Pressable>
+          </ScrollView>
+        ) : (
+          <View style={{ padding: 16, backgroundColor: colors.white, borderRadius: 14, borderWidth: 1, borderColor: colors.border, alignItems: 'center' }}>
+            <Text style={{ color: colors.muted, fontSize: 13 }}>No recent lost & found posts.</Text>
+          </View>
+        )}
+
+        {/* Request Items horizontal row */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 20, marginBottom: 10 }}>
+          <Text style={{ color: colors.navy, fontSize: 18, fontWeight: '800' }}>Request Items</Text>
+          <Pressable onPress={() => router.push('/requests')}>
+            <Text style={{ color: colors.blue, fontWeight: '700', fontSize: 13 }}>See more →</Text>
+          </Pressable>
+        </View>
+        {itemRequests.length ? (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingVertical: 4, gap: 10 }}>
+            {itemRequests.slice(0, 10).map((request) => (
+              <Pressable
+                key={request._id}
+                onPress={() => router.push(`/request-item-detail?id=${request._id}`)}
+                style={({ pressed }) => [{
+                  width: 165,
+                  padding: 9,
+                  backgroundColor: colors.white,
+                  borderRadius: 17,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  opacity: pressed ? 0.9 : 1,
+                  ...shadow,
+                }]}
+              >
+                <View style={{ height: 120, borderRadius: 12, overflow: 'hidden', backgroundColor: colors.paleBlue }}>
+                  {request.image ? (
+                    <Image source={{ uri: request.image }} resizeMode="cover" style={{ width: '100%', height: '100%' }} />
+                  ) : (
+                    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+                      <Text style={{ fontSize: 28, color: colors.green }}>◇</Text>
+                    </View>
+                  )}
+                  <View style={{
+                    position: 'absolute', bottom: 7, left: 7,
+                    backgroundColor: colors.softGreen,
+                    paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8,
+                    borderWidth: 1, borderColor: '#A7F3D0',
+                  }}>
+                    <Text style={{ color: colors.green, fontSize: 11, fontWeight: '800' }}>
+                      ₹{request.promiseAmount} offered
+                    </Text>
+                  </View>
+                </View>
+                <Text numberOfLines={1} style={{ marginTop: 8, color: colors.navy, fontWeight: '700', fontSize: 14 }}>
+                  {request.itemName}
+                </Text>
+                <Text numberOfLines={1} style={{ color: colors.muted, fontSize: 11, marginTop: 3 }}>
+                  {request.description}
+                </Text>
+              </Pressable>
+            ))}
+            <Pressable
+              onPress={() => router.push('/requests')}
+              style={({ pressed }) => [{
+                width: 135,
+                margin: 5,
+                padding: 14,
+                backgroundColor: '#E4F8F1',
+                borderRadius: 17,
+                borderWidth: 1,
+                borderColor: colors.border,
+                alignItems: 'center',
+                justifyContent: 'center',
+                opacity: pressed ? 0.8 : 1,
+                ...shadow,
+              }]}
+            >
+              <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: colors.white, alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
+                <Text style={{ color: colors.green, fontSize: 20 }}>◇</Text>
+              </View>
+              <Text style={{ color: colors.navy, fontWeight: '700', fontSize: 13, textAlign: 'center' }}>All Requests</Text>
+              <Text style={{ color: colors.muted, fontSize: 11, textAlign: 'center', marginTop: 2 }}>Help & earn</Text>
+            </Pressable>
+          </ScrollView>
+        ) : (
+          <View style={{ padding: 16, backgroundColor: colors.white, borderRadius: 14, borderWidth: 1, borderColor: colors.border, alignItems: 'center' }}>
+            <Text style={{ color: colors.muted, fontSize: 13 }}>No student requests yet.</Text>
+          </View>
+        )}
 
         <View style={{ height: 16 }} />
         <Pressable onPress={() => router.push('/(tabs)/sell')} style={{ backgroundColor: colors.navy, borderRadius: 17, padding: 17, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -333,13 +472,6 @@ export default function HomeScreen() {
             <Text style={{ color: colors.muted, marginTop: 5 }}>Help delivery request item and earn extra money</Text>
           </View>
           <Text style={{ color: colors.green, fontSize: 24 }}>◇</Text>
-        </Pressable>
-        <Pressable onPress={() => router.push('/about-links')} style={{ marginTop: 12, backgroundColor: colors.white, borderRadius: 17, padding: 17, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderWidth: 1, borderColor: colors.border, ...shadow }}>
-          <View style={{ flex: 1, paddingRight: 12 }}>
-            <Text style={{ color: colors.navy, fontSize: 16, fontWeight: '800' }}>About NicheTrade</Text>
-            <Text style={{ color: colors.muted, marginTop: 5 }}>Discover helpful pages and connect with us.</Text>
-          </View>
-          <Text style={{ color: colors.blue, fontSize: 22 }}>›</Text>
         </Pressable>
         <Pressable onPress={() => router.push('/donate')} style={({ pressed }) => ({
           marginTop: 10,

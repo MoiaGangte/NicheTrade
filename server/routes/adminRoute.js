@@ -3,33 +3,28 @@ import {
   adminAuthStatus,
   adminLogin,
   adminLogout,
-  approveSeller,
   deleteAdminLostFoundPost,
   deleteAdminProduct,
   deleteAdminRequestItem,
-  deleteDisabledSeller,
   decideSellerUploadRequest,
   listAdminLostFoundPosts,
   listAdminProducts,
   listAdminRequestItems,
-  listSellers,
   listSellerUploadRequests,
-  setSellerActiveStatus,
   setSellerUploadBenefits,
   updateAdminProduct,
 } from "../controllers/adminController.js";
 import authAdmin from "../middleware/authAdmin.js";
+import { listManagedSellers, updateSellerStatus } from "../controllers/adminSellerController.js";
 
 const router = express.Router();
 
 router.post("/login", adminLogin);
 router.get("/is-auth", authAdmin, adminAuthStatus);
 router.get("/logout", authAdmin, adminLogout);
-router.get("/sellers", authAdmin, listSellers);
-router.patch("/sellers/:sellerId/approve", authAdmin, approveSeller);
-router.patch("/sellers/:sellerId/status", authAdmin, setSellerActiveStatus);
+router.get("/seller-management", authAdmin, listManagedSellers);
+router.post("/seller-management/:sellerId/:action", authAdmin, updateSellerStatus);
 router.patch("/sellers/:sellerId/upload-benefits", authAdmin, setSellerUploadBenefits);
-router.delete("/sellers/:sellerId", authAdmin, deleteDisabledSeller);
 router.get("/seller-upload-requests", authAdmin, listSellerUploadRequests);
 router.patch("/seller-upload-requests/:requestId", authAdmin, decideSellerUploadRequest);
 router.get("/products", authAdmin, listAdminProducts);

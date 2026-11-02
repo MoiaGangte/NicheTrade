@@ -15,7 +15,7 @@ const footerLinks = [
     ],
   },
   {
-    title: 'Follow Us',
+    title: 'Follow Niche',
     icon: '↗',
     links: [
       { text: 'Instagram', url: 'https://www.instagram.com/nicheuniversityonline?mdxt=dmlrcmxraHZ2czFl' },

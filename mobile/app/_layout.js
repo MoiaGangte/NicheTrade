@@ -4,18 +4,22 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AppProvider } from '../context/AppContext';
 import { MessagesProvider } from '../context/MessagesContext';
 import { colors } from '../theme';
+import { CameraFlowProvider } from '../context/CameraFlowContext';
+import AppHeader from '../components/AppHeader';
 
 export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <AppProvider>
         <MessagesProvider>
+          <CameraFlowProvider>
           <StatusBar style="dark" backgroundColor={colors.canvas} />
           <Stack screenOptions={{
             headerStyle: { backgroundColor: colors.white },
             headerTintColor: colors.navy,
             headerTitleStyle: { fontWeight: '700' },
             contentStyle: { backgroundColor: colors.canvas },
+            header: () => <AppHeader />,
           }}>
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             <Stack.Screen name="product/[id]" options={{ title: 'Product Details' }} />
@@ -24,6 +28,7 @@ export default function RootLayout() {
             <Stack.Screen name="profile" options={{ title: 'Profile' }} />
             <Stack.Screen name="auth" options={{ title: 'Your account', presentation: 'modal' }} />
             <Stack.Screen name="cart" options={{ title: 'Your cart', presentation: 'modal' }} />
+            <Stack.Screen name="products" options={{ title: 'All Products' }} />
             <Stack.Screen name="lost-found" options={{ title: 'Lost & Found' }} />
             <Stack.Screen name="requests" options={{ title: 'Item requests' }} />
             <Stack.Screen name="admin" options={{ title: 'Admin moderation' }} />
@@ -36,6 +41,7 @@ export default function RootLayout() {
             <Stack.Screen name="lost-found-detail" options={{ title: 'Lost & Found Details' }} />
             <Stack.Screen name="request-item-detail" options={{ title: 'Request Details' }} />
           </Stack>
+          </CameraFlowProvider>
         </MessagesProvider>
       </AppProvider>
     </SafeAreaProvider>

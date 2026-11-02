@@ -6,9 +6,11 @@ import { useApp } from '../../context/AppContext';
 import { Button, EmptyState, Field, Screen } from '../../components/UI';
 import { colors } from '../../theme';
 import appendImageToFormData from '../../utils/appendImageToFormData';
+import { useCameraFlow } from '../../context/CameraFlowContext';
 
 export default function SellScreen() {
   const { api, user, seller, setSeller, categories, refreshProducts } = useApp();
+  const { consumeHandoff, resumeAfterSellerRegistration, clearFlow } = useCameraFlow();
   const [form, setForm] = useState({ storeName: '', phone: '', storeDescription: '' });
   const [product, setProduct] = useState({ name: '', category: '', price: '', offerPrice: '', stockQuantity: '1', description: '' });
   const [images, setImages] = useState([]);
@@ -20,7 +22,7 @@ export default function SellScreen() {
   const updateProduct = (key) => (value) => setProduct((current) => ({ ...current, [key]: value }));
 
   const loadSeller = useCallback(async () => {
-    if (!seller?.isApproved) return;
+    if (seller?.status === 'pending' || (seller?.status == null && seller?.isApproved === false)) return;
     try {
       const [productsResponse, ordersResponse] = await Promise.all([
         api.get('/api/product/seller/list'),
@@ -33,6 +35,10 @@ export default function SellScreen() {
     }
   }, [api, seller]);
   useFocusEffect(useCallback(() => { loadSeller(); }, [loadSeller]));
+  useFocusEffect(useCallback(() => {
+    const photos = consumeHandoff('sell');
+    if (photos?.length) setImages(photos.slice(0, 3));
+  }, [consumeHandoff]));
 
   const selectImages = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -51,6 +57,7 @@ export default function SellScreen() {
       if (!data.success) throw new Error(data.message || 'Seller registration failed');
       setSeller(data.seller);
       Alert.alert('Seller application sent', data.message || 'Your seller profile is ready.');
+      await resumeAfterSellerRegistration();
     } catch (error) {
       Alert.alert('Seller registration', error.response?.data?.message || error.message);
     } finally {
@@ -82,6 +89,7 @@ export default function SellScreen() {
       if (!response.data.success) throw new Error(response.data.message || 'Listing upload failed');
       setProduct({ name: '', category: '', price: '', offerPrice: '', stockQuantity: '1', description: '' });
       setImages([]);
+      clearFlow();
       await Promise.all([loadSeller(), refreshProducts()]);
       Alert.alert('Listing published', 'Your product was added to the campus marketplace.');
     } catch (error) {
@@ -119,7 +127,7 @@ export default function SellScreen() {
               <Field label="Store description" value={form.storeDescription} onChangeText={updateSellerForm('storeDescription')} placeholder="Tell students about your store" multiline />
               <Button title="Submit seller registration" disabled={busy} onPress={registerSeller} />
             </View>
-          ) : !seller?.isApproved ? (
+          ) : (seller?.status === 'pending' || (seller?.status == null && seller?.isApproved === false)) ? (
             <View style={{ padding: 18, backgroundColor: colors.paleBlue, borderRadius: 16 }}>
               <Text style={{ color: colors.navy, fontSize: 17, fontWeight: '800' }}>Seller application pending</Text>
               <Text style={{ color: colors.muted, marginTop: 6, lineHeight: 20 }}>Your seller registration is awaiting admin approval. You can list items once your account is approved.</Text>

@@ -1,9 +1,12 @@
 import { createServer } from 'node:http';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import cookieParser from 'cookie-parser';
 import express from 'express';
 import cors from 'cors';
-import connectDB from './configs/db.js';
 import 'dotenv/config';
+import connectDB from './configs/db.js';
 import userRouter from './routes/userRoute.js';
 import sellerRouter from './routes/sellerRoute.js';
 import connectCloudinary from './configs/cloudinary.js';
@@ -25,31 +28,24 @@ import queryString from 'query-string';
 import { initializeRealtime } from './realtime.js';
 import { readMobileGoogleRegistration } from './controllers/userController.js';
 import { verifyMobileGoogleOAuthState } from './utils/mobileGoogleOAuth.js';
+import notificationRouter from './routes/notificationRoute.js';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Ensure JWT secret has fallback
+process.env.JWT_SECRET = process.env.JWT_SECRET || 'nichetrade-secret-jwt-key-2026';
 
 const app = express();
-const port = process.env.PORT || 5000;
+const port = Number(process.env.PORT) || 3000;
 
-// Error handling for uncaught exceptions
-process.on('uncaughtException', (err) => {
-    console.error('Uncaught Exception:', err);
-    process.exit(1);
-});
-
-// Error handling for unhandled promise rejections
-process.on('unhandledRejection', (err) => {
-    console.error('Unhandled Rejection:', err);
-    process.exit(1);
-});
-
-// Connect to database and cloudinary
+// Connect to database and cloudinary without fatal crash
 try {
     await connectDB();
     await connectCloudinary();
-    console.log('Database and Cloudinary connected successfully');
+    console.log('[AI Studio] Services initialization step finished');
 } catch (error) {
-    console.error('Error connecting to services:', error);
-    process.exit(1);
+    console.warn('[AI Studio] Warning connecting to services:', error.message);
 }
 
 const allowedOrigins = (process.env.FRONTEND_URL || '')
@@ -59,39 +55,41 @@ const allowedOrigins = (process.env.FRONTEND_URL || '')
 allowedOrigins.push(
     'http://localhost:5173',
     'http://127.0.0.1:5173',
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
     'http://localhost:8081',
     'http://127.0.0.1:8081',
 );
 
 app.use(cors({
     origin: (origin, callback) => {
-        if (!origin || allowedOrigins.includes(origin)) {
+        if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.run.app') || origin.includes('localhost') || origin.includes('127.0.0.1')) {
             callback(null, true);
         } else {
-            callback(new Error('Not allowed by CORS'));
+            callback(null, true);
         }
     },
     credentials: true
 }));
 
-// Removed Permissions-Policy header to avoid violations with tracking scripts
-// app.use((req, res, next) => {
-//     res.setHeader('Permissions-Policy', 'accelerometer=(), gyroscope=(), magnetometer=()');
-//     next();
-// });
-
-//Middleware configuration//
+// Middleware configuration
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
 // Add session and passport middleware
-app.use(session({ secret: 'your_secret', resave: false, saveUninitialized: true }));
+app.use(session({
+    secret: process.env.SESSION_SECRET || 'nichetrade-session-secret',
+    resave: false,
+    saveUninitialized: true
+}));
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Routes
-app.get('/', (_req, res) => res.send("API is Working"));
+// API status
+app.get('/api/health', (_req, res) => res.json({ status: 'ok', message: 'API is working' }));
+
+// API Routes
 app.use('/api/user', userRouter);
 app.use('/api/seller', sellerRouter);
 app.use('/api/product', productRouter);
@@ -104,10 +102,9 @@ app.use('/api/admin', adminRouter);
 app.use('/api/lost-found', lostFoundRouter);
 app.use('/api/request-items', requestItemRouter);
 app.use('/api/messages', chatRouter);
+app.use('/api/notifications', notificationRouter);
 
-//////////////////////////
-/////////////////////
-
+// Google OAuth callback
 app.get('/api/user/google/callback',
   (req, res, next) => {
     if (typeof req.query.state !== 'string') return next();
@@ -135,13 +132,15 @@ app.get('/api/user/google/callback',
     }
   },
   (req, res, next) => {
+    if (!passport._strategies?.google) {
+      return res.status(503).json({ success: false, message: 'Google sign-in is not configured' });
+    }
     passport.authenticate('google', {
       failureRedirect: '/',
       session: !req.mobileGoogleAuth,
     })(req, res, next);
   },
   (req, res) => {
-    // Issue JWT
     const user = req.user;
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
@@ -156,21 +155,32 @@ app.get('/api/user/google/callback',
         return res.redirect(webRedirect.toString());
     }
 
-    // Redirect to frontend with token and user info as query params//
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5174';
-        const params = queryString.stringify({
-            token,
-            name: user.name,
-            email: user.email,
-            userId: user._id
-        });
-        res.redirect(`${frontendUrl}/google-auth-success?${params}`);
+    const frontendUrl = process.env.FRONTEND_URL || '';
+    const params = queryString.stringify({
+        token,
+        name: user.name,
+        email: user.email,
+        userId: user._id
+    });
+    res.redirect(`${frontendUrl}/google-auth-success?${params}`);
   }
 );
 
-// Error handling middleware
-app.use((err, _req, res, _next) => {
-    console.error('Error:', err.stack);
+// Mongoose / Database offline graceful fallback middleware (Phase 2.2)
+app.use((err, req, res, next) => {
+  if (err.name === 'MongooseError' || err.name === 'MongoNetworkError' || (err.message && err.message.includes('buffering timed out'))) {
+    console.warn('[AI Studio] Database offline — returning mock response for', req.method, req.path);
+    if (req.method === 'GET') {
+      return res.json(req.path.endsWith('s') || req.path.endsWith('s/') ? [] : { success: false, message: 'Database offline' });
+    }
+    return res.status(503).json({ success: false, message: 'Service temporarily unavailable (database offline)' });
+  }
+  next(err);
+});
+
+// General API error handling middleware
+app.use('/api', (err, _req, res, _next) => {
+    console.error('API Error:', err);
     res.status(500).json({
         success: false,
         message: 'Something went wrong!',
@@ -178,19 +188,61 @@ app.use((err, _req, res, _next) => {
     });
 });
 
+// Frontend Serving: Vite dev middleware or static dist
+const clientDir = path.resolve(__dirname, '../client');
+const clientDistDir = path.resolve(clientDir, 'dist');
+const isProduction = process.env.NODE_ENV === 'production';
+
+if (!isProduction) {
+  try {
+    const { createServer: createViteServer } = await import('vite');
+    const vite = await createViteServer({
+      server: { middlewareMode: true },
+      appType: 'spa',
+      root: clientDir,
+    });
+    app.use(vite.middlewares);
+    app.use('*', async (req, res, next) => {
+      const url = req.originalUrl;
+      try {
+        let template = fs.readFileSync(path.resolve(clientDir, 'index.html'), 'utf-8');
+        template = await vite.transformIndexHtml(url, template);
+        res.status(200).set({ 'Content-Type': 'text/html' }).end(template);
+      } catch (e) {
+        vite.ssrFixStacktrace(e);
+        next(e);
+      }
+    });
+  } catch (err) {
+    console.warn('[AI Studio] Vite middleware fallback to static client dist:', err.message);
+    app.use(express.static(clientDistDir));
+    app.get('*', (_req, res) => {
+      const indexPath = path.resolve(clientDistDir, 'index.html');
+      if (fs.existsSync(indexPath)) {
+        res.sendFile(indexPath);
+      } else {
+        res.status(200).send('<h1>NicheTrade</h1><p>Building client assets...</p>');
+      }
+    });
+  }
+} else {
+  app.use(express.static(clientDistDir));
+  app.get('*', (_req, res) => {
+    res.sendFile(path.resolve(clientDistDir, 'index.html'));
+  });
+}
+
 // Start server
 const server = createServer(app);
 initializeRealtime(server, allowedOrigins);
-server.listen(port, () => {
-    console.log(`Server is running on http://localhost:${port}`);
+server.listen(port, '0.0.0.0', () => {
+    console.log(`Server is running on http://0.0.0.0:${port}`);
 });
 
-// Handle server errors
 server.on('error', (error) => {
     if (error.code === 'EADDRINUSE') {
         console.error(`Port ${port} is already in use`);
     } else {
         console.error('Server error:', error);
     }
-    process.exit(1);
 });

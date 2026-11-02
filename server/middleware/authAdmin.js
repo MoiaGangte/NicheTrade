@@ -17,6 +17,8 @@ const authAdmin = (req, res, next) => {
         }
 
         req.isAdmin = true;
+        req.adminId = String(decoded.id || "admin");
+        req.adminEmail = String(decoded.email || process.env.ADMIN_EMAIL || "").trim().toLowerCase();
         next();
     } catch (error) {
         console.error("Admin auth middleware error:", error);

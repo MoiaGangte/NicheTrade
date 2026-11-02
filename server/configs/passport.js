@@ -7,12 +7,13 @@ const callbackURL = process.env.NODE_ENV === 'development' && !isVercelDeploymen
   ? process.env.GOOGLE_CLIENT_URL_LOCAL
   : process.env.GOOGLE_CLIENT_URL;
 
-passport.use(new GoogleStrategy({
-  clientID: process.env.GOOGLE_CLIENT_ID,
-  clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-  passReqToCallback: true,
-  callbackURL
-},
+if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+  passport.use(new GoogleStrategy({
+    clientID: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    passReqToCallback: true,
+    callbackURL
+  },
   async (req, accessToken, refreshToken, profile, done) => {
     try {
       const studentDetails = req.session?.googleStudentDetails;
@@ -70,8 +71,10 @@ passport.use(new GoogleStrategy({
     } catch (err) {
       return done(err, null);
     }
-  }
-));
+  }));
+} else {
+  console.warn('[AI Studio] Google OAuth credentials not set — Google sign-in disabled');
+}
 
 passport.serializeUser((user, done) => {
   done(null, user.id);

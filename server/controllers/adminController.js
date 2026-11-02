@@ -35,7 +35,7 @@ const loginAdmin = (req, res, includeToken) => {
     return res.status(401).json({ success: false, message: "Invalid email or password" });
   }
 
-  const token = jwt.sign({ id: "admin", role: "admin" }, process.env.JWT_SECRET, { expiresIn: "7d" });
+  const token = jwt.sign({ id: "admin", role: "admin", email: configuredEmail }, process.env.JWT_SECRET, { expiresIn: "7d" });
   res.cookie("adminToken", token, adminCookieOptions);
   return res.json({
     success: true,
@@ -44,7 +44,7 @@ const loginAdmin = (req, res, includeToken) => {
   });
 };
 
-export const adminLogin = (req, res) => loginAdmin(req, res, false);
+export const adminLogin = (req, res) => loginAdmin(req, res, true);
 export const adminAccessStatus = (req, res) => {
   const configuredEmail = (process.env.ADMIN_EMAIL || "").trim().toLowerCase();
   const userEmail = typeof req.user?.email === "string" ? req.user.email.trim().toLowerCase() : "";

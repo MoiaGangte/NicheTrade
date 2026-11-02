@@ -1,0 +1,15 @@
+# dependencies and local caches
+node_modules/
+.expo/
+.idea/
+
+# native build outputs
+android/.gradle/
+android/.cxx/
+android/app/build/
+android/build/
+ios/
+
+# generated output
+dist/
+web-build/

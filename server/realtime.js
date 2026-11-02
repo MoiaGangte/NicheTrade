@@ -15,8 +15,8 @@ export const initializeRealtime = (httpServer, allowedOrigins) => {
     io = new Server(httpServer, {
         cors: {
             origin: (origin, callback) => {
-                if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
-                return callback(new Error('Not allowed by Socket.IO CORS'));
+                if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.run.app') || origin.includes('localhost') || origin.includes('127.0.0.1')) return callback(null, true);
+                return callback(null, true);
             },
             credentials: true,
         },

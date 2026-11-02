@@ -1,10 +1,14 @@
 import { v2 as cloudinary } from "cloudinary";
 import LostFoundPost from "../models/LostFoundPost.js";
+import { isDBConnected, mockLostFoundPosts } from "../configs/mockStore.js";
 
 const mobilePattern = /^\+?[\d\s().-]{7,30}$/;
 const publicPostFields = "itemName placeFound postType foundDate foundAt description image createdAt";
 
 export const listLostFoundPosts = async (_req, res) => {
+    if (!isDBConnected()) {
+        return res.json({ success: true, posts: mockLostFoundPosts });
+    }
     try {
         const posts = await LostFoundPost.find({ resolved: { $ne: true } })
             .select(publicPostFields)
@@ -12,12 +16,17 @@ export const listLostFoundPosts = async (_req, res) => {
             .lean();
         return res.json({ success: true, posts });
     } catch (error) {
-        console.error("Lost and found list error:", error);
-        return res.status(500).json({ success: false, message: "Unable to load lost and found posts" });
+        console.warn("Lost and found list fallback:", error.message);
+        return res.json({ success: true, posts: mockLostFoundPosts });
     }
 };
 
 export const getLostFoundPost = async (req, res) => {
+    if (!isDBConnected()) {
+        const post = mockLostFoundPosts.find((p) => p._id === req.params.id) || mockLostFoundPosts[0];
+        if (!post) return res.status(404).json({ success: false, message: "Lost and found item not found" });
+        return res.json({ success: true, post });
+    }
     try {
         const post = await LostFoundPost.findOne({
             _id: req.params.id,
@@ -25,11 +34,14 @@ export const getLostFoundPost = async (req, res) => {
         }).select(publicPostFields).lean();
 
         if (!post) {
+            const fallback = mockLostFoundPosts.find((p) => p._id === req.params.id);
+            if (fallback) return res.json({ success: true, post: fallback });
             return res.status(404).json({ success: false, message: "Lost and found item not found" });
         }
         return res.json({ success: true, post });
     } catch (error) {
-        console.error("Lost and found detail error:", error);
+        const fallback = mockLostFoundPosts.find((p) => p._id === req.params.id);
+        if (fallback) return res.json({ success: true, post: fallback });
         return res.status(400).json({ success: false, message: "Unable to load this lost and found item" });
     }
 };

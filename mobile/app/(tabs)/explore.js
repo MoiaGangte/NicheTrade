@@ -1,23 +1,37 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, FlatList, Image, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useApp } from '../../context/AppContext';
 import { ProductCard, Screen } from '../../components/UI';
 import { colors, shadow } from '../../theme';
 
 export default function ExploreScreen() {
-  const { api, products, categories, favorites, toggleFavorite, addToCart } = useApp();
+  const { api, products, categories, favorites, toggleFavorite, refreshProducts } = useApp();
   const params = useLocalSearchParams();
   const [query, setQuery] = useState('');
   const [lostFoundPosts, setLostFoundPosts] = useState([]);
   const [lostFoundLoading, setLostFoundLoading] = useState(true);
-  const activeCategory = typeof params.category === 'string' ? params.category : '';
+  const [activeCategory, setActiveCategory] = useState('');
   const filtered = useMemo(() => products.filter((product) => {
     const text = `${product.name} ${product.description || ''} ${(product.categories || [product.category]).join(' ')}`.toLowerCase();
     const productCategories = product.categories?.length ? product.categories : [product.category];
     return text.includes(query.trim().toLowerCase())
       && (!activeCategory || productCategories.some((category) => category?.toLowerCase() === activeCategory.toLowerCase()));
   }), [products, query, activeCategory]);
+
+  useEffect(() => {
+    if (typeof params.all === 'string') {
+      setActiveCategory('');
+      return;
+    }
+    setActiveCategory(typeof params.category === 'string' ? params.category : '');
+  }, [params.all, params.category]);
+
+  useFocusEffect(useCallback(() => {
+    refreshProducts().catch((error) => {
+      console.warn('Marketplace refresh failed:', error?.message || error);
+    });
+  }, [refreshProducts]));
 
   useEffect(() => {
     let active = true;
@@ -57,7 +71,10 @@ export default function ExploreScreen() {
               {['', ...categories].map((item) => {
                 const isSelected = activeCategory === item;
                 return (
-                  <Pressable key={item || 'all'} onPress={() => router.setParams({ category: item })} style={{ paddingHorizontal: 16, paddingVertical: 9, borderRadius: 20, backgroundColor: isSelected ? colors.blue : colors.white, borderWidth: 1, borderColor: isSelected ? colors.blue : colors.border }}>
+                  <Pressable key={item || 'all'} onPress={() => {
+                    setActiveCategory(item);
+                    router.setParams({ category: item, all: undefined });
+                  }} style={{ paddingHorizontal: 16, paddingVertical: 9, borderRadius: 20, backgroundColor: isSelected ? colors.blue : colors.white, borderWidth: 1, borderColor: isSelected ? colors.blue : colors.border }}>
                     <Text style={{ color: isSelected ? colors.white : colors.navy, fontSize: 12, fontWeight: '600' }}>{item || 'All'}</Text>
                   </Pressable>
                 );
@@ -76,7 +93,7 @@ export default function ExploreScreen() {
               onPress={() => router.push(`/product/${item._id}`)}
               onFavorite={() => toggleFavorite(item._id)}
               favorite={Boolean(favorites[item._id])}
-              onAdd={() => addToCart(item._id)}
+              onAdd={() => toggleFavorite(item._id)}
             />
           </View>
         )}

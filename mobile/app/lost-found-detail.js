@@ -59,17 +59,57 @@ export default function LostFoundDetailScreen() {
         </Text>
         {related.length ? (
           <View style={{ marginTop: 25 }}>
-            <Text style={{ color: colors.navy, fontSize: 18, fontWeight: '800', marginBottom: 11 }}>Related {post.postType === 'lost' ? 'lost' : 'found'} posts</Text>
-            {related.map((item) => (
-              <Pressable key={item._id} onPress={() => router.replace(`/lost-found-detail?id=${item._id}`)} style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.white, padding: 10, borderRadius: 14, marginBottom: 9, ...shadow }}>
-                {item.image ? <Image source={{ uri: item.image }} style={{ width: 58, height: 58, borderRadius: 10, backgroundColor: colors.paleBlue }} /> : null}
-                <View style={{ flex: 1, marginLeft: 10 }}>
-                  <Text numberOfLines={1} style={{ color: colors.navy, fontWeight: '700' }}>{item.itemName}</Text>
-                  <Text numberOfLines={1} style={{ color: colors.muted, fontSize: 12, marginTop: 4 }}>{item.placeFound || item.description}</Text>
-                </View>
-                <Text style={{ color: colors.blue, fontSize: 20, marginLeft: 8 }}>›</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 11 }}>
+              <Text style={{ color: colors.navy, fontSize: 18, fontWeight: '800' }}>
+                More {post.postType === 'lost' ? 'Lost' : 'Found'} items
+              </Text>
+              <Pressable onPress={() => router.push('/(tabs)/lost-found')}>
+                <Text style={{ color: colors.blue, fontWeight: '700', fontSize: 13 }}>See all →</Text>
               </Pressable>
-            ))}
+            </View>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingVertical: 4 }}>
+              {related.map((item) => (
+                <Pressable
+                  key={item._id}
+                  onPress={() => router.replace(`/lost-found-detail?id=${item._id}`)}
+                  style={({ pressed }) => [{
+                    width: 155,
+                    backgroundColor: colors.white,
+                    borderRadius: 14,
+                    padding: 9,
+                    borderWidth: 1,
+                    borderColor: colors.border,
+                    opacity: pressed ? 0.9 : 1,
+                    ...shadow,
+                  }]}
+                >
+                  <View style={{ height: 110, borderRadius: 10, overflow: 'hidden', backgroundColor: colors.paleBlue }}>
+                    {item.image ? (
+                      <Image source={{ uri: item.image }} resizeMode="cover" style={{ width: '100%', height: '100%' }} />
+                    ) : (
+                      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+                        <Text style={{ fontSize: 24, color: colors.muted }}>⌕</Text>
+                      </View>
+                    )}
+                    <View style={{
+                      position: 'absolute', top: 6, left: 6,
+                      backgroundColor: item.postType === 'lost' ? '#DC2626' : '#2563EB',
+                      paddingHorizontal: 7, paddingVertical: 2, borderRadius: 6,
+                    }}>
+                      <Text style={{ color: colors.white, fontSize: 9, fontWeight: '800', textTransform: 'uppercase' }}>
+                        {item.postType === 'lost' ? 'Lost' : 'Found'}
+                      </Text>
+                    </View>
+                  </View>
+                  <Text numberOfLines={1} style={{ color: colors.navy, fontWeight: '700', fontSize: 13, marginTop: 7 }}>
+                    {item.itemName}
+                  </Text>
+                  <Text numberOfLines={1} style={{ color: colors.muted, fontSize: 11, marginTop: 2 }}>
+                    {item.placeFound || item.description}
+                  </Text>
+                </Pressable>
+              ))}
+            </ScrollView>
           </View>
         ) : null}
         <Button title="Browse Lost & Found" secondary onPress={() => router.push('/(tabs)/lost-found')} style={{ marginTop: 18 }} />

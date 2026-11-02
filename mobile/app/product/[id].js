@@ -2,17 +2,24 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Image, Pressable, ScrollView, Text, View } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useApp } from '../../context/AppContext';
-import api, { getErrorMessage } from '../../api';
-import { Button, Screen } from '../../components/UI';
+import { getErrorMessage } from '../../api';
+import { Button, Field, Screen } from '../../components/UI';
 import { colors, shadow } from '../../theme';
+
+const locations = ['AFC', 'Near Department Store', 'MBA Canteen', 'Cafe Canteen', 'Other'];
+const deliveryTimes = ['During lunch break', 'After college', 'Other'];
 
 export default function ProductScreen() {
   const { id } = useLocalSearchParams();
-  const { products, currency, addToCart, favorites, toggleFavorite, api, user } = useApp();
+  const { products, currency, favorites, toggleFavorite, api, user } = useApp();
   const [product, setProduct] = useState(products.find((item) => item._id === id) || null);
   const [imageIndex, setImageIndex] = useState(0);
   const [error, setError] = useState('');
-  const [startingChat, setStartingChat] = useState(false);
+  const [location, setLocation] = useState(locations[0]);
+  const [deliveryTime, setDeliveryTime] = useState(deliveryTimes[0]);
+  const [customLocation, setCustomLocation] = useState('');
+  const [customDeliveryTime, setCustomDeliveryTime] = useState('');
+  const [placingOrder, setPlacingOrder] = useState(false);
 
   useEffect(() => {
     if (product) return;
@@ -21,6 +28,39 @@ export default function ProductScreen() {
       setProduct(data.product);
     }).catch((requestError) => setError(getErrorMessage(requestError)));
   }, [id, product]);
+
+  const placeOrder = async () => {
+    if (!user) {
+      router.push('/auth');
+      return;
+    }
+    if (!product.inStock) return;
+    if ((location === 'Other' && !customLocation.trim()) || (deliveryTime === 'Other' && !customDeliveryTime.trim())) {
+      Alert.alert('Delivery details needed', 'Please enter your custom pickup location and time.');
+      return;
+    }
+
+    setPlacingOrder(true);
+    try {
+      const { data } = await api.post('/api/order/place', {
+        items: [{ product: product._id, quantity: 1 }],
+        deliveryLocation: location,
+        customDeliveryLocation: customLocation.trim(),
+        deliveryTime,
+        customDeliveryTime: customDeliveryTime.trim(),
+      });
+      if (!data.success) throw new Error(data.message || 'Unable to place order');
+      Alert.alert(
+        'Order sent to seller',
+        data.notificationWarning || 'The seller was notified and can now chat with you about pickup and delivery.',
+        [{ text: 'View messages', onPress: () => router.push('/(tabs)/messages') }, { text: 'View orders', onPress: () => router.push('/orders') }],
+      );
+    } catch (requestError) {
+      Alert.alert('Order could not be placed', requestError.response?.data?.message || requestError.message);
+    } finally {
+      setPlacingOrder(false);
+    }
+  };
 
   if (!product) return <Screen style={{ justifyContent: 'center', alignItems: 'center' }}>{error ? <Text style={{ color: colors.red }}>{error}</Text> : <ActivityIndicator color={colors.blue} />}</Screen>;
 
@@ -38,23 +78,6 @@ export default function ProductScreen() {
     .filter(({ sharedCategories }) => sharedCategories > 0)
     .sort((left, right) => right.sharedCategories - left.sharedCategories)
     .slice(0, 6);
-
-  const chatWithSeller = async () => {
-    if (!user) {
-      router.push('/auth');
-      return;
-    }
-    setStartingChat(true);
-    try {
-      const { data } = await api.post('/api/messages/conversations', { productId: product._id });
-      if (!data.success || !data.conversation?._id) throw new Error(data.message || 'Unable to open chat');
-      router.push(`/messages/${data.conversation._id}`);
-    } catch (requestError) {
-      Alert.alert('Chat with seller', requestError.response?.data?.message || requestError.message);
-    } finally {
-      setStartingChat(false);
-    }
-  };
 
   return (
     <Screen>
@@ -92,25 +115,84 @@ export default function ProductScreen() {
           <Text style={{ color: colors.ink, lineHeight: 22 }}>{description || 'No description provided.'}</Text>
         </View>
         {relatedProducts.length ? (
-          <View style={{ marginBottom: 8 }}>
-            <Text style={{ color: colors.navy, fontWeight: '800', fontSize: 18, marginBottom: 10 }}>Related products</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10 }}>
+          <View style={{ marginBottom: 12 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+              <Text style={{ color: colors.navy, fontWeight: '800', fontSize: 18 }}>Recommended for you</Text>
+              <Pressable onPress={() => router.push({ pathname: '/(tabs)/explore', params: { category: product.category } })}>
+                <Text style={{ color: colors.blue, fontWeight: '700', fontSize: 13 }}>See more →</Text>
+              </Pressable>
+            </View>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingVertical: 4 }}>
               {relatedProducts.map(({ item }) => (
-                <Pressable key={item._id} onPress={() => router.push(`/product/${item._id}`)} style={{ width: 150, backgroundColor: colors.white, borderRadius: 14, padding: 9, ...shadow }}>
-                  <Image source={{ uri: Array.isArray(item.image) ? item.image[0] : item.image }} style={{ width: 132, height: 105, borderRadius: 10, backgroundColor: colors.paleBlue }} />
-                  <Text numberOfLines={1} style={{ color: colors.navy, fontWeight: '700', marginTop: 8 }}>{item.name}</Text>
-                  <Text style={{ color: colors.blue, fontWeight: '800', marginTop: 3 }}>{currency}{item.offerPrice}</Text>
+                <Pressable
+                  key={item._id}
+                  onPress={() => router.push(`/product/${item._id}`)}
+                  style={({ pressed }) => [{
+                    width: 155,
+                    backgroundColor: colors.white,
+                    borderRadius: 14,
+                    padding: 9,
+                    borderWidth: 1,
+                    borderColor: colors.border,
+                    opacity: pressed ? 0.9 : 1,
+                    ...shadow,
+                  }]}
+                >
+                  <View style={{ height: 110, borderRadius: 10, overflow: 'hidden', backgroundColor: colors.paleBlue }}>
+                    <Image source={{ uri: Array.isArray(item.image) ? item.image[0] : item.image }} resizeMode="cover" style={{ width: '100%', height: '100%' }} />
+                  </View>
+                  <Text numberOfLines={1} style={{ color: colors.muted, fontSize: 10, marginTop: 6 }}>
+                    {(item.categories?.length ? item.categories : [item.category]).filter(Boolean).join(' · ')}
+                  </Text>
+                  <Text numberOfLines={1} style={{ color: colors.navy, fontWeight: '700', fontSize: 13, marginTop: 2 }}>
+                    {item.name}
+                  </Text>
+                  <Text style={{ color: colors.blue, fontWeight: '800', fontSize: 14, marginTop: 4 }}>
+                    {currency}{item.offerPrice}
+                  </Text>
                 </Pressable>
               ))}
             </ScrollView>
           </View>
         ) : null}
       </ScrollView>
-      <View style={{ padding: 15, borderTopColor: colors.border, borderTopWidth: 1, backgroundColor: colors.white }}>
-        <Button title={product.inStock ? 'Add to Cart' : 'Out of stock'} disabled={!product.inStock} onPress={() => addToCart(product._id)} />
-        <Button title={startingChat ? 'Opening chat…' : 'Chat with Seller'} secondary disabled={startingChat} onPress={chatWithSeller} style={{ marginTop: 9 }} />
-        <Text onPress={() => router.push('/cart')} style={{ color: colors.blue, textAlign: 'center', marginTop: 11, fontWeight: '700' }}>View cart</Text>
-      </View>
+      <ScrollView style={{ maxHeight: 330, borderTopColor: colors.border, borderTopWidth: 1, backgroundColor: colors.white }} contentContainerStyle={{ padding: 15 }}>
+        <Button
+          title={favorites[product._id] ? 'Saved to favorites' : 'Add to favorites'}
+          onPress={() => toggleFavorite(product._id)}
+        />
+        <Text style={{ color: colors.navy, fontWeight: '800', marginTop: 14 }}>Campus pickup location</Text>
+        <ChoiceChips values={locations} selected={location} onSelect={setLocation} />
+        {location === 'Other' ? <Field label="Custom pickup location" value={customLocation} onChangeText={setCustomLocation} /> : null}
+        <Text style={{ color: colors.navy, fontWeight: '800', marginTop: 6 }}>Preferred pickup time</Text>
+        <ChoiceChips values={deliveryTimes} selected={deliveryTime} onSelect={setDeliveryTime} />
+        {deliveryTime === 'Other' ? <Field label="Custom pickup time" value={customDeliveryTime} onChangeText={setCustomDeliveryTime} /> : null}
+        <Button
+          title={placingOrder ? 'Sending order…' : (product.inStock ? 'Request this item' : 'Out of stock')}
+          disabled={placingOrder || !product.inStock}
+          onPress={placeOrder}
+          style={{ marginTop: 8 }}
+        />
+        <Text onPress={() => router.push('/favorites')} style={{ color: colors.blue, textAlign: 'center', marginTop: 11, fontWeight: '700' }}>View favorites</Text>
+      </ScrollView>
     </Screen>
+  );
+}
+
+function ChoiceChips({ values, selected, onSelect }) {
+  return (
+    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginVertical: 8 }}>
+      {values.map((value) => (
+        <Pressable
+          key={value}
+          accessibilityRole="button"
+          accessibilityLabel={value}
+          onPress={() => onSelect(value)}
+          style={{ paddingHorizontal: 10, paddingVertical: 8, borderRadius: 16, backgroundColor: selected === value ? colors.blue : colors.white, borderWidth: 1, borderColor: selected === value ? colors.blue : colors.border }}
+        >
+          <Text style={{ color: selected === value ? colors.white : colors.navy, fontSize: 11 }}>{value}</Text>
+        </Pressable>
+      ))}
+    </View>
   );
 }

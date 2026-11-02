@@ -4,7 +4,10 @@ import * as SecureStore from 'expo-secure-store';
 
 export const TOKEN_KEY = 'nichetrade.token';
 export const ADMIN_TOKEN_KEY = 'nichetrade.admin-token';
-export const API_URL = (process.env.EXPO_PUBLIC_API_URL || 'https://niche-trade.vercel.app').replace(/\/+$/, '');
+export const API_URL = String(
+  process.env.EXPO_PUBLIC_API_URL ||
+  (Platform.OS === 'web' && typeof window !== 'undefined' ? window.location.origin : ''),
+).replace(/\/+$/, '');
 
 export const getStoredToken = (key) => (
   Platform.OS === 'web' ? Promise.resolve(globalThis.localStorage.getItem(key)) : SecureStore.getItemAsync(key)
@@ -28,7 +31,7 @@ api.interceptors.request.use(async (config) => {
   const token = await getStoredToken(
     config.url?.startsWith('/api/admin') ? ADMIN_TOKEN_KEY : TOKEN_KEY,
   );
-  if (token) config.headers.Authorization = `Bearer ${token}`;
+  if (token) config.headers.Authorization = 'Bearer ' + token;
   return config;
 });
 

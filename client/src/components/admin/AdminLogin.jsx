@@ -24,6 +24,7 @@ const AdminLogin = () => {
                 toast.error(data.message || "Unable to log in");
                 return;
             }
+            if (data.token) localStorage.setItem("adminToken", data.token);
             setIsAdmin(true);
             navigate("/admin");
         } catch (error) {

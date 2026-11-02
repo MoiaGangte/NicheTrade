@@ -36,6 +36,7 @@ import Documentation from './pages/Documentation'
 import Regulation from './pages/Regulation'
 import Donate from './pages/Donate'
 import Messages from './pages/Messages'
+import MobileDeviceSimulator from './components/MobileDeviceSimulator'
 
 const App = () => {
   const location = useLocation()
@@ -108,6 +109,7 @@ const App = () => {
         </Routes>
       </div>
       {!isPortalPath && <Footer />}
+      <MobileDeviceSimulator />
     </div>
   )
 }

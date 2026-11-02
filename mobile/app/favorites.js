@@ -6,7 +6,7 @@ import { EmptyState, ProductCard, Screen } from '../components/UI';
 import { colors } from '../theme';
 
 export default function FavoritesScreen() {
-  const { products, favorites, toggleFavorite, addToCart } = useApp();
+  const { products, favorites, toggleFavorite } = useApp();
   const saved = useMemo(() => products.filter((product) => favorites[product._id]), [products, favorites]);
   return (
     <Screen>
@@ -20,7 +20,7 @@ export default function FavoritesScreen() {
           favorite
           onPress={() => router.push(`/product/${item._id}`)}
           onFavorite={() => toggleFavorite(item._id)}
-          onAdd={() => addToCart(item._id)}
+          onAdd={() => toggleFavorite(item._id)}
         /></View>}
         ListEmptyComponent={<EmptyState title="No saved listings yet" detail="Tap the heart on a listing to save it to your account." />}
       />

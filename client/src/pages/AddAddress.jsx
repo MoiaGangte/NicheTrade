@@ -48,8 +48,6 @@ const AddAddress = () => {
     const onSubmitHandler = async (e) => {
         e.preventDefault();
         try {
-            // Get token from user object or localStorage
-            const token = user?.token || localStorage.getItem('token');
             const { data } = await axios.post(
                 '/api/address/add',
                 {
@@ -60,9 +58,6 @@ const AddAddress = () => {
                     userId: user._id
                 },
                 {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
                     withCredentials: true,
                 }
             );

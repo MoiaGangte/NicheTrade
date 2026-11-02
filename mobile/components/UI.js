@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, shadow } from '../theme';
 
 export function Screen({ children, style, ...props }) {
-  return <SafeAreaView edges={['top', 'left', 'right']} style={[{ flex: 1, backgroundColor: colors.canvas }, style]} {...props}>{children}</SafeAreaView>;
+  return <SafeAreaView edges={['left', 'right', 'bottom']} style={[{ flex: 1, backgroundColor: colors.canvas }, style]} {...props}>{children}</SafeAreaView>;
 }
 
 export function PageTitle({ title, subtitle, right }) {
@@ -101,7 +101,7 @@ export function Field({ label, value, onChangeText, placeholder, multiline, keyb
   );
 }
 
-export function ProductCard({ product, onPress, onFavorite, favorite, onAdd }) {
+export function ProductCard({ product, onPress, onFavorite, favorite, onAdd, style }) {
   const image = Array.isArray(product.image) ? product.image[0] : product.image;
   const seller = product.sellerId;
   return (
@@ -111,7 +111,7 @@ export function ProductCard({ product, onPress, onFavorite, favorite, onAdd }) {
         flex: 1, margin: 5, padding: 9, backgroundColor: colors.white,
         borderRadius: 17, borderWidth: 1, borderColor: colors.border,
         opacity: pressed ? 0.9 : 1, ...shadow,
-      }]}
+      }, style]}
     >
       <View style={{ height: 132, borderRadius: 12, overflow: 'hidden', backgroundColor: colors.paleBlue }}>
         {image ? <Image source={{ uri: image }} resizeMode="cover" style={{ width: '100%', height: '100%' }} /> : null}
@@ -139,7 +139,7 @@ export function ProductCard({ product, onPress, onFavorite, favorite, onAdd }) {
         </View>
         {onAdd ? (
           <Pressable onPress={(event) => { event.stopPropagation(); onAdd(); }} style={{ backgroundColor: colors.blue, borderRadius: 16, paddingHorizontal: 13, paddingVertical: 7 }}>
-            <Text style={{ color: colors.white, fontSize: 12, fontWeight: '700' }}>Add</Text>
+            <Text style={{ color: colors.white, fontSize: 11, fontWeight: '700' }}>{favorite ? 'Saved' : 'Favorite'}</Text>
           </Pressable>
         ) : null}
       </View>

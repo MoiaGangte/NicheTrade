@@ -1,39 +1,36 @@
 import mongoose from "mongoose";
+import { migrateSellerStatuses } from "../utils/sellerMigration.js";
 
 const connectDB = async () => {
     try {
-        // Connection options
+        mongoose.set('bufferCommands', false); // CRITICAL: fail fast, don't hang
+
+        if (!process.env.MONGODB_URI) {
+            console.warn('[AI Studio] MONGODB_URI not set — database offline/mock mode active');
+            return;
+        }
+
         const options = {
-            serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
-            socketTimeoutMS: 45000, // Close sockets after 45s of inactivity
+            serverSelectionTimeoutMS: 2000,
+            socketTimeoutMS: 45000,
         };
 
-        // Connect to MongoDB
         await mongoose.connect(`${process.env.MONGODB_URI}/NicheTrade`, options);
+        await migrateSellerStatuses();
 
-        // Connection event handlers
         mongoose.connection.on('connected', () => {
             console.log('MongoDB connected successfully');
         });
 
         mongoose.connection.on('error', (err) => {
-            console.error('MongoDB connection error:', err);
+            console.error('MongoDB connection error:', err.message);
         });
 
         mongoose.connection.on('disconnected', () => {
             console.log('MongoDB disconnected');
         });
-
-        // Handle application termination
-        process.on('SIGINT', async () => {
-            await mongoose.connection.close();
-            console.log('MongoDB connection closed through app termination');
-            process.exit(0);
-        });
-
     } catch (error) {
-        console.error('MongoDB connection error:', error);
-        throw error; // Re-throw the error to be handled by the server
+        console.warn('MongoDB connection failed — some features may not work:', error.message);
     }
 };
 

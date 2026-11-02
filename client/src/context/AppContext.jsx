@@ -1,34 +1,9 @@
 import { createContext, useContext, useEffect, useState, useCallback } from "react"
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-import axios from "axios";
+import api, { getApiBaseUrl } from "../utils/api";
 
-// Create axios instance with default config
-const axiosInstance = axios.create({
-    withCredentials: true,
-    baseURL: import.meta.env.VITE_BACKEND_URL
-});
-
-// Attach Authorization header from localStorage token on each request
-axiosInstance.interceptors.request.use(
-    (config) => {
-        const token = localStorage.getItem('token');
-        if (token) {
-            config.headers = config.headers || {};
-            config.headers.Authorization = `Bearer ${token}`;
-        }
-        return config;
-    },
-    (error) => Promise.reject(error)
-);
-
-// Add response interceptor to handle auth errors
-axiosInstance.interceptors.response.use(
-    (response) => response,
-    (error) => {
-        return Promise.reject(error);
-    }
-);
+const axiosInstance = api;
 
 export const AppContext = createContext();
 

@@ -12,7 +12,8 @@ const publicSeller = (seller) => ({
     address: seller.address || "",
     gstNumber: seller.gstNumber || "",
     storeDescription: seller.storeDescription || "",
-    isApproved: seller.isApproved,
+    status: seller.status || (seller.isActive === false ? "suspended" : "active"),
+    isApproved: seller.status !== undefined || seller.isApproved !== false,
     isActive: seller.isActive !== false,
     freeUploads: seller.freeUploads || 0,
     isVip: seller.isVip === true,
@@ -59,9 +60,7 @@ export const sellerRegister = async (req, res) => {
 
         return res.status(201).json({
             success: true,
-            message: seller.isApproved
-                ? "Your seller profile is ready"
-                : "Your seller profile was submitted and is awaiting admin approval",
+            message: "Your seller profile is active",
             user: { _id: user._id, name: user.name, email: user.email, role: user.role },
             seller: publicSeller(seller),
         });

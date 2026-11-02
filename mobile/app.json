@@ -34,6 +34,7 @@
         "expo-image-picker",
         {
           "photosPermission": "NicheTrade uses your photos to add product and Lost & Found images.",
+          "cameraPermission": "NicheTrade uses the camera so you can take photos for listings and community posts.",
           "microphonePermission": false
         }
       ],

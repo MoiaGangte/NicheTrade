@@ -12,6 +12,7 @@ const AdminLayout = () => {
                 toast.error(data.message || "Unable to log out");
                 return;
             }
+            localStorage.removeItem("adminToken");
             setIsAdmin(false);
             toast.success(data.message);
             navigate("/");

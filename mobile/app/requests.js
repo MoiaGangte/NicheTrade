@@ -6,9 +6,11 @@ import { useApp } from '../context/AppContext';
 import appendImageToFormData from '../utils/appendImageToFormData';
 import { Button, EmptyState, Field, Screen } from '../components/UI';
 import { colors } from '../theme';
+import { useCameraFlow } from '../context/CameraFlowContext';
 
 export default function RequestsScreen() {
   const { api, user } = useApp();
+  const { consumeHandoff, clearFlow } = useCameraFlow();
   const [requests, setRequests] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const [showForm, setShowForm] = useState(false);
@@ -28,6 +30,12 @@ export default function RequestsScreen() {
     }
   }, [api]);
   useFocusEffect(useCallback(() => { load(); }, [load]));
+  useFocusEffect(useCallback(() => {
+    const photos = consumeHandoff('requests');
+    if (!photos?.length) return;
+    setImage(photos[0]);
+    setShowForm(true);
+  }, [consumeHandoff]));
 
   const pickImage = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -49,6 +57,7 @@ export default function RequestsScreen() {
       setForm({ itemName: '', description: '', promiseAmount: '' });
       setImage(null);
       setShowForm(false);
+      clearFlow();
       await load();
       Alert.alert('Request posted', 'Your item request is now visible to the campus community.');
     } catch (error) {
@@ -82,7 +91,7 @@ export default function RequestsScreen() {
         </Pressable>
         {image ? <Image source={{ uri: image.uri }} style={{ width: 100, height: 100, borderRadius: 12, marginBottom: 13 }} /> : null}
         <Button title={busy ? 'Posting…' : 'Post request'} disabled={busy} onPress={submit} />
-        <Text onPress={() => setShowForm(false)} style={{ color: colors.blue, textAlign: 'center', margin: 16 }}>Cancel</Text>
+        <Text onPress={() => { setShowForm(false); clearFlow(); }} style={{ color: colors.blue, textAlign: 'center', margin: 16 }}>Cancel</Text>
       </View>} />
     </Screen>
   );

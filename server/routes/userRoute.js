@@ -57,6 +57,9 @@ userRouter.get('/google', (req, res, next) => {
     }
     next();
 }, (req, res, next) => {
+    if (!passport._strategies?.google) {
+        return res.status(503).json({ success: false, message: 'Google sign-in is not configured' });
+    }
     const options = { scope: ['profile', 'email'] };
     if (req.mobileGoogleOAuthState) options.state = req.mobileGoogleOAuthState;
     passport.authenticate('google', options)(req, res, next);

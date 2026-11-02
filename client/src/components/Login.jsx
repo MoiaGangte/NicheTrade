@@ -2,6 +2,7 @@ import React from 'react'
 import { useAppContext } from '../context/AppContext';
 import toast from 'react-hot-toast';
 import PasswordInput from './PasswordInput';
+import { getBackendUrl } from '../utils/api';
 
 const Login = () => {
 
@@ -39,7 +40,7 @@ const Login = () => {
             }
         }
 
-        window.location.href = `${import.meta.env.VITE_BACKEND_URL}/api/user/google`;
+        window.location.href = getBackendUrl('/api/user/google');
     };
 
     const onSubmitHandler = async (event) => {

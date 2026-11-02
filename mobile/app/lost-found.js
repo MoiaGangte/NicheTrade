@@ -6,9 +6,11 @@ import { useApp } from '../context/AppContext';
 import appendImageToFormData from '../utils/appendImageToFormData';
 import { Button, EmptyState, Field, Screen } from '../components/UI';
 import { colors } from '../theme';
+import { useCameraFlow } from '../context/CameraFlowContext';
 
 export default function LostFoundScreen() {
   const { api } = useApp();
+  const { consumeHandoff, lostFoundType, clearFlow } = useCameraFlow();
   const [posts, setPosts] = useState([]);
   const [type, setType] = useState('lost');
   const [showForm, setShowForm] = useState(false);
@@ -29,6 +31,13 @@ export default function LostFoundScreen() {
     }
   }, [api]);
   useFocusEffect(useCallback(() => { load(); }, [load]));
+  useFocusEffect(useCallback(() => {
+    const photos = consumeHandoff('lost-found');
+    if (!photos?.length) return;
+    setImage(photos[0]);
+    setType(lostFoundType);
+    setShowForm(true);
+  }, [consumeHandoff, lostFoundType]));
   const filtered = posts.filter((post) => (post.postType || 'found') === type);
 
   const pickImage = async () => {
@@ -51,6 +60,7 @@ export default function LostFoundScreen() {
       if (!response.data.success) throw new Error(response.data.message || 'Unable to post');
       setShowForm(false);
       setImage(null);
+      clearFlow();
       setForm((current) => ({ ...current, itemName: '', placeFound: '', description: '' }));
       await load();
       Alert.alert('Posted', 'Your Lost & Found post has been shared.');
@@ -96,7 +106,7 @@ export default function LostFoundScreen() {
           </Pressable>
           {image ? <Image source={{ uri: image.uri }} style={{ width: 100, height: 100, borderRadius: 12, marginBottom: 13 }} /> : null}
           <Button title={busy ? 'Posting…' : 'Post item'} disabled={busy} onPress={submit} />
-          <Text onPress={() => setShowForm(false)} style={{ color: colors.blue, textAlign: 'center', margin: 16 }}>Cancel</Text>
+          <Text onPress={() => { setShowForm(false); clearFlow(); }} style={{ color: colors.blue, textAlign: 'center', margin: 16 }}>Cancel</Text>
         </View>}
       />
     </Screen>

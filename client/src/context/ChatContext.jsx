@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { io } from 'socket.io-client';
 import { useAppContext } from './AppContext';
+import { getSocketUrl } from '../utils/api';
 
 const ChatContext = createContext(null);
 
@@ -36,7 +37,7 @@ export function ChatProvider({ children }) {
         const token = localStorage.getItem('token');
         if (!token) return undefined;
 
-        const socketUrl = import.meta.env.VITE_BACKEND_URL || window.location.origin;
+        const socketUrl = getSocketUrl();
         const connection = io(socketUrl, {
             auth: { token },
             transports: ['websocket', 'polling'],

@@ -22,8 +22,8 @@ export const createOrFindConversation = async (buyerId, productId) => {
         throw error;
     }
 
-    const seller = await Seller.findById(product.sellerId).select('userId isApproved isActive');
-    if (!seller?.userId || !seller.isApproved || seller.isActive === false) {
+    const seller = await Seller.findById(product.sellerId).select('userId status');
+    if (!seller?.userId || seller.status !== "active") {
         const error = new Error('The seller for this listing is unavailable');
         error.status = 404;
         throw error;
@@ -101,12 +101,18 @@ export const createOrderChatMessages = async (order) => {
         if (!mongoose.isValidObjectId(productId)) continue;
         const product = await Product.findById(productId).select('_id name sellerId');
         if (!product?.sellerId) continue;
-        const seller = await Seller.findById(product.sellerId).select('userId isApproved isActive');
-        if (!seller?.userId || !seller.isApproved || seller.isActive === false) continue;
+        const seller = await Seller.findById(product.sellerId).select('userId status');
+        if (!seller?.userId || seller.status !== "active") continue;
         if (seller.userId.toString() === order.userId.toString()) continue;
 
         const conversation = await createOrFindConversation(order.userId, product._id);
-        const content = `Order placed: ${item.quantity} × ${product.name}.`;
+        const location = order.deliveryLocation === 'Other'
+            ? order.customDeliveryLocation
+            : order.deliveryLocation;
+        const time = order.deliveryTime === 'Other'
+            ? order.customDeliveryTime
+            : order.deliveryTime;
+        const content = `Order placed: ${item.quantity} × ${product.name}. Pickup: ${location || 'Not specified'}; preferred time: ${time || 'Not specified'}.`;
         const message = await createAndPublishMessage({
             conversation,
             type: 'order',

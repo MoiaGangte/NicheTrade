@@ -46,7 +46,7 @@ export default function OrdersScreen() {
   return (
     <Screen>
       <ScrollView refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} />} contentContainerStyle={{ padding: 17, paddingBottom: 25 }}>
-        <PageTitle title="My orders" subtitle="Track your campus purchases" right={<Pressable onPress={() => router.push('/cart')}><Text style={{ color: colors.blue, fontWeight: '700' }}>Cart  →</Text></Pressable>} />
+        <PageTitle title="My orders" subtitle="Track your campus purchases" right={<Pressable onPress={() => router.push('/favorites')}><Text style={{ color: colors.blue, fontWeight: '700' }}>Favorites  →</Text></Pressable>} />
         {!orders.length ? <EmptyState title="No orders yet" detail="Your purchases and order updates will show up here." /> : orders.map((order) => (
           <View key={order._id} style={{ backgroundColor: colors.white, padding: 13, borderRadius: 16, marginBottom: 11, ...shadow }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>

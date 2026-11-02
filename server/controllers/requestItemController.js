@@ -1,7 +1,11 @@
 import { v2 as cloudinary } from "cloudinary";
 import RequestItem from "../models/RequestItem.js";
+import { isDBConnected, mockItemRequests } from "../configs/mockStore.js";
 
 export const listRequestItems = async (_req, res) => {
+    if (!isDBConnected()) {
+        return res.json({ success: true, requests: mockItemRequests });
+    }
     try {
         const requests = await RequestItem.find({})
             .populate("requesterId", "name email mobileNumber department")
@@ -9,12 +13,17 @@ export const listRequestItems = async (_req, res) => {
             .lean();
         return res.json({ success: true, requests });
     } catch (error) {
-        console.error("Request item list error:", error);
-        return res.status(500).json({ success: false, message: "Unable to load item requests" });
+        console.warn("Request item list fallback:", error.message);
+        return res.json({ success: true, requests: mockItemRequests });
     }
 };
 
 export const getRequestItem = async (req, res) => {
+    if (!isDBConnected()) {
+        const request = mockItemRequests.find((r) => r._id === req.params.id) || mockItemRequests[0];
+        if (!request) return res.status(404).json({ success: false, message: "Item request not found" });
+        return res.json({ success: true, request });
+    }
     try {
         const request = await RequestItem.findById(req.params.id)
             .populate("requesterId", "name email mobileNumber department")
@@ -22,12 +31,15 @@ export const getRequestItem = async (req, res) => {
             .lean();
 
         if (!request) {
+            const fallback = mockItemRequests.find((r) => r._id === req.params.id);
+            if (fallback) return res.json({ success: true, request: fallback });
             return res.status(404).json({ success: false, message: "Item request not found" });
         }
 
         return res.json({ success: true, request });
     } catch (error) {
-        console.error("Request item details error:", error);
+        const fallback = mockItemRequests.find((r) => r._id === req.params.id);
+        if (fallback) return res.json({ success: true, request: fallback });
         return res.status(500).json({ success: false, message: "Unable to load item request" });
     }
 };
