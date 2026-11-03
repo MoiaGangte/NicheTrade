@@ -1,24 +1,39 @@
 import { useEffect, useRef, useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useApp } from '../context/AppContext';
 import { Button, Field, Screen } from '../components/UI';
-import DateOfBirthField from '../components/DateOfBirthField';
 import { colors } from '../theme';
+
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const friendlyAuthError = (error) => {
+  const message = error.response?.data?.message || error.message || '';
+  const normalized = message.toLowerCase();
+  if (normalized.includes('network') || error.code === 'ERR_NETWORK') {
+    return 'Unable to reach NicheTrade. Check your connection and try again.';
+  }
+  if (normalized.includes('already') || normalized.includes('user exists')) {
+    return 'An account with this email already exists. Sign in instead.';
+  }
+  if (normalized.includes('invalid email or password')) {
+    return 'The email or password is incorrect.';
+  }
+  if (normalized.includes('complete all account') || normalized.includes('complete student')) {
+    return 'Email/password account creation needs server support for profile completion.';
+  }
+  return message || 'Unable to continue. Please try again.';
+};
 
 export default function AuthScreen() {
   const { signIn, googleSignIn, completeGoogleSignIn } = useApp();
   const params = useLocalSearchParams();
   const handledGoogleCallback = useRef(false);
   const [mode, setMode] = useState('login');
-  const [loginMethod, setLoginMethod] = useState('email');
   const [busy, setBusy] = useState(false);
-  const [form, setForm] = useState({
-    name: '', email: '', password: '', department: '', registerNumber: '',
-    mobileNumber: '', studentType: '', dateOfBirth: '',
-  });
+  const [error, setError] = useState('');
+  const [form, setForm] = useState({ email: '', password: '' });
   const update = (key) => (value) => setForm((current) => ({ ...current, [key]: value }));
-  const updateRegisterNumber = (value) => update('registerNumber')(value.replace(/\D/g, ''));
 
   useEffect(() => {
     if (Platform.OS !== 'web' || handledGoogleCallback.current || typeof params.code !== 'string') return;
@@ -27,44 +42,54 @@ export default function AuthScreen() {
     window.sessionStorage.removeItem('nichetrade.google-auth-state');
     if (!expectedState || params.state !== expectedState) {
       router.replace('/auth');
-      Alert.alert('Google sign-in', 'Could not verify the sign-in session. Please try again.');
+      setError('Could not verify the Google sign-in session. Please try again.');
       return;
     }
 
     setBusy(true);
     completeGoogleSignIn(params.code)
       .then(() => router.replace('/profile'))
-      .catch((error) => {
+      .catch((requestError) => {
         router.replace('/auth');
-        Alert.alert('Google sign-in', error.response?.data?.message || error.message);
+        setError(friendlyAuthError(requestError));
       })
       .finally(() => setBusy(false));
   }, [completeGoogleSignIn, params.code, params.state]);
 
   const submit = async () => {
+    setError('');
+    const email = form.email.trim();
+    if (!emailPattern.test(email)) {
+      setError('Enter a valid email address.');
+      return;
+    }
+    if (form.password.length < 8) {
+      setError('Password must be at least 8 characters.');
+      return;
+    }
+
     setBusy(true);
     try {
-      if (mode === 'login' && loginMethod === 'register') {
-        await signIn({ registerNumber: form.registerNumber, dateOfBirth: form.dateOfBirth }, '/api/user/login-register-number');
-      } else {
-        await signIn(mode === 'register' ? form : { email: form.email, password: form.password }, `/api/user/${mode}`);
-      }
+      await signIn(
+        { email, password: form.password },
+        mode === 'register' ? '/api/user/register' : '/api/user/login',
+      );
       router.replace('/profile');
-    } catch (error) {
-      Alert.alert('Account', error.response?.data?.message || error.message);
+    } catch (requestError) {
+      setError(friendlyAuthError(requestError));
     } finally {
       setBusy(false);
     }
   };
 
   const google = async () => {
+    setError('');
     setBusy(true);
     try {
-      const studentDetails = mode === 'register' ? form : null;
-      const success = await googleSignIn(studentDetails);
+      const success = await googleSignIn();
       if (success) router.replace('/profile');
-    } catch (error) {
-      Alert.alert('Google sign-in', error.response?.data?.message || error.message);
+    } catch (requestError) {
+      setError(friendlyAuthError(requestError));
     } finally {
       setBusy(false);
     }
@@ -73,59 +98,73 @@ export default function AuthScreen() {
   return (
     <Screen>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: 22 }}>
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', paddingHorizontal: 22, paddingVertical: 18 }}
+        >
           <View style={{ alignItems: 'center', marginBottom: 26 }}>
-            <Text style={{ color: colors.navy, fontSize: 34, fontWeight: '900' }}>Niche<Text style={{ color: colors.blue }}>Trade</Text></Text>
+            <Text style={{ color: colors.navy, fontSize: 34, fontWeight: '900' }}>
+              Niche<Text style={{ color: colors.blue }}>Trade</Text>
+            </Text>
             <Text style={{ color: colors.muted, marginTop: 6 }}>Your campus marketplace</Text>
           </View>
+
           <Text style={{ color: colors.navy, textAlign: 'center', fontSize: 22, fontWeight: '800', marginBottom: 18 }}>
             {mode === 'login' ? 'Welcome back' : 'Create your account'}
           </Text>
 
-          {mode === 'register' ? (
-            <>
-              <Field label="Full name" value={form.name} onChangeText={update('name')} placeholder="Enter your name" />
-              <Field label="Department" value={form.department} onChangeText={update('department')} placeholder="Enter your department" />
-              <Field label="Register number" value={form.registerNumber} onChangeText={updateRegisterNumber} placeholder="Enter your register number" keyboardType="number-pad" />
-              <DateOfBirthField value={form.dateOfBirth} onChange={update('dateOfBirth')} />
-              <Field label="Mobile number" value={form.mobileNumber} onChangeText={update('mobileNumber')} placeholder="Enter your mobile number" keyboardType="phone-pad" />
-              <Text style={{ color: colors.ink, fontWeight: '700', marginBottom: 8 }}>Student type</Text>
-              <View style={{ flexDirection: 'row', gap: 9, marginBottom: 14 }}>
-                {['Hosteller', 'Day Scholar'].map((type) => <Text key={type} onPress={() => update('studentType')(type)} style={{ overflow: 'hidden', paddingHorizontal: 14, paddingVertical: 11, borderRadius: 12, color: form.studentType === type ? colors.white : colors.navy, backgroundColor: form.studentType === type ? colors.blue : colors.white, borderWidth: 1, borderColor: colors.border }}>{type}</Text>)}
-              </View>
-            </>
-          ) : null}
+          <Field
+            label="Email"
+            value={form.email}
+            onChangeText={update('email')}
+            placeholder="you@example.com"
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
+          <Field
+            label="Password"
+            value={form.password}
+            onChangeText={update('password')}
+            placeholder={mode === 'register' ? 'At least 8 characters' : 'Enter your password'}
+            secureTextEntry
+            autoCapitalize="none"
+          />
 
-          {mode === 'login' ? (
-            <View style={{ flexDirection: 'row', gap: 8, marginBottom: 13 }}>
-              {[['email', 'Email'], ['register', 'Register number']].map(([value, label]) => <Text key={value} onPress={() => setLoginMethod(value)} style={{ color: loginMethod === value ? colors.white : colors.navy, backgroundColor: loginMethod === value ? colors.blue : colors.white, paddingHorizontal: 13, paddingVertical: 10, borderRadius: 17 }}>{label}</Text>)}
+          {error ? (
+            <View accessibilityRole="alert" style={{ backgroundColor: '#FEECEC', borderRadius: 12, padding: 12, marginBottom: 12 }}>
+              <Text style={{ color: colors.red, textAlign: 'center', lineHeight: 19 }}>{error}</Text>
             </View>
           ) : null}
-          {mode === 'register' || loginMethod === 'email' ? (
-            <>
-              {mode === 'login' ? <Field label="Email" value={form.email} onChangeText={update('email')} placeholder="Enter your email" keyboardType="email-address" autoCapitalize="none" /> : null}
-              {mode === 'register' ? <Field label="Email" value={form.email} onChangeText={update('email')} placeholder="Enter your email" keyboardType="email-address" autoCapitalize="none" /> : null}
-              <Field label="Password" value={form.password} onChangeText={update('password')} placeholder="Enter your password" secureTextEntry />
-            </>
-          ) : (
-            <>
-              <Field label="Register number" value={form.registerNumber} onChangeText={updateRegisterNumber} placeholder="Enter your register number" keyboardType="number-pad" />
-              <DateOfBirthField value={form.dateOfBirth} onChange={update('dateOfBirth')} />
-            </>
-          )}
 
-          <Button title={mode === 'login' ? 'Login' : 'Create account'} disabled={busy} onPress={submit} style={{ marginTop: 4 }} />
+          <Button
+            title={mode === 'login' ? 'Sign in' : 'Create account'}
+            accessibilityLabel={mode === 'login' ? 'Sign in' : 'Create account'}
+            disabled={busy}
+            onPress={submit}
+          />
           <Text style={{ color: colors.muted, textAlign: 'center', paddingVertical: 13 }}>or</Text>
           <Button
-            title={mode === 'register' ? 'Sign in with Google' : 'Login with Google'}
+            title="Continue with Google"
             secondary
             disabled={busy}
             onPress={google}
             icon={{ uri: 'https://developers.google.com/identity/images/g-logo.png' }}
           />
-          <Text onPress={() => { setMode(mode === 'login' ? 'register' : 'login'); setLoginMethod('email'); }} style={{ color: colors.blue, textAlign: 'center', marginTop: 20, fontWeight: '700' }}>
-            {mode === 'login' ? 'New to NicheTrade?  Create an account' : 'Already have an account?  Login'}
-          </Text>
+
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={mode === 'login' ? 'Create an account' : 'Sign in to an existing account'}
+            disabled={busy}
+            onPress={() => {
+              setMode((current) => (current === 'login' ? 'register' : 'login'));
+              setError('');
+            }}
+            style={{ paddingVertical: 15 }}
+          >
+            <Text style={{ color: colors.blue, textAlign: 'center', fontWeight: '700' }}>
+              {mode === 'login' ? 'New to NicheTrade? Create an account' : 'Already have an account? Sign in'}
+            </Text>
+          </Pressable>
         </ScrollView>
       </KeyboardAvoidingView>
     </Screen>

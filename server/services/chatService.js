@@ -129,6 +129,7 @@ export const getUserConversations = async (userId) => {
         .populate({ path: 'buyerId', select: 'name' })
         .populate({ path: 'sellerId', select: 'name' })
         .populate({ path: 'productId', select: 'name image offerPrice price category' })
+        .populate({ path: 'lostFoundId', select: 'itemName image postType' })
         .sort({ lastMessageAt: -1, updatedAt: -1 })
         .lean();
 

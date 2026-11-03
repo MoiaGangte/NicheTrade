@@ -3,9 +3,13 @@ import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import User from '../models/User.js';
 
 const isVercelDeployment = process.env.VERCEL === '1' || Boolean(process.env.VERCEL_ENV);
-const callbackURL = process.env.NODE_ENV === 'development' && !isVercelDeployment
+let callbackURL = process.env.NODE_ENV === 'development' && !isVercelDeployment
   ? process.env.GOOGLE_CLIENT_URL_LOCAL
   : process.env.GOOGLE_CLIENT_URL;
+
+if (!callbackURL && process.env.VERCEL_URL) {
+  callbackURL = `https://${process.env.VERCEL_URL}/api/user/google/callback`;
+}
 
 if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
   passport.use(new GoogleStrategy({
@@ -18,9 +22,7 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
     try {
       const studentDetails = req.session?.googleStudentDetails;
       const email = profile.emails?.[0]?.value;
-      if (!email) {
-        return done(new Error('Google sign-in requires complete student information'));
-      }
+      if (!email) return done(new Error('Google sign-in did not return an email address'));
 
       let user = await User.findOne({
         $or: [
@@ -29,22 +31,17 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
         ]
       });
 
-      const hasCompleteStudentDetails = user && ['department', 'registerNumber', 'mobileNumber', 'studentType', 'dateOfBirth']
-        .every((field) => user[field]);
-      if (!studentDetails && !hasCompleteStudentDetails) {
-        return done(new Error('Google sign-in requires complete student information'));
-      }
-
       if (!user) {
+        const newUserDetails = studentDetails || {};
         user = await User.create({
           googleId: profile.id,
-          name: studentDetails.name,
+          name: newUserDetails.name || profile.displayName || email.split('@')[0],
           email,
-          department: studentDetails.department,
-          registerNumber: studentDetails.registerNumber,
-          mobileNumber: studentDetails.mobileNumber,
-          studentType: studentDetails.studentType,
-          dateOfBirth: studentDetails.dateOfBirth,
+          department: newUserDetails.department || '',
+          registerNumber: newUserDetails.registerNumber || undefined,
+          mobileNumber: newUserDetails.mobileNumber || '',
+          studentType: newUserDetails.studentType || undefined,
+          dateOfBirth: newUserDetails.dateOfBirth || undefined,
           cartItems: {},
           favorites: {}
         });
@@ -57,12 +54,12 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
         .some((field) => !user[field]);
       if (missingStudentDetails) {
         user.set({
-          name: user.name || studentDetails.name,
-          department: user.department || studentDetails.department,
-          registerNumber: user.registerNumber || studentDetails.registerNumber,
-          mobileNumber: user.mobileNumber || studentDetails.mobileNumber,
-          studentType: user.studentType || studentDetails.studentType,
-          dateOfBirth: user.dateOfBirth || studentDetails.dateOfBirth,
+          name: user.name || studentDetails?.name || profile.displayName || email.split('@')[0],
+          department: user.department || studentDetails?.department || '',
+          registerNumber: user.registerNumber || studentDetails?.registerNumber || undefined,
+          mobileNumber: user.mobileNumber || studentDetails?.mobileNumber || '',
+          studentType: user.studentType || studentDetails?.studentType || undefined,
+          dateOfBirth: user.dateOfBirth || studentDetails?.dateOfBirth || undefined,
         });
         await user.save();
       }

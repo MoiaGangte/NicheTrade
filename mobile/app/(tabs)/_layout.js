@@ -18,7 +18,7 @@ export default function TabLayout() {
       accessibilityLabel="Open camera actions"
       onPress={openCameraMenu}
       style={{
-        marginLeft: 18,
+        marginLeft: -10,
         width: 78,
         height: 62,
         borderRadius: 31,
@@ -79,7 +79,6 @@ export default function TabLayout() {
     })}>
       <Tabs.Screen name="index" options={{ title: 'Home' }} />
       <Tabs.Screen name="explore" options={{ href: null }} />
-      <Tabs.Screen name="lost-found" options={{ href: null }} />
       <Tabs.Screen name="messages" options={{ title: 'Messages' }} />
       <Tabs.Screen name="camera-action" options={{ title: '', tabBarLabel: () => null, tabBarButton: CameraTabButton }} />
       <Tabs.Screen name="sell" options={{ title: 'Sell' }} />

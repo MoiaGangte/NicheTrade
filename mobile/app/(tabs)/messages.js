@@ -85,11 +85,11 @@ export default function MessagesInboxScreen() {
                   <Text numberOfLines={1} style={{ flex: 1, color: colors.navy, fontWeight: '700' }}>{conversation.otherUser?.name || 'NicheTrade member'}</Text>
                   <Text style={{ color: colors.muted, fontSize: 11 }}>{formatTime(conversation.lastMessageAt)}</Text>
                 </View>
-                <Text numberOfLines={1} style={{ color: colors.green, fontSize: 12, marginTop: 3 }}>{conversation.productId?.name || 'Listing unavailable'}{conversation.productId?.offerPrice != null ? ` · ₹${conversation.productId.offerPrice}` : ''}</Text>
+                <Text numberOfLines={1} style={{ color: colors.green, fontSize: 12, marginTop: 3 }}>{conversation.productId?.name || conversation.lostFoundId?.itemName || 'Listing unavailable'}{conversation.productId?.offerPrice != null ? ` · ₹${conversation.productId.offerPrice}` : ''}</Text>
                 <Text numberOfLines={1} style={{ color: colors.muted, fontSize: 12, marginTop: 3 }}>{conversation.lastMessageText || 'Conversation started'}</Text>
               </View>
               {conversation.unreadCount > 0 ? <View style={{ minWidth: 20, height: 20, paddingHorizontal: 5, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.green }}><Text style={{ color: colors.white, fontSize: 11, fontWeight: '700' }}>{conversation.unreadCount}</Text></View> : null}
-              {conversation.productId?.image?.[0] ? <Image source={{ uri: conversation.productId.image[0] }} style={{ width: 44, height: 44, borderRadius: 9, backgroundColor: colors.paleBlue }} /> : null}
+              {conversation.productId?.image?.[0] || conversation.lostFoundId?.image ? <Image source={{ uri: conversation.productId?.image?.[0] || conversation.lostFoundId.image }} style={{ width: 44, height: 44, borderRadius: 9, backgroundColor: colors.paleBlue }} /> : null}
             </Pressable>
           ))}
         </ScrollView>

@@ -1,5 +1,5 @@
-import { useCallback, useState } from 'react';
-import { Alert, FlatList, Image, Pressable, RefreshControl, Text, View } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { Alert, FlatList, Image, Linking, Pressable, RefreshControl, Text, TextInput, View } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { useApp } from '../context/AppContext';
@@ -12,11 +12,12 @@ export default function LostFoundScreen() {
   const { api } = useApp();
   const { consumeHandoff, lostFoundType, clearFlow } = useCameraFlow();
   const [posts, setPosts] = useState([]);
-  const [type, setType] = useState('lost');
+  const [type, setType] = useState('all');
+  const [search, setSearch] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [image, setImage] = useState(null);
+  const [images, setImages] = useState([]);
   const [form, setForm] = useState({ itemName: '', placeFound: '', description: '', founderName: '', founderMobile: '', founderDepartment: '', foundAt: new Date().toISOString() });
   const update = (key) => (value) => setForm((current) => ({ ...current, [key]: value }));
   const load = useCallback(async () => {
@@ -34,32 +35,80 @@ export default function LostFoundScreen() {
   useFocusEffect(useCallback(() => {
     const photos = consumeHandoff('lost-found');
     if (!photos?.length) return;
-    setImage(photos[0]);
+    setImages((current) => [...current, ...photos].slice(0, 3));
     setType(lostFoundType);
     setShowForm(true);
   }, [consumeHandoff, lostFoundType]));
-  const filtered = posts.filter((post) => (post.postType || 'found') === type);
+  useEffect(() => {
+    if (typeof ImagePicker.getPendingResultAsync !== 'function') return;
+    ImagePicker.getPendingResultAsync().then((result) => {
+      if (!result?.canceled && result.assets?.length) {
+        setImages((current) => [...current, ...result.assets].slice(0, 3));
+        setShowForm(true);
+      }
+    }).catch((error) => console.warn('Unable to recover camera photo:', error.message));
+  }, []);
+  const filtered = posts.filter((post) => {
+    if (type !== 'all' && (post.postType || 'found') !== type) return false;
+    const needle = search.trim().toLowerCase();
+    if (!needle) return true;
+    return `${post.itemName || ''} ${post.placeFound || ''} ${post.description || ''}`.toLowerCase().includes(needle);
+  });
 
   const pickImage = async () => {
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) return Alert.alert('Photo access needed', 'Allow access to attach an item photo.');
-    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.85 });
-    if (!result.canceled) setImage(result.assets[0]);
+    if (images.length >= 3) return Alert.alert('Photo limit', 'You can add up to 3 photos.');
+    try {
+      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert('Photo access needed', 'Allow photo access to choose an item photo.');
+        return;
+      }
+      const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.85 });
+      if (!result.canceled && result.assets?.length) {
+        setImages((current) => [...current, ...result.assets].slice(0, 3));
+      }
+    } catch (error) {
+      Alert.alert('Could not open photos', error.response?.data?.message || error.message || 'Please try again.');
+    }
+  };
+
+  const takePhoto = async () => {
+    if (images.length >= 3) return Alert.alert('Photo limit', 'You can add up to 3 photos.');
+    try {
+      const permission = await ImagePicker.requestCameraPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert(
+          'Camera permission needed',
+          'Allow camera access to take a photo, or enable it in Settings.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Open settings', onPress: () => Linking.openSettings() },
+          ],
+        );
+        return;
+      }
+      const result = await ImagePicker.launchCameraAsync({ mediaTypes: ['images'], quality: 0.7, allowsEditing: false });
+      if (!result.canceled && result.assets?.length) {
+        setImages((current) => [...current, ...result.assets].slice(0, 3));
+      }
+    } catch (error) {
+      Alert.alert('Could not open camera', error.response?.data?.message || error.message || 'Please try again.');
+    }
   };
 
   const submit = async () => {
-    if (!image || !form.itemName.trim() || !form.description.trim() || !form.founderName.trim() || !form.founderMobile.trim() || !form.founderDepartment.trim() || !form.foundAt.trim() || (type === 'found' && !form.placeFound.trim())) {
+    if (!images.length || !form.itemName.trim() || !form.description.trim() || !form.founderName.trim() || !form.founderMobile.trim() || !form.founderDepartment.trim() || !form.foundAt.trim() || (type === 'found' && !form.placeFound.trim())) {
       return Alert.alert('Complete all fields', 'Add the item details, contact information, date, and a photo.');
     }
     setBusy(true);
     try {
       const data = new FormData();
       Object.entries({ ...form, postType: type }).forEach(([key, value]) => data.append(key, value));
-      await appendImageToFormData(data, 'image', image, 'lost-found.jpg');
+      await appendImageToFormData(data, 'image', images[0], 'lost-found.jpg');
       const response = await api.post('/api/lost-found', data);
       if (!response.data.success) throw new Error(response.data.message || 'Unable to post');
       setShowForm(false);
-      setImage(null);
+      setImages([]);
       clearFlow();
       setForm((current) => ({ ...current, itemName: '', placeFound: '', description: '' }));
       await load();
@@ -101,10 +150,30 @@ export default function LostFoundScreen() {
           <Field label="Your name" value={form.founderName} onChangeText={update('founderName')} placeholder="Contact name" />
           <Field label="Mobile number" value={form.founderMobile} onChangeText={update('founderMobile')} placeholder="Contact phone" keyboardType="phone-pad" />
           <Field label="Department" value={form.founderDepartment} onChangeText={update('founderDepartment')} placeholder="Your department" />
-          <Pressable onPress={pickImage} style={{ padding: 15, borderWidth: 1, borderColor: colors.border, borderRadius: 13, alignItems: 'center', marginBottom: 13 }}>
-            <Text style={{ color: colors.blue, fontWeight: '700' }}>{image ? 'Photo selected · Change photo' : 'Add item photo'}</Text>
-          </Pressable>
-          {image ? <Image source={{ uri: image.uri }} style={{ width: 100, height: 100, borderRadius: 12, marginBottom: 13 }} /> : null}
+          <View style={{ flexDirection: 'row', gap: 10, marginBottom: 13 }}>
+            <Pressable accessibilityRole="button" accessibilityLabel="Take a photo" onPress={takePhoto} style={{ flex: 1, padding: 15, borderWidth: 1, borderColor: colors.border, borderRadius: 13, alignItems: 'center' }}>
+              <Text style={{ color: colors.blue, fontWeight: '700' }}>Take photo</Text>
+            </Pressable>
+            <Pressable accessibilityRole="button" accessibilityLabel="Choose photos from gallery" onPress={pickImage} style={{ flex: 1, padding: 15, borderWidth: 1, borderColor: colors.border, borderRadius: 13, alignItems: 'center' }}>
+              <Text style={{ color: colors.blue, fontWeight: '700' }}>Choose from gallery</Text>
+            </Pressable>
+          </View>
+          <Text style={{ color: colors.muted, marginBottom: 8 }}>{images.length}/3 photos</Text>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 13 }}>
+            {images.map((image, index) => (
+              <View key={image.assetId || `${image.uri}-${index}`} style={{ width: 96, height: 96 }}>
+                <Image source={{ uri: image.uri }} style={{ width: 96, height: 96, borderRadius: 12 }} />
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`Remove photo ${index + 1}`}
+                  onPress={() => setImages((current) => current.filter((_, currentIndex) => currentIndex !== index))}
+                  style={{ position: 'absolute', right: -6, top: -6, width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.navy }}
+                >
+                  <Text style={{ color: colors.white, fontWeight: '800' }}>×</Text>
+                </Pressable>
+              </View>
+            ))}
+          </View>
           <Button title={busy ? 'Posting…' : 'Post item'} disabled={busy} onPress={submit} />
           <Text onPress={() => { setShowForm(false); clearFlow(); }} style={{ color: colors.blue, textAlign: 'center', margin: 16 }}>Cancel</Text>
         </View>}
@@ -114,9 +183,20 @@ export default function LostFoundScreen() {
 
   return (
     <Screen>
+      <View style={{ paddingHorizontal: 15, paddingTop: 15 }}>
+        <Text style={{ color: colors.navy, fontSize: 24, fontWeight: '800' }}>Lost & Found</Text>
+        <TextInput
+          accessibilityLabel="Search Lost and Found posts"
+          value={search}
+          onChangeText={setSearch}
+          placeholder="Search items or locations"
+          placeholderTextColor={colors.muted}
+          style={{ height: 46, marginTop: 12, paddingHorizontal: 13, borderRadius: 13, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.white, color: colors.ink }}
+        />
+      </View>
       <View style={{ flexDirection: 'row', padding: 15, gap: 8 }}>
-        {['lost', 'found'].map((value) => <Pressable key={value} onPress={() => setType(value)} style={{ flex: 1, alignItems: 'center', padding: 11, borderRadius: 18, backgroundColor: type === value ? colors.blue : colors.white }}>
-          <Text style={{ color: type === value ? colors.white : colors.navy, fontWeight: '700' }}>{value === 'lost' ? 'Lost Items' : 'Found Items'}</Text>
+        {[['all', 'All'], ['lost', 'Lost'], ['found', 'Found']].map(([value, label]) => <Pressable key={value} accessibilityRole="button" accessibilityLabel={`Show ${label.toLowerCase()} Lost and Found posts`} onPress={() => setType(value)} style={{ flex: 1, alignItems: 'center', padding: 11, borderRadius: 18, backgroundColor: type === value ? colors.blue : colors.white }}>
+          <Text style={{ color: type === value ? colors.white : colors.navy, fontWeight: '700' }}>{label}</Text>
         </Pressable>)}
       </View>
       <FlatList
@@ -137,8 +217,8 @@ export default function LostFoundScreen() {
             </View>
           </Pressable>
         )}
-        ListEmptyComponent={<EmptyState title={`No ${type} items posted`} detail="Be the first to share an update with your campus." />}
-        ListFooterComponent={<Button title="＋  Report a lost or found item" onPress={() => setShowForm(true)} />}
+        ListEmptyComponent={<EmptyState title={search ? 'No matching items' : `No ${type === 'all' ? '' : type + ' '}items posted`} detail="Be the first to share an update with your campus." />}
+        ListFooterComponent={<Button title="＋  Report a lost or found item" onPress={() => { setType((current) => current === 'found' ? 'found' : 'lost'); setShowForm(true); }} />}
       />
     </Screen>
   );

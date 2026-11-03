@@ -19,10 +19,11 @@ export function PageTitle({ title, subtitle, right }) {
   );
 }
 
-export function Button({ title, onPress, secondary, disabled, style, icon }) {
+export function Button({ title, onPress, secondary, disabled, style, icon, accessibilityLabel }) {
   return (
     <Pressable
       accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel || title}
       disabled={disabled}
       onPress={onPress}
       style={({ pressed }) => [{
@@ -68,6 +69,7 @@ export function Field({ label, value, onChangeText, placeholder, multiline, keyb
         borderRadius: 12, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.white,
       }}>
         <TextInput
+          accessibilityLabel={label || placeholder || 'Text input'}
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}

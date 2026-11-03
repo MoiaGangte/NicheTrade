@@ -277,7 +277,7 @@ export default function HomeScreen() {
         {/* Lost & Found horizontal row */}
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 20, marginBottom: 10 }}>
           <Text style={{ color: colors.navy, fontSize: 18, fontWeight: '800' }}>Lost & Found</Text>
-          <Pressable onPress={() => router.push('/lost-found')}>
+          <Pressable accessibilityRole="button" accessibilityLabel="See more Lost and Found posts" onPress={() => router.push('/lost-found')}>
             <Text style={{ color: colors.blue, fontWeight: '700', fontSize: 13 }}>See more →</Text>
           </Pressable>
         </View>
@@ -441,7 +441,7 @@ export default function HomeScreen() {
           </View>
           <Text style={{ color: colors.white, fontSize: 25 }}>＋</Text>
         </Pressable>
-        <Pressable onPress={() => router.push('/lost-found')} style={({ pressed }) => ({
+        <Pressable accessibilityRole="button" accessibilityLabel="Open Lost and Found" onPress={() => router.push('/lost-found')} style={({ pressed }) => ({
           marginTop: 12,
           backgroundColor: '#E8EEFF',
           borderRadius: 17,

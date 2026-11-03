@@ -1,9 +1,11 @@
 import express from "express";
 import multer from "multer";
 import { lostFoundUpload } from "../configs/multer.js";
+import { authUser } from "../middleware/authMiddleware.js";
 import {
     confirmLostFoundClaim,
     createLostFoundPost,
+    deleteLostFoundPost,
     getLostFoundFounder,
     getLostFoundPost,
     listLostFoundPosts,
@@ -14,6 +16,7 @@ const lostFoundRouter = express.Router();
 lostFoundRouter.get("/", listLostFoundPosts);
 lostFoundRouter.post(
     "/",
+    authUser,
     lostFoundUpload.single("image"),
     (error, _req, res, next) => {
         if (error instanceof multer.MulterError && error.code === "LIMIT_FILE_SIZE") {
@@ -25,6 +28,7 @@ lostFoundRouter.post(
 );
 lostFoundRouter.get("/:id", getLostFoundPost);
 lostFoundRouter.get("/:id/claim", getLostFoundFounder);
-lostFoundRouter.post("/:id/confirm", confirmLostFoundClaim);
+lostFoundRouter.post("/:id/confirm", authUser, confirmLostFoundClaim);
+lostFoundRouter.delete("/:id", authUser, deleteLostFoundPost);
 
 export default lostFoundRouter;

@@ -136,7 +136,9 @@ app.get('/api/user/google/callback',
       return res.status(503).json({ success: false, message: 'Google sign-in is not configured' });
     }
     passport.authenticate('google', {
-      failureRedirect: '/',
+      failureRedirect: req.mobileGoogleAuth?.redirect === 'nichetrade://auth'
+        ? 'nichetrade://auth?error=google_auth_failed'
+        : '/',
       session: !req.mobileGoogleAuth,
     })(req, res, next);
   },

@@ -148,6 +148,9 @@ export function AppProvider({ children }) {
       const result = await WebBrowser.openAuthSessionAsync(authUrl, returnUrl);
       if (result.type !== 'success' || !result.url) return false;
       const callback = Linking.parse(result.url);
+      if (callback.queryParams?.error) {
+        throw new Error('Google sign-in was not completed. Please try again.');
+      }
       const code = callback.queryParams?.code;
       const callbackState = callback.queryParams?.state;
       if (typeof callbackState !== 'string' || callbackState !== state) {

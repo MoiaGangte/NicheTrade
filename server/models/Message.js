@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 const messageSchema = new mongoose.Schema({
     conversationId: { type: mongoose.Schema.Types.ObjectId, ref: 'Conversation', required: true },
     senderId: { type: mongoose.Schema.Types.ObjectId, ref: 'user', default: null },
-    type: { type: String, enum: ['text', 'order'], required: true },
+    type: { type: String, enum: ['text', 'order', 'lost-found-claim'], required: true },
     content: { type: String, required: true, trim: true, maxlength: 2000 },
     orderId: { type: mongoose.Schema.Types.ObjectId, ref: 'Order', default: null },
     readAt: { type: Date, default: null },

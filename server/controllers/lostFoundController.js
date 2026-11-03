@@ -1,9 +1,12 @@
 import { v2 as cloudinary } from "cloudinary";
 import LostFoundPost from "../models/LostFoundPost.js";
 import { isDBConnected, mockLostFoundPosts } from "../configs/mockStore.js";
+import Conversation from "../models/Conversation.js";
+import Message from "../models/Message.js";
+import SellerNotification from "../models/SellerNotification.js";
 
 const mobilePattern = /^\+?[\d\s().-]{7,30}$/;
-const publicPostFields = "itemName placeFound postType foundDate foundAt description image createdAt";
+const publicPostFields = "itemName placeFound postType foundDate foundAt description image createdAt userId";
 
 export const listLostFoundPosts = async (_req, res) => {
     if (!isDBConnected()) {
@@ -115,6 +118,7 @@ export const createLostFoundPost = async (req, res) => {
             founderName,
             founderMobile,
             founderDepartment,
+            userId: req.userId,
         });
 
         return res.status(201).json({
@@ -140,18 +144,64 @@ export const createLostFoundPost = async (req, res) => {
 
 export const confirmLostFoundClaim = async (req, res) => {
     try {
+        const { pickupLocation, pickupTime } = req.body;
+        if (!pickupLocation?.trim()) {
+            return res.status(400).json({ success: false, message: "Choose a campus pickup location" });
+        }
         const post = await LostFoundPost.findOneAndUpdate(
             { _id: req.params.id, resolved: { $ne: true } },
             { $set: { resolved: true, resolvedAt: new Date() } },
             { new: true },
-        ).select("_id");
+        );
 
         if (!post) {
             return res.status(404).json({ success: false, message: "This item is no longer available" });
         }
-        return res.json({ success: true, message: "Item removed from Lost & Found" });
+        if (!post.userId || post.userId.toString() === req.userId.toString()) {
+            return res.json({ success: true, message: "Item removed from Lost & Found" });
+        }
+
+        let conversationId = null;
+        try {
+            const filter = { buyerId: req.userId, sellerId: post.userId, lostFoundId: post._id };
+            let conversation = await Conversation.findOneAndUpdate(
+                filter,
+                { $setOnInsert: { ...filter, lastMessageAt: new Date() } },
+                { new: true, upsert: true, setDefaultsOnInsert: true },
+            );
+            const text = `Hi, I'd like to claim "${post.itemName}". Pickup location: ${pickupLocation.trim()}.${pickupTime ? ` Preferred pickup time: ${pickupTime.trim()}.` : ""}`;
+            const firstMessage = await Message.findOne({ conversationId: conversation._id, type: "lost-found-claim" });
+            if (!firstMessage) {
+                await Message.create({ conversationId: conversation._id, senderId: req.userId, type: "lost-found-claim", content: text });
+                await Conversation.updateOne({ _id: conversation._id }, {
+                    $set: { lastMessageText: text, lastMessageType: "text", lastMessageAt: new Date() },
+                    $inc: { sellerUnreadCount: 1 },
+                });
+            }
+            conversationId = conversation._id;
+            await SellerNotification.create({
+                userId: post.userId,
+                subject: "Lost & Found claim",
+                body: `${req.user?.name || "A student"} claimed "${post.itemName}". Pickup: ${pickupLocation.trim()}${pickupTime ? ` at ${pickupTime.trim()}` : ""}.`,
+                type: "lost_found_claim",
+            });
+        } catch (chatError) {
+            console.warn("Lost & Found claim chat setup failed:", chatError.message);
+        }
+        return res.json({ success: true, message: "Claim sent and item removed from Lost & Found", conversationId });
     } catch (error) {
         console.error("Lost and found claim confirmation error:", error);
         return res.status(400).json({ success: false, message: "Unable to confirm this claim" });
+    }
+};
+
+export const deleteLostFoundPost = async (req, res) => {
+    try {
+        const post = await LostFoundPost.findOneAndDelete({ _id: req.params.id, userId: req.userId });
+        if (!post) return res.status(404).json({ success: false, message: "You can only delete your own post" });
+        return res.json({ success: true, message: "Lost & Found post deleted" });
+    } catch (error) {
+        console.error("Lost and found delete error:", error);
+        return res.status(400).json({ success: false, message: "Unable to delete this post" });
     }
 };
