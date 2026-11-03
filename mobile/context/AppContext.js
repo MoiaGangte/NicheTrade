@@ -5,7 +5,9 @@ import * as WebBrowser from 'expo-web-browser';
 import * as AuthSession from 'expo-auth-session';
 import api, { API_URL, getErrorMessage, removeStoredToken, setStoredToken, TOKEN_KEY } from '../api';
 
-if (Platform.OS !== 'web') WebBrowser.maybeCompleteAuthSession();
+if (Platform.OS !== 'web' && typeof WebBrowser.maybeCompleteAuthSession === 'function') {
+  WebBrowser.maybeCompleteAuthSession();
+}
 
 const AppContext = createContext(null);
 
@@ -133,6 +135,9 @@ export function AppProvider({ children }) {
       if (!data.success || !data.mobileRegistration) throw new Error(data.message || 'Unable to start Google sign-in');
       registrationPayload = `&mobileRegistration=${encodeURIComponent(data.mobileRegistration)}`;
     }
+    if (typeof Crypto.randomUUID !== 'function') {
+      throw new Error('Google sign-in is unavailable because the installed Expo crypto module is incompatible. Rebuild the Android app.');
+    }
     const state = Crypto.randomUUID();
     if (Platform.OS === 'web') {
       const returnUrl = `${window.location.origin}/auth`;
@@ -142,11 +147,17 @@ export function AppProvider({ children }) {
       return false;
     }
 
+    if (typeof AuthSession.makeRedirectUri !== 'function' || typeof WebBrowser.openAuthSessionAsync !== 'function') {
+      throw new Error('Google sign-in is unavailable because the Expo authentication modules are incompatible. Rebuild the Android app.');
+    }
     const returnUrl = AuthSession.makeRedirectUri({ scheme: 'nichetrade', path: 'auth' });
     const authUrl = `${API_URL}/api/user/google?mobileRedirect=${encodeURIComponent('nichetrade://auth')}&mobileState=${encodeURIComponent(state)}${registrationPayload}`;
     try {
       const result = await WebBrowser.openAuthSessionAsync(authUrl, returnUrl);
-      if (result.type !== 'success' || !result.url) return false;
+      if (result.type === 'cancel' || result.type === 'dismiss') return false;
+      if (result.type !== 'success' || !result.url) {
+        throw new Error('Google sign-in was cancelled or could not be opened.');
+      }
       const callback = Linking.parse(result.url);
       if (callback.queryParams?.error) {
         throw new Error('Google sign-in was not completed. Please try again.');
